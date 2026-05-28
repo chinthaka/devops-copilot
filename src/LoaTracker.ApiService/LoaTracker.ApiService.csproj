@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Azure.Data.Tables" Version="13.3.5" />
+    <PackageReference Include="Aspire.Azure.Storage.Queues" Version="13.3.5" />
+    <!--<PackageReference Include="Azure.Data.Tables" Version="12.11.0" />-->
+    <!--<PackageReference Include="Azure.Storage.Queues" Version="12.25.0" />-->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevOpsCopilot.ServiceDefaults\DevOpsCopilot.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>

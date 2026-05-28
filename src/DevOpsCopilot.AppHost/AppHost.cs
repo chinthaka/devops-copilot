@@ -14,4 +14,43 @@ var eventHub = builder.AddAzureEventHubs("eventhubs")
     .RunAsEmulator()
     .AddHub("logs");
 
+var storage = builder
+	.AddAzureStorage("storage")
+	.RunAsEmulator(emulator =>
+	{
+		emulator.WithBlobPort(10000)
+				.WithQueuePort(10001)
+				.WithTablePort(10002);
+		//.WithLifetime(ContainerLifetime.Persistent)
+		//.WithDataVolume();
+
+
+		IEnumerable<EndpointAnnotation> endpoints = emulator.Resource.Annotations
+			.OfType<EndpointAnnotation>()
+			.Where(endpoint => endpoint.Name is "blob" or "queue" or "table");
+
+		foreach (EndpointAnnotation endpoint in endpoints)
+		{
+			endpoint.IsProxied = false;
+		}
+
+	});
+
+var queues = storage.AddQueues("queues");
+var tables = storage.AddTables("tables");
+
+
+// Api porject - reference both queue and table connections
+var api = builder.AddProject<Projects.LoaTracker_ApiService>("api")
+	.WithReference(queues)
+	.WithReference(tables)
+	.WaitFor(storage);
+
+
+builder.AddAzureFunctionsProject<Projects.LoaTrackerFunctions>("functions")
+	.WithHostStorage(storage)
+	.WithEnvironment("queues", "UseDevelopmentStorage=true").WaitFor(queues)
+	.WithEnvironment("tables", "UseDevelopmentStorage=true").WaitFor(tables)
+	.WaitFor(storage);
+
 builder.Build().Run();
