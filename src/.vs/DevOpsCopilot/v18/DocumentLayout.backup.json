@@ -1,0 +1,58 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\dev\\src\\devops-copilot\\src\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C4D91614-59F1-4063-8A56-98BEB2F795E7}|DevOpsCopilot.AppHost\\DevOpsCopilot.AppHost.csproj|c:\\dev\\src\\devops-copilot\\src\\devopscopilot.apphost\\apphost.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C4D91614-59F1-4063-8A56-98BEB2F795E7}|DevOpsCopilot.AppHost\\DevOpsCopilot.AppHost.csproj|solutionrelative:devopscopilot.apphost\\apphost.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{06313A36-FEEA-4912-831A-1F02E092686F}|frontend\\frontend.esproj|c:\\dev\\src\\devops-copilot\\src\\frontend\\src\\app.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}",
+      "RelativeMoniker": "D:0:0:{06313A36-FEEA-4912-831A-1F02E092686F}|frontend\\frontend.esproj|solutionrelative:frontend\\src\\app.tsx||{0F2454B1-A556-402D-A7D0-1FDE7F99DEE0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "AppHost.cs",
+              "DocumentMoniker": "C:\\dev\\src\\devops-copilot\\src\\DevOpsCopilot.AppHost\\AppHost.cs",
+              "RelativeDocumentMoniker": "DevOpsCopilot.AppHost\\AppHost.cs",
+              "ToolTip": "C:\\dev\\src\\devops-copilot\\src\\DevOpsCopilot.AppHost\\AppHost.cs",
+              "RelativeToolTip": "DevOpsCopilot.AppHost\\AppHost.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-27T14:22:00.885Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "App.tsx",
+              "DocumentMoniker": "C:\\dev\\src\\devops-copilot\\src\\frontend\\src\\App.tsx",
+              "RelativeDocumentMoniker": "frontend\\src\\App.tsx",
+              "ToolTip": "C:\\dev\\src\\devops-copilot\\src\\frontend\\src\\App.tsx",
+              "RelativeToolTip": "frontend\\src\\App.tsx",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAZAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003213|",
+              "WhenOpened": "2026-05-27T14:21:13.955Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
