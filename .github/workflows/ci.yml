@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 11.0.x
+          dotnet-quality: preview
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Build solution
+        run: dotnet build src/DevOpsCopilot.sln --configuration Release
+
+      - name: Build EmailNotifier
+        run: dotnet build src/DevOpsCopilot.EmailNotifier/DevOpsCopilot.EmailNotifier.csproj --configuration Release
+
+      - name: Test
+        run: dotnet test src/DevOpsCopilot.sln --configuration Release --no-build
+
+      - name: Lint and build frontend
+        working-directory: src/frontend
+        run: |
+          npm ci
+          npm run lint
+          npm run build

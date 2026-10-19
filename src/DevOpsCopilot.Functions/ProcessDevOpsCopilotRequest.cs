@@ -36,7 +36,7 @@ public class ProcessDevOpsCopilotRequest
 		// Send the confirmation email
 		//var msg = new SendGridMessage
 		//{
-		//	From = new EmailAddress("devopscopilot@gmail.com", "DevOpsCopilot"),
+		//	From = new EmailAddress("sample@gmail.com", "DevOpsCopilot"),
 		//	Subject = $"DevOpsCopilot request received - {payload.TrackingId}"
 		//};
 		var htmlContent = "<strong>and easy to do anywhere with C#.</strong>";
@@ -48,7 +48,7 @@ public class ProcessDevOpsCopilotRequest
 			$"Tracking ID: {payload.TrackingId}\n\n" +
 			$"DevOpsCopilot (demo)";
 
-		var mssg = MailHelper.CreateSingleEmail(new EmailAddress("kumarasiri@gmail.com", "DevOpsCopilot"), new EmailAddress(payload.MemberEmail), subject, plainTextContent, htmlContent);
+		var mssg = MailHelper.CreateSingleEmail(new EmailAddress("sample@example.com", "DevOpsCopilot"), new EmailAddress(payload.MemberEmail), subject, plainTextContent, htmlContent);
 
 		var response = await _sendGrid.SendEmailAsync(mssg, ct);
 
