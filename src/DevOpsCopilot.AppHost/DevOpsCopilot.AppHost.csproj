@@ -12,6 +12,7 @@
     <ProjectReference Include="..\DevOpsCopilot.Server\DevOpsCopilot.Server.csproj" />
     <ProjectReference Include="..\DevOpsCopilot.ApiService\DevOpsCopilot.ApiService.csproj" />
     <ProjectReference Include="..\DevOpsCopilot.Functions\DevOpsCopilot.Functions.csproj" />
+    <ProjectReference Include="..\DevOpsCopilot.Daemon\DevOpsCopilot.Daemon.csproj" />
   </ItemGroup>
 
   <ItemGroup>
