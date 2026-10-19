@@ -11,6 +11,7 @@ Handoff shapes and tool rules live in [docs/pipeline.md](docs/pipeline.md). Read
 - For one stage, follow the matching skill: `watch-event-hubs`, `diagnostic-agent`, `rag-grounding`, `remediation-agent`.
 - Use only evidence listed in `docs/pipeline.md`. Do not invent Kusto rows, search hits, or log lines.
 - The draft is the output. Do not post to Slack or Teams, and do not deploy Bicep, unless the user asks.
+- Write each test as Arrange, Act, then Assert, in that order. Add test projects under the solution folder `tests`.
 
 ## Layout
 
@@ -23,6 +24,7 @@ Solution: `src/DevOpsCopilot.sln`. Orchestration: `src/DevOpsCopilot.AppHost/App
 | `src/DevOpsCopilot.ServiceDefaults` | Health checks, service discovery, OpenTelemetry. OTLP export only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. |
 | `src/DevOpsCopilot.Daemon` | .NET 11 worker. Event Hubs consumer and Semantic Kernel team. Add it when implementing the daemon. |
 | `incidents/` | Remediation drafts. Do not commit them unless the user asks. |
+| `tests/` | xUnit projects, grouped in the solution folder `tests`. |
 
 The weather frontend (`src/frontend`, `src/DevOpsCopilot.Server`) and the sample projects `src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions`, and `src/DevOpsCopilot.EmailNotifier` are leftover. Do not extend them.
 
