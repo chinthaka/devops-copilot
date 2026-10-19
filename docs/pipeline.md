@@ -4,7 +4,7 @@ Single source for the daemon, agent handoffs, and draft shape. `AGENTS.md` and t
 
 ## Flow
 
-A system error or exception is published to Azure Event Hubs. The DevOpsCopilot daemon consumes that stream, reads the W3C trace context, and runs a Semantic Kernel team in this order:
+A system error or exception is published to Azure Event Hubs. The DevOpsCopilot daemon consumes that stream, reads the W3C trace context, and runs a Microsoft Agent Framework workflow in this order:
 
 1. **Diagnostic agent** calls the Kusto (KQL) tool.
 2. **RAG grounding agent** calls Azure AI Search over historical post-mortems.

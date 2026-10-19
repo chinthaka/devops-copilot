@@ -9,7 +9,7 @@ description: >
 
 # Incident response
 
-Run the Semantic Kernel team once for one event, in order. Handoff shapes are in `docs/pipeline.md`. Read it first. Read each stage skill and follow it. Do not copy those steps into this file.
+Run the Microsoft Agent Framework workflow once for one event, in order. Handoff shapes are in `docs/pipeline.md`. Read it first. Read each stage skill and follow it. Do not copy those steps into this file.
 
 ## Steps
 

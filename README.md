@@ -1,6 +1,6 @@
 # devops-copilot
 
-DevOpsCopilot is a .NET 11 worker that listens to enterprise exception and error logs on Azure Event Hubs. It reads W3C trace context with OpenTelemetry and runs a Semantic Kernel team: diagnose with Kusto, ground the case in historical post-mortems, and write a Slack, Teams, and Bicep draft for the on-call team.
+DevOpsCopilot is a .NET 11 worker that listens to enterprise exception and error logs on Azure Event Hubs. It reads W3C trace context with OpenTelemetry and runs a Microsoft Agent Framework workflow: diagnose with Kusto, ground the case in historical post-mortems, and write a Slack, Teams, and Bicep draft for the on-call team.
 
 Agent instructions: [AGENTS.md](AGENTS.md). Handoff shapes and tool rules: [docs/pipeline.md](docs/pipeline.md). Skills live under `.agents/skills/`.
 
@@ -17,7 +17,7 @@ Agent instructions: [AGENTS.md](AGENTS.md). Handoff shapes and tool rules: [docs
 │ .NET 11 Worker Service (DevOpsCopilot Daemon)               │
 │                                                             │
 │  1. Ingests W3C Trace Context via OpenTelemetry             │
-│  2. Triggers Semantic Kernel Multi-Agent Team               │
+│  2. Triggers Microsoft Agent Framework team                 │
 │                                                             │
 │    ┌──────────────────┐      ┌───────────────────────────┐  │
 │    │ Diagnostic Agent │ ───► │ Tool: Kusto Query (KQL)   │  │

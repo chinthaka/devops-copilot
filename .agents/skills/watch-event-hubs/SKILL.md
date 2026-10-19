@@ -16,7 +16,7 @@ Hub name, consumer group, and the log-event fields are in `docs/pipeline.md`. Us
 1. Keep the Aspire `eventhubs` resource and hub `logs` in `src/DevOpsCopilot.AppHost/AppHost.cs`. Add them only if they are missing.
 2. Reference `DevOpsCopilot.LogForwarder` from the service that emits logs, and point `EventHubLogExporter` at hub `logs`.
 3. Add `src/DevOpsCopilot.Daemon` if it does not exist. It is a `net11.0` worker and the only consumer. Consumer group: `devops-copilot`.
-4. On each event, read `TraceId` and `SpanId` before any agent runs. Checkpoint after the batch is handled. Do not start the Semantic Kernel team from this skill.
+4. On each event, read `TraceId` and `SpanId` before any agent runs. Checkpoint after the batch is handled. Do not start the incident workflow from this skill.
 
 ## When the user wants an event to investigate
 

@@ -47,6 +47,8 @@ var api = builder.AddProject<Projects.DevOpsCopilot_ApiService>("api")
 	.WaitFor(storage);
 
 
+builder.AddProject<Projects.DevOpsCopilot_Daemon>("daemon");
+
 builder.AddAzureFunctionsProject<Projects.DevOpsCopilot_Functions>("functions")
 	.WithHostStorage(storage)
 	.WithEnvironment("queues", "UseDevelopmentStorage=true").WaitFor(queues)

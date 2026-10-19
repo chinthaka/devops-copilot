@@ -428,3 +428,6 @@ FodyWeavers.xsd
 *.msm
 *.msp
 .vs
+
+# Incident drafts written by the remediation agent
+incidents/
