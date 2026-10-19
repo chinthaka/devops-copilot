@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsCopilot.Server", "Dev
 EndProject
 Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "frontend", "frontend\frontend.esproj", "{06313A36-FEEA-4912-831A-1F02E092686F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoaTrackerFunctions", "LoaTracker.Functions\LoaTrackerFunctions.csproj", "{0014E3EE-0121-1008-5E71-BEDA521E2E20}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevOpsCopilot.Functions", "DevOpsCopilot.Functions\DevOpsCopilot.Functions.csproj", "{0014E3EE-0121-1008-5E71-BEDA521E2E20}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoaTracker.ApiService", "LoaTracker.ApiService\LoaTracker.ApiService.csproj", "{A4A18844-7DD5-F891-B1D3-6A9B26E4B4DF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevOpsCopilot.ApiService", "DevOpsCopilot.ApiService\DevOpsCopilot.ApiService.csproj", "{A4A18844-7DD5-F891-B1D3-6A9B26E4B4DF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevOpsCopilot.ServiceDefaults", "DevOpsCopilot.ServiceDefaults\DevOpsCopilot.ServiceDefaults.csproj", "{AAFDF889-3D3D-4A57-A3C5-0B44127216D2}"
 EndProject

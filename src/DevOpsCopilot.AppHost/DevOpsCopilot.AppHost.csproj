@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>d04fe575-631e-4cbd-9e92-f3b231265a1e</UserSecretsId>
@@ -10,8 +10,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DevOpsCopilot.Server\DevOpsCopilot.Server.csproj" />
-    <ProjectReference Include="..\LoaTracker.ApiService\LoaTracker.ApiService.csproj" />
-    <ProjectReference Include="..\LoaTracker.Functions\LoaTrackerFunctions.csproj" />
+    <ProjectReference Include="..\DevOpsCopilot.ApiService\DevOpsCopilot.ApiService.csproj" />
+    <ProjectReference Include="..\DevOpsCopilot.Functions\DevOpsCopilot.Functions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

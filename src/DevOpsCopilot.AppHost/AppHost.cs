@@ -41,13 +41,13 @@ var tables = storage.AddTables("tables");
 
 
 // Api porject - reference both queue and table connections
-var api = builder.AddProject<Projects.LoaTracker_ApiService>("api")
+var api = builder.AddProject<Projects.DevOpsCopilot_ApiService>("api")
 	.WithReference(queues)
 	.WithReference(tables)
 	.WaitFor(storage);
 
 
-builder.AddAzureFunctionsProject<Projects.LoaTrackerFunctions>("functions")
+builder.AddAzureFunctionsProject<Projects.DevOpsCopilot_Functions>("functions")
 	.WithHostStorage(storage)
 	.WithEnvironment("queues", "UseDevelopmentStorage=true").WaitFor(queues)
 	.WithEnvironment("tables", "UseDevelopmentStorage=true").WaitFor(tables)

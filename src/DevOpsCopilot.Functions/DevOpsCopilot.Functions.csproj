@@ -1,12 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UserSecretsId>loatracker-functions-secrets</UserSecretsId>
+    <UserSecretsId>devopscopilot-functions-secrets</UserSecretsId>
+    <!-- Worker SDK 2.0.7 has no net11 entry. This label lets the net11.0 app build. -->
+    <_ToolingSuffix>net11-isolated</_ToolingSuffix>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,7 +1,7 @@
 ﻿using Azure;
 using Azure.Data.Tables;
 
-public class LoaAutidEntity : ITableEntity
+public class DevOpsCopilotAutidEntity : ITableEntity
 {
 	public string PartitionKey { get; set; } = default!;
 	public string RowKey { get; set; } = default!;

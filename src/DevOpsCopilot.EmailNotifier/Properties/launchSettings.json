@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "LoaTracker.EmailNotifier": {
+    "DevOpsCopilot.EmailNotifier": {
       "commandName": "Project",
       "commandLineArgs": "--port 7043",
       "launchBrowser": false

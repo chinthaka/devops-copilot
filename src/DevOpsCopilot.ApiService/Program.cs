@@ -51,17 +51,17 @@ app.UseExceptionHandler();
 app.MapDefaultEndpoints();
 app.MapOpenApi();
 
-var loa = app.MapGroup("/loa").WithTags("Loa");
+var devopsCopilot = app.MapGroup("/devops-copilot").WithTags("DevOpsCopilot");
 
-loa.MapPost("/", AddLoaRequest).WithName("SubmitLoaRequest");
+devopsCopilot.MapPost("/", AddDevOpsCopilotRequest).WithName("SubmitDevOpsCopilotRequest");
 
-loa.MapGet("/{trackingId}", GetLoaStatus).WithName("GetLoaStatus");
+devopsCopilot.MapGet("/{trackingId}", GetDevOpsCopilotStatus).WithName("GetDevOpsCopilotStatus");
 
 app.Run();
 
 
-static async Task<IResult> AddLoaRequest(
-	LoaRequest request,
+static async Task<IResult> AddDevOpsCopilotRequest(
+	DevOpsCopilotRequest request,
 	QueueServiceClient queueClient,
 	TableServiceClient tableClient,
 	ILogger<Program> logger,
@@ -82,7 +82,7 @@ static async Task<IResult> AddLoaRequest(
 	using var scope = logger.BeginScope(new Dictionary<string, object>
 	{
 		["AdviserName"] = request.AdviserName,
-		["RequestType"] = "LoaSubmission"
+		["RequestType"] = "DevOpsCopilotSubmission"
 	});
 
 	IResult result;
@@ -92,11 +92,11 @@ static async Task<IResult> AddLoaRequest(
 
 		var trackingId = Guid.CreateVersion7().ToString("N");
 
-		logger.LogInformation("LoA request received for adviser {Adviser}", request.AdviserName);
+		logger.LogInformation("DevOpsCopilot request received for adviser {Adviser}", request.AdviserName);
 
-		var table = tableClient.GetTableClient("LoaAudit");
+		var table = tableClient.GetTableClient("DevOpsCopilotAudit");
 		await table.CreateIfNotExistsAsync(cancellationToken);
-		await table.AddEntityAsync(new LoaAutidEntity
+		await table.AddEntityAsync(new DevOpsCopilotAutidEntity
 		{
 			PartitionKey = DateTime.UtcNow.ToString("yyyy-MM-dd"),
 			RowKey = trackingId,
@@ -106,7 +106,7 @@ static async Task<IResult> AddLoaRequest(
 			SchemeName = request.SchemeName ?? "(unspecified)"
 		}, cancellationToken: cancellationToken);
 
-		var queue = queueClient.GetQueueClient("loa-request");
+		var queue = queueClient.GetQueueClient("devops-copilot-request");
 		await queue.CreateIfNotExistsAsync();
 
 		var payload = JsonSerializer.Serialize(new
@@ -118,29 +118,29 @@ static async Task<IResult> AddLoaRequest(
 		});
 		await queue.SendMessageAsync(payload, cancellationToken);
 
-		result = Results.Accepted($"/loa/{trackingId}", new { trackingId, status = "Received" });
+		result = Results.Accepted($"/devops-copilot/{trackingId}", new { trackingId, status = "Received" });
 
-		logger.LogInformation("LoA request {TrackingId} queued successfully", trackingId);
+		logger.LogInformation("DevOpsCopilot request {TrackingId} queued successfully", trackingId);
 
 	}
 	catch(Exception e)
 	{
 		result = Results.BadRequest("Please try again later");
-		logger.LogError(e, "Error submitting LoA request");
+		logger.LogError(e, "Error submitting DevOpsCopilot request");
 	}
 
 	return result;
 }
 
-static async Task<IResult> GetLoaStatus(
+static async Task<IResult> GetDevOpsCopilotStatus(
 	string trackingId,
 	TableServiceClient tableClient,
 	CancellationToken cancellationToken)
 {
-	var table = tableClient.GetTableClient("LoaAudit");
-	var results = table.QueryAsync<LoaAutidEntity>(e => e.RowKey == trackingId, null, null, cancellationToken).OrderBy(e => e.Timestamp);
+	var table = tableClient.GetTableClient("DevOpsCopilotAudit");
+	var results = table.QueryAsync<DevOpsCopilotAutidEntity>(e => e.RowKey == trackingId, null, null, cancellationToken).OrderBy(e => e.Timestamp);
 
-	var events = new List<LoaAutidEntity>();
+	var events = new List<DevOpsCopilotAutidEntity>();
 
 	await foreach (var entity in results)
 	{
@@ -160,4 +160,4 @@ static async Task<IResult> GetLoaStatus(
 	});
 }
 
-public record LoaRequest(string AdviserName, string MemeberEmail, string? SchemeName);
+public record DevOpsCopilotRequest(string AdviserName, string MemeberEmail, string? SchemeName);
