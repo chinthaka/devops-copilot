@@ -6,6 +6,7 @@ Handoff shapes and tool rules live in [docs/pipeline.md](docs/pipeline.md). Read
 
 ## How to work
 
+- Create a new feature branch from `main` before starting any new feature. Do not commit feature work directly to `main`.
 - For a full pass over an event, follow `.agents/skills/incident-response/SKILL.md`.
 - For one stage, follow the matching skill: `watch-event-hubs`, `diagnostic-agent`, `rag-grounding`, `remediation-agent`.
 - Use only evidence listed in `docs/pipeline.md`. Do not invent Kusto rows, search hits, or log lines.
