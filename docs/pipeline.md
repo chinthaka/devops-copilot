@@ -16,8 +16,8 @@ The team does not run in parallel. Each agent receives the previous agent's obje
 
 - Publisher: application logs and exceptions. Local producer is `EventHubLogExporter` in `src/DevOpsCopilot.LogForwarder`.
 - Resource: Azure Event Hubs, Aspire name `eventhubs`, emulator in local runs. Hub: `logs`.
-- Consumer: `src/DevOpsCopilot.Daemon`, a .NET 11 worker (`net11.0`). Consumer group: `devops-copilot`.
-- The daemon checkpoints after a batch is handled. It extracts W3C trace context (`TraceId`, `SpanId`, trace flags) from the OpenTelemetry payload before it starts the team.
+- Consumer: `src/DevOpsCopilot.Daemon`, a .NET 10 worker (`net10.0`). Consumer group: `devops-copilot`.
+- The daemon checkpoints each event only after it has been handled. It extracts W3C trace context (`TraceId`, `SpanId`, trace flags) from the OpenTelemetry payload before it starts the team.
 - Start the team only for `Error` and `Critical` events, or events whose `Exception` is set. `Warning` alone does not start the team.
 
 ### Log event

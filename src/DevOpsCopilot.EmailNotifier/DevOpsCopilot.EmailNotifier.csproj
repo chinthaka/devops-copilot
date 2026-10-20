@@ -1,14 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net11.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>2290ff6f-4764-4ed8-9241-d3c755dd5fb3</UserSecretsId>
-    <!-- Worker SDK 2.0.5 has no net11 entry. This label lets the net11.0 app build. -->
-    <_ToolingSuffix>net11-isolated</_ToolingSuffix>
   </PropertyGroup>
 
   <ItemGroup>
