@@ -13,6 +13,7 @@ server.PublishWithContainerFiles(webfrontend, "wwwroot");
 var eventHub = builder.AddAzureEventHubs("eventhubs")
     .RunAsEmulator()
     .AddHub("logs");
+eventHub.AddConsumerGroup("devops-copilot");
 
 var storage = builder
 	.AddAzureStorage("storage")
@@ -38,21 +39,29 @@ var storage = builder
 
 var queues = storage.AddQueues("queues");
 var tables = storage.AddTables("tables");
+var checkpoints = storage.AddBlobs("checkpoints");
 
 
 // Api porject - reference both queue and table connections
 var api = builder.AddProject<Projects.DevOpsCopilot_ApiService>("api")
 	.WithReference(queues)
 	.WithReference(tables)
+	.WithReference(eventHub, "eventhubs")
+	.WaitFor(eventHub)
 	.WaitFor(storage);
 
 
-builder.AddProject<Projects.DevOpsCopilot_Daemon>("daemon");
+builder.AddProject<Projects.DevOpsCopilot_Daemon>("daemon")
+	.WithReference(eventHub, "eventhubs")
+	.WithReference(checkpoints, "checkpoints")
+	.WaitFor(eventHub)
+	.WaitFor(checkpoints);
 
 builder.AddAzureFunctionsProject<Projects.DevOpsCopilot_Functions>("functions")
 	.WithHostStorage(storage)
-	.WithEnvironment("queues", "UseDevelopmentStorage=true").WaitFor(queues)
-	.WithEnvironment("tables", "UseDevelopmentStorage=true").WaitFor(tables)
+	.WithEnvironment("AzureWebJobsSecretStorageType", "Files")
+	.WithReference(queues).WaitFor(queues)
+	.WithReference(tables).WaitFor(tables)
 	.WaitFor(storage);
 
 builder.Build().Run();

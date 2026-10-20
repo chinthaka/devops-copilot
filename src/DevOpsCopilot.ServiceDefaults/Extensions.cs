@@ -1,9 +1,13 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
+using Azure.Messaging.EventHubs;
+using Azure.Messaging.EventHubs.Producer;
+using DevOpsCopilot.LogForwarder;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
@@ -46,10 +50,22 @@ namespace Microsoft.Extensions.Hosting
 
 		public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
 		{
+			var eventHubConnectionString = builder.Configuration.GetConnectionString("eventhubs");
+			if (!string.IsNullOrWhiteSpace(eventHubConnectionString))
+			{
+				builder.Services.AddSingleton(_ => CreateEventHubProducer(eventHubConnectionString));
+			}
+
 			builder.Logging.AddOpenTelemetry(logging =>
 			{
 				logging.IncludeFormattedMessage = true;
 				logging.IncludeScopes = true;
+				if (!string.IsNullOrWhiteSpace(eventHubConnectionString))
+				{
+					logging.AddProcessor(serviceProvider =>
+						new BatchLogRecordExportProcessor(
+							new EventHubLogExporter(serviceProvider.GetRequiredService<EventHubProducerClient>())));
+				}
 			});
 
 			builder.Services.AddOpenTelemetry()
@@ -76,6 +92,14 @@ namespace Microsoft.Extensions.Hosting
 			builder.AddOpenTelemetryExporters();
 
 			return builder;
+		}
+
+		private static EventHubProducerClient CreateEventHubProducer(string connectionString)
+		{
+			var properties = EventHubsConnectionStringProperties.Parse(connectionString);
+			return string.IsNullOrWhiteSpace(properties.EventHubName)
+				? new EventHubProducerClient(connectionString, "logs")
+				: new EventHubProducerClient(connectionString);
 		}
 
 		private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder

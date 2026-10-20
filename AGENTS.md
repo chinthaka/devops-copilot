@@ -20,9 +20,9 @@ Solution: `src/DevOpsCopilot.sln`. Orchestration: `src/DevOpsCopilot.AppHost/App
 | Path | Role |
 |---|---|
 | `src/DevOpsCopilot.AppHost` | Aspire composition root. Local Event Hubs emulator, hub `logs`. |
-| `src/DevOpsCopilot.LogForwarder` | OpenTelemetry exporter that JSON-encodes logs for Event Hubs. Not referenced by the AppHost yet. |
+| `src/DevOpsCopilot.LogForwarder` | OpenTelemetry exporter that JSON-encodes application logs for the `logs` Event Hubs hub. |
 | `src/DevOpsCopilot.ServiceDefaults` | Health checks, service discovery, OpenTelemetry. OTLP export only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. |
-| `src/DevOpsCopilot.Daemon` | .NET 11 worker. Microsoft Agent Framework workflow. Not subscribed to hub `logs` yet. |
+| `src/DevOpsCopilot.Daemon` | .NET 10 worker. Consumes `logs` with consumer group `devops-copilot`, checkpoints handled events in Blob Storage, and runs the incident workflow. |
 | `incidents/` | Remediation drafts. Do not commit them unless the user asks. |
 | `tests/` | xUnit projects, grouped in the solution folder `tests`. |
 
@@ -30,14 +30,14 @@ The weather frontend (`src/frontend`, `src/DevOpsCopilot.Server`) and the sample
 
 ## Build
 
-- Target `net11.0` for every project, including the daemon.
+- Target `net10.0` for every .NET project, including Azure Functions, so local Aspire development uses the installed .NET 10 runtime and supported Functions v4 runtime.
 - Nullable reference types on. Match the style of the project you edit.
 - Run the stack from the AppHost. Event Hubs uses the emulator locally.
 - Keep secrets out of the repo. Read Event Hubs, Kusto, and Azure AI Search settings from Aspire references or user secrets.
 
 ## Change boundaries
 
-- Wire `EventHubLogExporter` to the hub `logs` before adding a second exporter.
+- Keep `EventHubLogExporter` wired to the hub `logs` before adding a second exporter.
 - The daemon is the only consumer. Consumer group: `devops-copilot`. Checkpoint after each handled batch.
 - Register the Microsoft Agent Framework workflow inside the daemon. Diagnostic, then RAG grounding, then remediation. Do not add a fourth agent unless the user asks.
 - Kusto calls are read-only KQL. Search calls stay on the `historical-postmortems` index.
