@@ -30,6 +30,11 @@ builder.Services.AddSingleton(new LogQueryTargets(
     incident.Kusto.DependenciesTable));
 builder.Services.AddSingleton<GatherEvidence>();
 builder.Services.AddSingleton<GroundInHistory>();
+
+// Stage 6. No model is registered until M5 task group 5, so this resolves to the deterministic
+// path and every report says the model was unavailable.
+builder.Services.AddSingleton<IDiagnosisModel>(UnconfiguredDiagnosisModel.Instance);
+builder.Services.AddSingleton(provider => new Diagnose(provider.GetRequiredService<IDiagnosisModel>()));
 builder.Services.AddSingleton<RunIncidentPipeline>();
 builder.Services.AddSingleton<ProcessLogEvents>();
 builder.Services.AddHostedService<Worker>();

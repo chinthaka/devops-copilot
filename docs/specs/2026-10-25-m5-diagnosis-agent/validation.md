@@ -41,7 +41,7 @@
 
 `tests/DevOpsCopilot.Application.Tests` — the stage, with a fake `IDiagnosisModel`:
 
-- **`Without_a_configured_model_the_deterministic_diagnosis_is_used`** (AC-4) – Arrange: a fake model reporting not configured. Act: run the diagnose stage. Assert: the diagnosis equals the deterministic one and the model was never called.
+- **`Without_a_configured_model_the_deterministic_diagnosis_is_used`** (AC-4) – Arrange: a fake model reporting not configured. Act: run the diagnose stage. Assert: the diagnosis matches the deterministic one field by field (record equality compares its lists by reference, so the fields are compared instead) and the model was never called.
 - **`The_deterministic_diagnosis_records_the_model_as_unavailable`** (AC-4) – Act: as above. Assert: an open question states the diagnosis model was unavailable.
 - **`Without_a_model_the_pipeline_still_writes_a_report`** (AC-4) – Arrange: the full pipeline with fake tools, all unavailable. Act: run one error event. Assert: one report path is returned and the report has the seven sections.
 - **`A_well_formed_model_diagnosis_is_used_in_the_report`** (AC-5) – Arrange: a fake model returning a valid, fully cited diagnosis. Act: run. Assert: the report's title, likely cause and suggested steps are the model's, and no open question claims the model was unavailable.
@@ -49,7 +49,8 @@
 - **`A_rejected_model_diagnosis_falls_back_with_an_open_question`** (AC-7) – Arrange: a model returning a diagnosis citing row 99. Act: run. Assert: the deterministic diagnosis is used, confidence `low`, and an open question says the model's diagnosis was rejected for citing evidence that was not returned.
 - **`A_throwing_model_falls_back_and_does_not_propagate`** (AC-8) – Arrange: a model that throws. Act: run. Assert: no exception escapes, the deterministic diagnosis is used and an open question names the failure.
 - **`A_model_that_returns_nothing_falls_back`** (AC-8) – Arrange: a model returning `null` (an unbindable response at the boundary). Act: run. Assert: as above.
-- **`A_timed_out_model_falls_back`** (AC-8) – Arrange: a model that honours a cancellation token past the timeout, driven by a fake `TimeProvider`. Act: run. Assert: as above, and the open question names the timeout.
+- **`A_timed_out_model_falls_back`** (AC-8) – Arrange: a model that waits on the cancellation token, and a stage built with a zero timeout. Act: run. Assert: as above, and the open question names the timeout. (The timeout is a `TimeSpan` on the stage rather than a fake `TimeProvider`: the repo has no `FakeTimeProvider` package and a zero timeout is deterministic without one.)
+- **`A_shutdown_while_the_model_is_running_still_stops_the_worker`** (AC-8) – Arrange: a model that waits on the cancellation token and an already-cancelled caller token. Act: run. Assert: an `OperationCanceledException` propagates. Added during implementation: a cancelled *caller* must not be swallowed as a model failure, which is the one case where falling back would be wrong.
 - **`An_event_whose_model_fails_is_still_checkpointed`** (AC-8) – Arrange: `ProcessLogEvents` with a throwing model. Act: run one event. Assert: the checkpoint delegate ran once and the observer saw no error.
 
 Existing Application and Domain tests keep passing unchanged, in particular the `Warning`-does-not-start-the-team test and the five-hit cap.

@@ -43,7 +43,7 @@ Tests first within every group, per [AGENTS.md](../../../AGENTS.md). Each group 
 
 1. Add `AzureOpenAISettings(Endpoint, Deployment, ApiKey)` next to the existing settings records, and extend `AddInfrastructure` to take it and register the model. Absent or blank endpoint or deployment means `IsConfigured` is false and no client is constructed.
 2. Add `AzureOpenAIDiagnosisModel : IDiagnosisModel`: builds the `IChatClient` from `Azure.AI.OpenAI`, asks for the diagnosis as structured output against an Infrastructure-local DTO, maps the DTO to the Domain `Diagnosis`, and returns `null` on an unbindable response. The prompt states the evidence available by index and forbids any claim that does not cite it, and forbids Bicep, ARM, Terraform and scripts, per [mission.md principle 1](../mission.md#principles).
-3. Bound the call with the configured timeout (30 s, pending open question 4) by linking a cancellation token; a cancelled call returns `null`.
+3. Pass the configured timeout (30 s, pending open question 4) to the Application stage, which already bounds the call with a linked cancellation token. Infrastructure does not time itself out: a timeout is a fallback decision, and decision D2 keeps those in Application.
 4. Register the chat client so the three existing agents keep resolving `IChatClient` as they do now, and give the third agent the diagnosis model.
 5. In `src/DevOpsCopilot.Worker/Program.cs`, read `Incident:AzureOpenAI` into the settings record. No configuration is read anywhere else.
 6. Write the integration test `AzureOpenAI_ReturnsABindableAndCitedDiagnosis`, gated on the configuration being present.
