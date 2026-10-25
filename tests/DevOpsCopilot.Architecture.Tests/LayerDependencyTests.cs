@@ -81,6 +81,33 @@ public class LayerDependencyTests
     }
 
     [Fact]
+    public void The_azure_openai_client_lives_only_in_infrastructure()
+    {
+        // Arrange
+        string[] openAIPackages = ["Azure.AI.OpenAI", "Azure.Identity", "Microsoft.Extensions.AI.OpenAI"];
+        var infrastructure = Repository.Project($"src/{Infrastructure}/{Infrastructure}.csproj");
+        string[] others =
+        [
+            $"src/{Domain}/{Domain}.csproj",
+            $"src/{Application}/{Application}.csproj",
+            $"src/{Worker}/{Worker}.csproj",
+        ];
+
+        // Act
+        var elsewhere = others.Select(Repository.Project).ToArray();
+
+        // Assert
+        Assert.Contains("Azure.AI.OpenAI", infrastructure.PackageReferences);
+        foreach (var project in elsewhere)
+        {
+            Assert.DoesNotContain(project.PackageReferences, openAIPackages.Contains);
+        }
+
+        Assert.DoesNotContain(ReferencedAssemblyNames(Application), name => name.Contains("OpenAI", StringComparison.Ordinal));
+        Assert.DoesNotContain(ReferencedAssemblyNames(Domain), name => name.Contains("OpenAI", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Domain_does_not_reference_application_or_infrastructure()
     {
         // Arrange

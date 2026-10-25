@@ -7,5 +7,7 @@ public sealed class IncidentOptions
 
     public SearchOptions Search { get; set; } = new();
 
+    public AzureOpenAIOptions AzureOpenAI { get; set; } = new();
+
     public string DraftsDirectory { get; set; } = "incidents";
 }

@@ -57,7 +57,29 @@ Existing Application and Domain tests keep passing unchanged, in particular the 
 
 ## Integration tests
 
-- **`AzureOpenAI_ReturnsABindableAndCitedDiagnosis`** (AC-11) – Arrange: handoffs with two KQL entries, two rows and two hits, and an endpoint, deployment and credential from user secrets. Act: call the Azure OpenAI diagnosis model once. Assert: the response binds to the diagnosis shape and passes the citation guard. Marked `Category=RequiresAzureOpenAI` and skipped when the configuration is absent, in the same way the AppHost tests skip without Docker. Never run in CI.
+- **`AzureOpenAI_ReturnsABindableAndCitedDiagnosis`** (AC-11) – Arrange: handoffs with two KQL entries, two rows and two hits, and an endpoint, deployment and credential from user secrets. Act: call the Azure OpenAI diagnosis model once. Assert: the response binds to the diagnosis shape and passes the citation guard. Marked `Category=RequiresAzureOpenAI` and skipped by `AzureOpenAIRequiredFactAttribute` when the configuration is absent, in the same way the AppHost tests skip without Docker. Never run in CI.
+
+### Infrastructure unit tests for the model (no network)
+
+Driven by `FakeChatClient`, which answers with whatever text the test gives it, so the whole mapping, prompt and failure surface is covered without Azure:
+
+- **`Without_a_chat_client_the_model_is_not_configured`**, **`With_a_chat_client_the_model_is_configured`**, **`An_unconfigured_model_proposes_nothing_without_calling_anything`** (AC-4).
+- **`A_well_formed_answer_is_mapped_to_the_domain_diagnosis`** (AC-5) – every field of the contract shape is mapped.
+- **`The_incident_id_always_comes_from_the_handoff_not_the_model`** (AC-5) – the model cannot rename the incident it was asked about.
+- **`An_answer_that_is_not_json_proposes_nothing`**, **`An_answer_with_a_confidence_outside_the_contract_proposes_nothing`**, **`An_answer_without_a_likely_cause_proposes_nothing`** (AC-8) – an answer that cannot be trusted becomes `null`, which the stage turns into the deterministic fallback.
+- **`Missing_lists_are_mapped_to_empty_lists_never_null`** (AC-1).
+- **`The_prompt_lists_the_evidence_by_index_and_forbids_infrastructure_code`** (AC-7, [mission principle 1](../mission.md#principles)) – the prompt carries the KQL, rows and hit ids by index and forbids Bicep, ARM and Terraform.
+- **`The_prompt_says_a_tool_was_unavailable_rather_than_inventing_evidence`** (AC-3).
+- **`The_model_is_asked_exactly_once_per_event`** (NFR, cost).
+- **`A_cancelled_call_propagates_so_the_stage_can_decide`**, **`A_failing_transport_propagates_so_the_stage_can_decide`** (AC-8, decision D2) – Infrastructure never swallows a failure.
+
+### Configuration and wiring tests
+
+- **`Without_an_endpoint_and_a_deployment_no_client_is_built`** (theory over blank endpoint and deployment), **`An_endpoint_that_is_not_a_url_builds_no_client_rather_than_throwing`**, **`An_endpoint_and_a_deployment_with_a_key_build_a_client`**, **`Without_a_key_a_client_is_still_built_for_managed_identity`** (AC-4, AC-11).
+- **`The_settings_never_carry_a_default_endpoint_deployment_or_key`** – nothing is hardcoded; `Unconfigured` is empty throughout.
+- **`The_settings_do_not_print_the_api_key`** (NFR, secrets) – `ToString` redacts the key, so it cannot reach a log line.
+- **`A_non_positive_timeout_falls_back_to_the_default`**, **`A_configured_timeout_is_used`** (AC-8).
+- **`Without_azure_openai_the_registered_model_is_unconfigured`**, **`With_azure_openai_the_registered_model_is_configured`**, **`The_diagnose_stage_is_registered_with_the_configured_timeout`**, **`Omitting_the_azure_openai_settings_keeps_the_deterministic_path`** (AC-4, AC-10) – what the host actually resolves from `AddInfrastructure`.
 - **`EndToEnd_AnErrorEvent_WritesASevenSectionReport`** (AC-2, AC-4) – Arrange: the AppHost with the emulators and no Azure OpenAI configuration. Act: produce one error event to hub `logs`. Assert: a report file appears under the configured drafts directory with the seven section headings, confidence `low`, and an open question naming the unavailable model. Extends the existing emulator end-to-end test; marked `Category=RequiresDocker`.
 
 ## Architecture tests

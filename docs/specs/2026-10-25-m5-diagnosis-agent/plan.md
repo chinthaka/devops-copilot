@@ -95,7 +95,21 @@ Read only in `src/DevOpsCopilot.Worker/Program.cs`, under the existing `Incident
 - `Incident:AzureOpenAI:ApiKey` – user secrets locally; empty in Azure, where managed identity is used (open question 2).
 - `Incident:AzureOpenAI:TimeoutSeconds` – default 30 (open question 4).
 
-No value is committed, logged or written into a report.
+No value is committed, logged or written into a report. `appsettings.json` ships the section with
+empty strings so the shape is discoverable, and `AzureOpenAISettings.ToString()` redacts the key so
+it cannot reach a log line.
+
+Set them locally with user secrets, never in a file under source control:
+
+```bash
+dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:AzureOpenAI:Endpoint" "https://<resource>.openai.azure.com/"
+dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:AzureOpenAI:Deployment" "<deployment-name>"
+dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:AzureOpenAI:ApiKey" "<key>"   # omit to use your Azure login
+```
+
+The same three keys, set on `tests/DevOpsCopilot.Infrastructure.Tests`, switch on the gated
+integration test. In Azure the key stays empty and the worker authenticates with its managed
+identity.
 
 ## Risks
 

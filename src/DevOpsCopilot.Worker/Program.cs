@@ -23,7 +23,12 @@ builder.Services.AddInfrastructure(
         incident.Search.Endpoint,
         incident.Search.Index,
         incident.Search.ApiKey),
-    new ReportSettings(incident.DraftsDirectory));
+    new ReportSettings(incident.DraftsDirectory),
+    new AzureOpenAISettings(
+        incident.AzureOpenAI.Endpoint,
+        incident.AzureOpenAI.Deployment,
+        incident.AzureOpenAI.ApiKey,
+        incident.AzureOpenAI.TimeoutSeconds));
 
 builder.Services.AddSingleton(new LogQueryTargets(
     incident.Kusto.ExceptionsTable,
@@ -31,10 +36,8 @@ builder.Services.AddSingleton(new LogQueryTargets(
 builder.Services.AddSingleton<GatherEvidence>();
 builder.Services.AddSingleton<GroundInHistory>();
 
-// Stage 6. No model is registered until M5 task group 5, so this resolves to the deterministic
-// path and every report says the model was unavailable.
-builder.Services.AddSingleton<IDiagnosisModel>(UnconfiguredDiagnosisModel.Instance);
-builder.Services.AddSingleton(provider => new Diagnose(provider.GetRequiredService<IDiagnosisModel>()));
+// Stage 6 is registered by AddInfrastructure: the Azure OpenAI model when the deployment is
+// configured, and the deterministic path when it is not.
 builder.Services.AddSingleton<RunIncidentPipeline>();
 builder.Services.AddSingleton<ProcessLogEvents>();
 builder.Services.AddHostedService<Worker>();

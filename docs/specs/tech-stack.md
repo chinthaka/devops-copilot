@@ -19,7 +19,7 @@ Strict Clean Architecture in four projects, with dependencies pointing inwards o
 |---|---|---|---|
 | Domain | `src/DevOpsCopilot.Domain` | Nothing beyond the base class library | None |
 | Application | `src/DevOpsCopilot.Application` | Domain | `Microsoft.Extensions.Logging.Abstractions` 10.0.12 |
-| Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain | The Azure, Kusto and Agent Framework packages below, plus `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12 and `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions` 10.0.12 |
+| Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain | The Azure, Kusto and Agent Framework packages below, plus `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.13 (raised from 10.0.12 by `Microsoft.Extensions.AI` in M5) and `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions` 10.0.12 |
 | Host | `src/DevOpsCopilot.Worker` | All of the above plus `ServiceDefaults`, for wiring only | None; ASP.NET Core comes from the web SDK |
 
 The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and the architecture tests fail the build when a layer breaks them.
@@ -49,8 +49,8 @@ The `LogForwarder` exists because Azure Monitor cannot stream into the local emu
 | Item | Choice | Version |
 |---|---|---|
 | Agent framework | Microsoft Agent Framework | `Microsoft.Agents.AI` 1.25.0, `Microsoft.Agents.AI.Workflows` 1.25.0 |
-| Chat abstraction | `Microsoft.Extensions.AI` (`IChatClient`) | Transitive via Agent Framework |
-| LLM | Azure OpenAI | Not yet wired. The agents accept an optional `IChatClient` and run deterministically without one. |
+| Chat abstraction | `Microsoft.Extensions.AI` (`IChatClient`) | `Microsoft.Extensions.AI` 10.11.0, `Microsoft.Extensions.AI.OpenAI` 10.11.0 |
+| LLM | Azure OpenAI | `Azure.AI.OpenAI` 2.1.0, `Azure.Identity` 1.21.0. Built (roadmap M5): the diagnosis stage asks the configured deployment for a structured `Diagnosis`. Without an endpoint and a deployment the stage runs deterministically and the report says the model was unavailable. The deployment's model family is chosen per environment and is not pinned here. |
 | Evaluation | Staged incidents with known causes, run in CI | Not yet built. See roadmap M8. |
 
 The three agents (diagnostic, grounding, diagnosis) are Agent Framework implementations in Infrastructure behind Application interfaces. Stage order is orchestrated in Application by `RunIncidentPipeline`, which uses no Agent Framework type, so the stages stay testable without one.
@@ -106,7 +106,7 @@ The polling interval is a constant in the frontend, not configuration.
 |---|---|
 | Framework | xUnit, projects under `tests/` in the solution folder `tests` |
 | Unit tests | Domain and Application: plain tests, no Azure SDK, network or emulator |
-| Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources |
+| Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources. The Azure OpenAI test is marked `Category=RequiresAzureOpenAI` and skipped unless `Incident:AzureOpenAI` is in user secrets or the environment; it never runs in CI. |
 | Host tests | `tests/DevOpsCopilot.Worker.Tests`: the worker's statistics and status endpoint on an in-process test server (`Microsoft.AspNetCore.TestHost` 10.0.12). `tests/DevOpsCopilot.Server.Tests`: the status-document mapping against a stubbed worker HTTP handler. |
 | AppHost and end-to-end tests | `tests/DevOpsCopilot.AppHost.Tests` on `Aspire.Hosting.Testing` 13.6.1, producing events with `Azure.Messaging.EventHubs` 5.12.2. Needs Docker for the emulators; marked `Category=RequiresDocker` and skipped when no daemon answers. |
 | Architecture tests | `tests/DevOpsCopilot.Architecture.Tests`. Reflection over the built assemblies and the project files, so no extra package. Fail the build when a layer references something it must not. |
