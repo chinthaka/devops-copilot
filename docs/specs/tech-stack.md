@@ -84,11 +84,14 @@ When a workspace or search service is not configured, the stage reports `unavail
 
 | Item | Choice | Version |
 |---|---|---|
-| Frontend | React with Vite and TypeScript, in `src/DevOpsCopilot.Frontend` | React 19.2, Vite, TypeScript 5.9, ESLint 9 |
+| Frontend | React with Vite and TypeScript, in `src/DevOpsCopilot.Frontend` | React 19.2, Vite 8, TypeScript 5.9, ESLint 9 |
 | Backend for frontend | `src/DevOpsCopilot.Server` (ASP.NET Core), publishes the built frontend into `wwwroot` | |
+| Component tests | Vitest with jsdom and React Testing Library | Vitest 5.0, jsdom 30.1, `@testing-library/react` 16.3, `@testing-library/jest-dom` 7.0 |
 | Node | Node 22 | Required by CI |
 
-Currently the frontend is the Aspire weather sample. Roadmap M1 replaces it with the status dashboard.
+The frontend is the status dashboard: it reads the status document from `/api/status` on
+`DevOpsCopilot.Server`, which in turn reads the worker's `/status` over Aspire service discovery.
+The polling interval is a constant in the frontend, not configuration.
 
 ## Telemetry
 
@@ -104,7 +107,8 @@ Currently the frontend is the Aspire weather sample. Roadmap M1 replaces it with
 | Framework | xUnit, projects under `tests/` in the solution folder `tests` |
 | Unit tests | Domain and Application: plain tests, no Azure SDK, network or emulator |
 | Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources |
-| Host tests | `tests/DevOpsCopilot.Worker.Tests`: the worker's statistics and status endpoint on an in-process test server (`Microsoft.AspNetCore.TestHost` 10.0.12) |
+| Host tests | `tests/DevOpsCopilot.Worker.Tests`: the worker's statistics and status endpoint on an in-process test server (`Microsoft.AspNetCore.TestHost` 10.0.12). `tests/DevOpsCopilot.Server.Tests`: the status-document mapping against a stubbed worker HTTP handler. |
+| AppHost and end-to-end tests | `tests/DevOpsCopilot.AppHost.Tests` on `Aspire.Hosting.Testing` 13.6.1, producing events with `Azure.Messaging.EventHubs` 5.12.2. Needs Docker for the emulators; marked `Category=RequiresDocker` and skipped when no daemon answers. |
 | Architecture tests | `tests/DevOpsCopilot.Architecture.Tests`. Reflection over the built assemblies and the project files, so no extra package. Fail the build when a layer references something it must not. |
 | Evaluation | Staged-incident set for diagnosis quality (M8) |
 
@@ -112,14 +116,16 @@ Currently the frontend is the Aspire weather sample. Roadmap M1 replaces it with
 
 | Item | Choice | Status |
 |---|---|---|
-| CI | GitHub Actions `.github/workflows/ci.yml`: Release build of the solution, tests, frontend lint and build, on pull requests and pushes to `main` | Built |
+| CI | GitHub Actions `.github/workflows/ci.yml`: Release build of the solution, tests (excluding `Category=RequiresDocker`), frontend lint, Vitest tests and build, on pull requests and pushes to `main` | Built |
 | Deployment | GitHub Actions workflow deploying the AppHost resources on `main` after CI passes | Planned (M7) |
 | Hosting | Azure Container Apps | Planned (M7) |
 | Secrets | Aspire references, user secrets locally; GitHub and Azure configuration in CI. Never in the repo. | Rule |
 
 ## Leftover projects
 
-`src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions` and `src/DevOpsCopilot.EmailNotifier` are samples from the template, and `src/DevOpsCopilot.Server` plus `src/DevOpsCopilot.Frontend` are the weather sample. Do not extend the samples. They are removed by a dedicated roadmap item once nothing in the AppHost depends on them.
+`src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions` and `src/DevOpsCopilot.EmailNotifier` are samples from the template. Do not extend them. They are removed by a dedicated roadmap item (M18) once nothing in the AppHost depends on them.
+
+`src/DevOpsCopilot.Server` and `src/DevOpsCopilot.Frontend` are no longer samples: M1 replaced the weather screen with the product status dashboard, so they are extended like any other project.
 
 ## Not used
 

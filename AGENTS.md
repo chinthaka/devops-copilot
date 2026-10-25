@@ -30,7 +30,7 @@ This project follows Spec-Driven Development and uses Test-Driven Development wh
    Stop for review after all three files exist. Do not write code until they are approved.
 3. **Test first.** Implement the tests listed in `validation.md` as failing tests, then write the code to make them pass, then refactor with the tests green. Where a test cannot come first (LLM output quality, live Azure services), use the staged-incident evaluation set or an integration test against the emulator, as `validation.md` says. When done, fill in the **Results** section of `validation.md` with what passed.
 4. **Stay in scope.** One feature per branch. Change only what the spec covers. If the work needs a different shape or rule, update the spec and `docs/pipeline.md` in the same pull request and say so in the description.
-5. **Verify.** Run `dotnet build` and `dotnet test` before every commit. Do not commit with failing tests.
+5. **Verify.** Run `dotnet build` and `dotnet test` before every commit. When the change touches `src/DevOpsCopilot.Frontend`, also run `npm run lint`, `npm run test` and `npm run build` there. Do not commit with failing tests.
 6. **Pull request.** Open a pull request into `main` that links the feature folder and includes the completed **Results** section of `validation.md`. Do not merge it yourself.
 
 ### Tests
@@ -98,6 +98,8 @@ Solution: `src/DevOpsCopilot.sln`. Orchestration: `src/DevOpsCopilot.AppHost/App
 | `src/DevOpsCopilot.Application` | Use cases and the interfaces for everything external: `IEventSource`, `ILogQuery`, `IKnowledgeSearch`, `IReportWriter`, and the stage order in `RunIncidentPipeline`. |
 | `src/DevOpsCopilot.Infrastructure` | Implementations: Event Hubs consumer and parser, Kusto, Azure AI Search, the file report writer, and the three Microsoft Agent Framework agents. |
 | `src/DevOpsCopilot.Worker` | .NET 10 worker and composition root. Consumes `logs` with consumer group `devops-copilot`, checkpoints in Blob Storage, and runs the incident pipeline. |
+| `src/DevOpsCopilot.Server` | Backend for the dashboard. Serves `/api/status`, one JSON status document built from the worker's `/status` (resolved by Aspire service discovery) and the enumerated service health. Hosts the built frontend from `wwwroot`. |
+| `src/DevOpsCopilot.Frontend` | The status dashboard: React, Vite and TypeScript. Polls `/api/status` and renders the worker's running state, uptime, the six statistics and the health of `worker`, `eventhubs` and `storage`. Tested with Vitest. |
 | `src/DevOpsCopilot.LogForwarder` | OpenTelemetry exporter that sends application logs to hub `logs`. Used as a **local test producer**, because Azure Monitor and Application Insights cannot stream into the local emulator. It is not the product's ingestion path. |
 | `src/DevOpsCopilot.ServiceDefaults` | Health checks, service discovery, OpenTelemetry. OTLP export only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. |
 | `docs/pipeline.md` | System contract for stages, handoffs and tool rules. |
@@ -105,7 +107,7 @@ Solution: `src/DevOpsCopilot.sln`. Orchestration: `src/DevOpsCopilot.AppHost/App
 | `incidents/` | Local report output. Gitignored; do not commit unless the user asks. |
 | `tests/` | xUnit projects, grouped in the solution folder `tests`. |
 
-Leftover projects: the weather frontend (`src/DevOpsCopilot.Frontend`, `src/DevOpsCopilot.Server`) and the samples `src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions` and `src/DevOpsCopilot.EmailNotifier`. Do not extend them. Remove them only in a feature whose spec says so.
+Leftover projects: the samples `src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions` and `src/DevOpsCopilot.EmailNotifier`. Do not extend them. Remove them only in a feature whose spec says so.
 
 ## Build
 

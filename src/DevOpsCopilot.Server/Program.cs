@@ -11,9 +11,15 @@ builder.Services.AddProblemDetails();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// The status API reads the worker over HTTP; service discovery resolves http://worker.
+// The status API reads the worker over HTTP; service discovery resolves http://worker. The short
+// timeout caps the retries the shared resilience handler adds: a status probe should report the
+// worker as not running quickly rather than hold the dashboard's poll open.
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddHttpClient<WorkerStatusClient>(client => client.BaseAddress = new Uri("http://worker"));
+builder.Services.AddHttpClient<WorkerStatusClient>(client =>
+{
+    client.BaseAddress = new Uri("http://worker");
+    client.Timeout = TimeSpan.FromSeconds(5);
+});
 
 var app = builder.Build();
 

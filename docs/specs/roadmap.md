@@ -33,7 +33,7 @@ Known gaps between the code and the contract, closed by the milestones below:
 | Only the `LogForwarder` JSON shape is parsed, not diagnostic-settings `records` arrays | `LogEventParser.cs` | M10 |
 | No triage, correlation, notification, work item or learn stage | — | M6, M11 to M16 |
 | Nothing deploys to Azure | `.github/workflows/` | M7 |
-| The dashboard is still the weather sample | `src/DevOpsCopilot.Frontend`, `src/DevOpsCopilot.Server` | M1 |
+| ~~The dashboard is still the weather sample~~ Closed: the status dashboard replaced it | `src/DevOpsCopilot.Frontend`, `src/DevOpsCopilot.Server` | M1 (done) |
 
 ---
 
@@ -47,15 +47,17 @@ Known gaps between the code and the contract, closed by the milestones below:
 
 Goal: one error event in production produces one trustworthy report in Teams, from a deployed Azure environment, with diagnosis quality measured in CI. No triage or correlation yet; one event is one report.
 
-### M1 – Status dashboard (M)
+### M1 – Status dashboard (M, done)
 
 Replace the weather UI with a dashboard that shows whether the worker is running, the health of the AppHost services, and processing statistics: events read, events skipped, batches checkpointed, and the time of the last processed event. Until the daemon is consuming hub `logs`, status is "not running" and the counts are zero.
+
+Delivered by [2026-10-25-status-dashboard](2026-10-25-status-dashboard/requirement.md).
 
 Split into:
 
 1. **M1.1 – Counters in the worker (S, done).** The daemon keeps the statistics in memory (the four above plus errors and uptime) and exposes them on a status endpoint, toggled by `HostTelemetry:Enabled`. Tests prove the counters move when events are handled and skipped.
-2. **M1.2 – Status API (S).** `DevOpsCopilot.Server` reads the daemon's status and service health and serves them as one JSON document. Unit tests for the mapping; integration test against the AppHost.
-3. **M1.3 – Dashboard UI (S).** The React frontend renders the status document and polls it. The weather forecast screen is gone. ESLint and the build pass.
+2. **M1.2 – Status API (S, done).** `DevOpsCopilot.Server` reads the daemon's status and service health and serves them as one JSON document. Unit tests for the mapping; integration test against the AppHost.
+3. **M1.3 – Dashboard UI (S, done).** The React frontend renders the status document and polls it. The weather forecast screen is gone. ESLint, Vitest and the build pass.
 
 **Done when:** `aspire run` opens a dashboard that shows "not running" and zeros before the daemon starts, then live counts once it consumes `logs`. No weather code remains in `src/DevOpsCopilot.Frontend`.
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { POLL_INTERVAL_MS, fetchStatus, type StatusDocument } from './status';
 
 export interface StatusPoll {
@@ -16,11 +16,18 @@ export function useStatus(intervalMs: number = POLL_INTERVAL_MS): StatusPoll {
   const [status, setStatus] = useState<StatusDocument | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const reading = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
 
     const read = async () => {
+      // A slow answer must not let polls pile up on top of each other.
+      if (reading.current) {
+        return;
+      }
+
+      reading.current = true;
       try {
         const document = await fetchStatus();
         if (!cancelled) {
@@ -32,6 +39,7 @@ export function useStatus(intervalMs: number = POLL_INTERVAL_MS): StatusPoll {
           setError(failure instanceof Error ? failure.message : 'The status API could not be read.');
         }
       } finally {
+        reading.current = false;
         if (!cancelled) {
           setLoading(false);
         }
