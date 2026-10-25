@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: src/frontend/package-lock.json
+          cache-dependency-path: src/DevOpsCopilot.Frontend/package-lock.json
 
       - name: Build solution
         run: dotnet build src/DevOpsCopilot.sln --configuration Release
@@ -36,7 +36,7 @@ jobs:
         run: dotnet test src/DevOpsCopilot.sln --configuration Release --no-build
 
       - name: Lint and build frontend
-        working-directory: src/frontend
+        working-directory: src/DevOpsCopilot.Frontend
         run: |
           npm ci
           npm run lint

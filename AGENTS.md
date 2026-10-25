@@ -105,7 +105,7 @@ Solution: `src/DevOpsCopilot.sln`. Orchestration: `src/DevOpsCopilot.AppHost/App
 | `incidents/` | Local report output. Gitignored; do not commit unless the user asks. |
 | `tests/` | xUnit projects, grouped in the solution folder `tests`. |
 
-Leftover projects: the weather frontend (`src/frontend`, `src/DevOpsCopilot.Server`) and the samples `src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions` and `src/DevOpsCopilot.EmailNotifier`. Do not extend them. Remove them only in a feature whose spec says so.
+Leftover projects: the weather frontend (`src/DevOpsCopilot.Frontend`, `src/DevOpsCopilot.Server`) and the samples `src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions` and `src/DevOpsCopilot.EmailNotifier`. Do not extend them. Remove them only in a feature whose spec says so.
 
 ## Build
 

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsCopilot.AppHost", "De
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsCopilot.Server", "DevOpsCopilot.Server\DevOpsCopilot.Server.csproj", "{72EBDFD6-BC95-4D8B-B77F-73D2C3469F44}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "frontend", "frontend\frontend.esproj", "{06313A36-FEEA-4912-831A-1F02E092686F}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "DevOpsCopilot.Frontend", "DevOpsCopilot.Frontend\DevOpsCopilot.Frontend.esproj", "{06313A36-FEEA-4912-831A-1F02E092686F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevOpsCopilot.Functions", "DevOpsCopilot.Functions\DevOpsCopilot.Functions.csproj", "{0014E3EE-0121-1008-5E71-BEDA521E2E20}"
 EndProject
@@ -38,6 +38,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevOpsCopilot.Infrastructure.Tests", "..\tests\DevOpsCopilot.Infrastructure.Tests\DevOpsCopilot.Infrastructure.Tests.csproj", "{4FF2C410-23C1-4ED3-B049-7D7F6428FAA4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevOpsCopilot.Architecture.Tests", "..\tests\DevOpsCopilot.Architecture.Tests\DevOpsCopilot.Architecture.Tests.csproj", "{6E0A750D-888E-4F55-A69B-D060C01BA9E7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevOpsCopilot.Worker.Tests", "..\tests\DevOpsCopilot.Worker.Tests\DevOpsCopilot.Worker.Tests.csproj", "{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -249,6 +251,18 @@ Global
 		{6E0A750D-888E-4F55-A69B-D060C01BA9E7}.Release|x64.Build.0 = Release|Any CPU
 		{6E0A750D-888E-4F55-A69B-D060C01BA9E7}.Release|x86.ActiveCfg = Release|Any CPU
 		{6E0A750D-888E-4F55-A69B-D060C01BA9E7}.Release|x86.Build.0 = Release|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Debug|x64.Build.0 = Debug|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Debug|x86.Build.0 = Debug|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Release|x64.ActiveCfg = Release|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Release|x64.Build.0 = Release|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Release|x86.ActiveCfg = Release|Any CPU
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -260,6 +274,7 @@ Global
 		{C85F9113-DBDB-4E3D-A974-72B745240299} = {32606D56-8826-434F-A598-1D002CF4E92A}
 		{4FF2C410-23C1-4ED3-B049-7D7F6428FAA4} = {32606D56-8826-434F-A598-1D002CF4E92A}
 		{6E0A750D-888E-4F55-A69B-D060C01BA9E7} = {32606D56-8826-434F-A598-1D002CF4E92A}
+		{DF194D36-BD2E-41C9-88DE-ABC186BB3A63} = {32606D56-8826-434F-A598-1D002CF4E92A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {520D4149-1544-4654-B00C-68EDAD2CF2B8}
