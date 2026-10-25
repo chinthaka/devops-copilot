@@ -94,7 +94,10 @@ Solution: `src/DevOpsCopilot.sln`. Orchestration: `src/DevOpsCopilot.AppHost/App
 | Path | Role |
 |---|---|
 | `src/DevOpsCopilot.AppHost` | Aspire composition root. Local Event Hubs emulator, hub `logs`. |
-| `src/DevOpsCopilot.Daemon` | .NET 10 worker. Consumes `logs` with consumer group `devops-copilot`, checkpoints in Blob Storage, and runs the incident workflow. **Current state:** a single project. It is split into the Domain, Application, Infrastructure and Worker projects described under Architecture by a dedicated feature. New code goes into the target layers. |
+| `src/DevOpsCopilot.Domain` | Entities, value objects and domain rules: the event, the handoffs, the fixed KQL questions, the overlap rules and the draft renderer. No packages. |
+| `src/DevOpsCopilot.Application` | Use cases and the interfaces for everything external: `IEventSource`, `ILogQuery`, `IKnowledgeSearch`, `IReportWriter`, and the stage order in `RunIncidentPipeline`. |
+| `src/DevOpsCopilot.Infrastructure` | Implementations: Event Hubs consumer and parser, Kusto, Azure AI Search, the file report writer, and the three Microsoft Agent Framework agents. |
+| `src/DevOpsCopilot.Worker` | .NET 10 worker and composition root. Consumes `logs` with consumer group `devops-copilot`, checkpoints in Blob Storage, and runs the incident pipeline. |
 | `src/DevOpsCopilot.LogForwarder` | OpenTelemetry exporter that sends application logs to hub `logs`. Used as a **local test producer**, because Azure Monitor and Application Insights cannot stream into the local emulator. It is not the product's ingestion path. |
 | `src/DevOpsCopilot.ServiceDefaults` | Health checks, service discovery, OpenTelemetry. OTLP export only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. |
 | `docs/pipeline.md` | System contract for stages, handoffs and tool rules. |

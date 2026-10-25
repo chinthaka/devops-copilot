@@ -51,7 +51,7 @@ var api = builder.AddProject<Projects.DevOpsCopilot_ApiService>("api")
 	.WaitFor(storage);
 
 
-builder.AddProject<Projects.DevOpsCopilot_Daemon>("daemon")
+builder.AddProject<Projects.DevOpsCopilot_Worker>("worker")
 	.WithReference(eventHub, "eventhubs")
 	.WithReference(checkpoints, "checkpoints")
 	.WaitFor(eventHub)

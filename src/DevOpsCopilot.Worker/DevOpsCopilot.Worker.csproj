@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-DevOpsCopilot.Daemon-f6bcefe1-0b1e-448b-a7a0-18f3ac74fa34</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevOpsCopilot.Domain\DevOpsCopilot.Domain.csproj" />
+    <ProjectReference Include="..\DevOpsCopilot.Application\DevOpsCopilot.Application.csproj" />
+    <ProjectReference Include="..\DevOpsCopilot.Infrastructure\DevOpsCopilot.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -6,7 +6,7 @@ This file sets the order. It does not change the rules in [docs/pipeline.md](../
 
 Sizes are relative: **S** fits in one short feature branch, **M** is a few days of focused work, **L** is a week or more and should be split further when its spec is written.
 
-Last updated: 2026-10-24.
+Last updated: 2026-10-25.
 
 ## Where the code is now
 
@@ -14,8 +14,9 @@ Built and merged on `main`:
 
 - Aspire AppHost with the Event Hubs emulator (hub `logs`, consumer group `devops-copilot`), Azurite (blob container `checkpoints`), and the sample API, Functions and weather frontend from the template.
 - `DevOpsCopilot.LogForwarder`, an OpenTelemetry exporter that JSON-encodes application logs to hub `logs`. Wired through `ServiceDefaults` when Aspire supplies the `eventhubs` connection. Local test producer only.
-- `DevOpsCopilot.Daemon`, a `net10.0` worker. It consumes hub `logs`, reads `TraceId` and `SpanId`, calls `IncidentWorkflow` for each event, and checkpoints to Blob Storage after handling. On restart it resumes from the checkpoint.
-- `IncidentWorkflow`, a Microsoft Agent Framework workflow that runs the diagnostic agent, the grounding agent and the remediation agent in sequence for **one log event**. `Warning` without an exception does not start it.
+- Four projects in strict Clean Architecture: `DevOpsCopilot.Domain`, `DevOpsCopilot.Application`, `DevOpsCopilot.Infrastructure` and the `net10.0` worker `DevOpsCopilot.Worker`. Architecture tests fail the build when a layer references something it must not.
+- The worker consumes hub `logs`, reads `TraceId` and `SpanId`, runs the pipeline for each event, and checkpoints to Blob Storage after handling. On restart it resumes from the checkpoint.
+- `RunIncidentPipeline` in Application runs the evidence stage, the grounding stage and the report stage in sequence for **one log event**. `Warning` without an exception does not start it. The three agents are Agent Framework types in Infrastructure, behind the Application interfaces.
 - Read-only Kusto queries (three fixed questions, `.` commands rejected) and Azure AI Search over `historical-postmortems` (five-hit cap, overlap filter). Without configuration both report `unavailable` and return nothing.
 - A draft written to `incidents/YYYY-MM-DD-<event-id>.md`, which is gitignored.
 - Tests: hub event parsing, checkpoint resume, warning does not start the team, both tools unavailable, five-hit cap, draft sections, and a KQL string containing `.drop` is not executed.
@@ -26,10 +27,9 @@ Known gaps between the code and the contract, closed by the milestones below:
 
 | Gap | Where | Closed by |
 |---|---|---|
-| One project instead of Domain, Application, Infrastructure and Host | `src/DevOpsCopilot.Daemon` | M3 |
 | The draft has Slack, Teams and **Bicep** sections, and the agent is named "remediation". The contract forbids infrastructure code and defines seven report sections with a diagnosis in the middle. | `RemediationAgent.cs` | M4 |
 | Handoffs are keyed by `eventId`; the contract keys them by `incidentId` | `DiagnosticHandoff`, `GroundingHandoff` | M12, M13 |
-| No LLM is wired; agents are deterministic | `IncidentServiceCollectionExtensions.cs` | M5 |
+| No LLM is wired; agents are deterministic | `InfrastructureServiceCollectionExtensions.cs` | M5 |
 | Only the `LogForwarder` JSON shape is parsed, not diagnostic-settings `records` arrays | `LogEventParser.cs` | M10 |
 | No triage, correlation, notification, work item or learn stage | — | M6, M11 to M16 |
 | Nothing deploys to Azure | `.github/workflows/` | M7 |
@@ -61,19 +61,19 @@ Split into:
 
 ### M2 – Prove the consumer (S, done)
 
-Tests for parsing a hub log event and for resuming after a checkpoint already exist in `tests/DevOpsCopilot.Daemon.Tests`. Remaining: one test that a record which cannot be parsed is logged and skipped without stopping the consumer, per the contract.
+Tests for parsing a hub log event and for resuming after a checkpoint already exist, in `tests/DevOpsCopilot.Infrastructure.Tests` and `tests/DevOpsCopilot.Application.Tests`. Remaining: one test that a record which cannot be parsed is logged and skipped without stopping the consumer, per the contract.
 
 **Done when:** the unparseable-record test passes alongside the existing parse and resume tests.
 
-### M3 – Clean Architecture split (M)
+### M3 – Clean Architecture split (M, done)
 
 Split `DevOpsCopilot.Daemon` into `DevOpsCopilot.Domain`, `DevOpsCopilot.Application`, `DevOpsCopilot.Infrastructure` and `DevOpsCopilot.Worker`, as described in [AGENTS.md](../../AGENTS.md#architecture). Behaviour does not change; all existing tests keep passing.
 
 Split into:
 
-1. **M3.1 – Create the projects and architecture tests (S).** Four empty projects with the correct references, plus `tests/DevOpsCopilot.Architecture.Tests` that fail when a layer references something it must not. The tests pass on empty projects.
-2. **M3.2 – Move the domain and the interfaces (S).** The event, handoffs and value objects go to Domain; `IEventSource`, `ILogQuery`, `IKnowledgeSearch`, `IReportWriter` and the stage orchestration go to Application. Existing tests are moved to `tests/DevOpsCopilot.Domain.Tests` and `tests/DevOpsCopilot.Application.Tests`.
-3. **M3.3 – Move the implementations and the host (S).** Event Hubs consumer, Kusto, AI Search and the Agent Framework agents go to Infrastructure; `Program.cs` and DI go to Worker. The AppHost references Worker. `DevOpsCopilot.Daemon` is deleted.
+1. **M3.1 – Create the projects and architecture tests (S, done).** Four empty projects with the correct references, plus `tests/DevOpsCopilot.Architecture.Tests` that fail when a layer references something it must not. The tests pass on empty projects.
+2. **M3.2 – Move the domain and the interfaces (S, done).** The event, handoffs and value objects go to Domain; `IEventSource`, `ILogQuery`, `IKnowledgeSearch`, `IReportWriter` and the stage orchestration go to Application. Existing tests are moved to `tests/DevOpsCopilot.Domain.Tests` and `tests/DevOpsCopilot.Application.Tests`.
+3. **M3.3 – Move the implementations and the host (S, done).** Event Hubs consumer, Kusto, AI Search and the Agent Framework agents go to Infrastructure; `Program.cs` and DI go to Worker. The AppHost references Worker. `DevOpsCopilot.Daemon` is deleted.
 
 **Done when:** `dotnet build` and `dotnet test` are clean, the architecture tests pass, Application has no Azure SDK or Agent Framework package reference, and the AppHost runs the Worker.
 

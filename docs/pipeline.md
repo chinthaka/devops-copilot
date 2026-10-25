@@ -39,7 +39,7 @@ Use only the incident's events, rows returned by KQL, documents returned by Azur
 ### Stream and worker
 
 - Resource: Azure Event Hubs, Aspire name `eventhubs`, emulator in local runs. Hub: `logs`.
-- Consumer: `src/DevOpsCopilot.Daemon`, a .NET 10 worker (`net10.0`). Consumer group: `devops-copilot`.
+- Consumer: `src/DevOpsCopilot.Worker`, a .NET 10 worker (`net10.0`). Consumer group: `devops-copilot`.
 - Diagnostic-settings payloads arrive as a `records` array. Each record is normalised into one event. Mapping rules per log category belong in the relevant feature spec.
 - The worker checkpoints an Event Hubs event only after every record in it has been handled.
 - A record that cannot be parsed is logged with its category and skipped. It never stops the consumer.

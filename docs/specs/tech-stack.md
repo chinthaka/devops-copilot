@@ -13,18 +13,16 @@ The technologies, versions and services DevOpsCopilot uses. Do not introduce any
 
 ## Solution structure
 
-**Current state.** The worker is a single project, `src/DevOpsCopilot.Daemon`, which holds consumption, parsing, the agents and the tools together.
+Strict Clean Architecture in four projects, with dependencies pointing inwards only. Built by [roadmap.md](roadmap.md) M3.
 
-**Target state.** Strict Clean Architecture in four projects, with dependencies pointing inwards only. The split is done by a dedicated roadmap item ([roadmap.md](roadmap.md), Phase 1, M3). New code goes into the target layers.
+| Layer | Project | May reference | Packages |
+|---|---|---|---|
+| Domain | `src/DevOpsCopilot.Domain` | Nothing beyond the base class library | None |
+| Application | `src/DevOpsCopilot.Application` | Domain | `Microsoft.Extensions.Logging.Abstractions` 10.0.12 |
+| Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain | The Azure, Kusto and Agent Framework packages below, plus `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12 |
+| Host | `src/DevOpsCopilot.Worker` | All of the above, for wiring only | `Microsoft.Extensions.Hosting` 10.0.8 |
 
-| Layer | Project | May reference |
-|---|---|---|
-| Domain | `src/DevOpsCopilot.Domain` | Nothing beyond the base class library |
-| Application | `src/DevOpsCopilot.Application` | Domain |
-| Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain |
-| Host | `src/DevOpsCopilot.Worker` | All of the above, for wiring only |
-
-The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture).
+The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and the architecture tests fail the build when a layer breaks them.
 
 ## Local orchestration
 
@@ -55,7 +53,7 @@ The `LogForwarder` exists because Azure Monitor cannot stream into the local emu
 | LLM | Azure OpenAI | Not yet wired. The agents accept an optional `IChatClient` and run deterministically without one. |
 | Evaluation | Staged incidents with known causes, run in CI | Not yet built. See roadmap M8. |
 
-The three agents (diagnostic, grounding, diagnosis) are Agent Framework implementations in Infrastructure behind Application interfaces. Stage order is orchestrated in Application.
+The three agents (diagnostic, grounding, diagnosis) are Agent Framework implementations in Infrastructure behind Application interfaces. Stage order is orchestrated in Application by `RunIncidentPipeline`, which uses no Agent Framework type, so the stages stay testable without one.
 
 ## Evidence and knowledge
 
@@ -106,7 +104,7 @@ Currently the frontend is the Aspire weather sample. Roadmap M1 replaces it with
 | Framework | xUnit, projects under `tests/` in the solution folder `tests` |
 | Unit tests | Domain and Application: plain tests, no Azure SDK, network or emulator |
 | Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources |
-| Architecture tests | Planned with the layer split (M3). Fail the build when a layer references something it must not. |
+| Architecture tests | `tests/DevOpsCopilot.Architecture.Tests`. Reflection over the built assemblies and the project files, so no extra package. Fail the build when a layer references something it must not. |
 | Evaluation | Staged-incident set for diagnosis quality (M8) |
 
 ## Build, CI and hosting
