@@ -23,7 +23,7 @@ Tests first within every group, per [AGENTS.md](../../AGENTS.md). Each group lea
 2. Create `tests/DevOpsCopilot.Worker.Tests` and write the `WorkerStatistics` unit tests, then the thread-safe `WorkerStatistics` (interlocked counters, `TimeProvider` for last-processed time and uptime) implementing the observer.
 3. Move the worker to the ASP.NET Core minimal host with `ServiceDefaults`; map `/health` and the status endpoint serving the statistics plus the health-check results for its `eventhubs` and `storage` connections. The health checks are `IHealthCheck` implementations in Infrastructure (it owns the Azure SDKs); the worker only registers them.
 4. Wire the `HostTelemetry:Enabled` flag (default `true`): enabled registers `WorkerStatistics` as the observer, disabled registers the no-op observer and the status endpoint reports `telemetryEnabled: false` with `statistics: null`.
-5. Give the worker an HTTP endpoint in the AppHost. Integration tests `StatusEndpoint_ReturnsStatisticsAndDependencyHealth` and `StatusEndpoint_WhenTelemetryDisabled_ReportsDisabledWithoutStatistics`.
+5. Give the worker an HTTP endpoint in the AppHost. Integration tests `The_status_endpoint_returns_statistics_and_dependency_health` and `With_telemetry_disabled_the_endpoint_reports_disabled_without_statistics`.
 
 ### 3. M1.2 – Status API (S)
 

@@ -12,12 +12,18 @@ public sealed class ProcessLogEvents
     private readonly IEventSource _source;
     private readonly RunIncidentPipeline _pipeline;
     private readonly ILogger<ProcessLogEvents> _logger;
+    private readonly IProcessingObserver _observer;
 
-    public ProcessLogEvents(IEventSource source, RunIncidentPipeline pipeline, ILogger<ProcessLogEvents> logger)
+    public ProcessLogEvents(
+        IEventSource source,
+        RunIncidentPipeline pipeline,
+        ILogger<ProcessLogEvents> logger,
+        IProcessingObserver? observer = null)
     {
         _source = source;
         _pipeline = pipeline;
         _logger = logger;
+        _observer = observer ?? NullProcessingObserver.Instance;
     }
 
     public Task RunAsync(CancellationToken cancellationToken) =>
@@ -33,7 +39,22 @@ public sealed class ProcessLogEvents
             logEvent.TraceId,
             logEvent.SpanId);
 
-        await _pipeline.RunAsync(logEvent, cancellationToken);
-        await received.CheckpointAsync(cancellationToken);
+        _observer.OnEventRead();
+        try
+        {
+            var result = await _pipeline.RunAsync(logEvent, cancellationToken);
+            if (result is null)
+            {
+                _observer.OnEventSkipped();
+            }
+
+            await received.CheckpointAsync(cancellationToken);
+            _observer.OnCheckpointed();
+        }
+        catch
+        {
+            _observer.OnEventFailed();
+            throw;
+        }
     }
 }

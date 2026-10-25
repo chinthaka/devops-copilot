@@ -53,7 +53,7 @@ Replace the weather UI with a dashboard that shows whether the worker is running
 
 Split into:
 
-1. **M1.1 – Counters in the worker (S).** The daemon keeps the four statistics in memory and exposes them on a health or status endpoint. Tests prove the counters move when events are handled and skipped.
+1. **M1.1 – Counters in the worker (S, done).** The daemon keeps the statistics in memory (the four above plus errors and uptime) and exposes them on a status endpoint, toggled by `HostTelemetry:Enabled`. Tests prove the counters move when events are handled and skipped.
 2. **M1.2 – Status API (S).** `DevOpsCopilot.Server` reads the daemon's status and service health and serves them as one JSON document. Unit tests for the mapping; integration test against the AppHost.
 3. **M1.3 – Dashboard UI (S).** The React frontend renders the status document and polls it. The weather forecast screen is gone. ESLint and the build pass.
 

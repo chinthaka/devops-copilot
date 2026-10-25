@@ -4,10 +4,10 @@
 
 | AC | Test or check | Type | Layer | Project |
 |---|---|---|---|---|
-| AC-1 | `WorkerStatistics_WhenEventRead_IncrementsEventsRead` and siblings for skipped, checkpointed and errors | Unit | Host | `tests/DevOpsCopilot.Worker.Tests` |
-| AC-1 | `ProcessLogEvents_WhenEventHandled_NotifiesObserverRead` and siblings for skipped, checkpointed and failed | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
-| AC-2 | `WorkerStatistics_WhenEventRead_SetsLastProcessedAt`, `WorkerStatistics_UptimeGrowsFromStartTime` | Unit | Host | `tests/DevOpsCopilot.Worker.Tests` |
-| AC-3 | `StatusEndpoint_ReturnsStatisticsAndDependencyHealth` | Integration | Host | `tests/DevOpsCopilot.Worker.Tests` |
+| AC-1 | `An_event_read_increments_events_read_and_sets_last_processed` and siblings for skipped, checkpointed and errors | Unit | Host | `tests/DevOpsCopilot.Worker.Tests` |
+| AC-1 | `An_incident_starting_event_is_notified_as_read_and_checkpointed` and siblings for skipped, checkpointed and failed | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
+| AC-2 | `An_event_read_increments_events_read_and_sets_last_processed`, `Uptime_grows_from_the_start_time` | Unit | Host | `tests/DevOpsCopilot.Worker.Tests` |
+| AC-3 | `The_status_endpoint_returns_statistics_and_dependency_health` | Integration | Host | `tests/DevOpsCopilot.Worker.Tests` |
 | AC-4 | `StatusDocument_MapsWorkerStatusAndServiceHealth` | Unit | Host | `tests/DevOpsCopilot.Server.Tests` |
 | AC-4 | `StatusApi_AgainstAppHost_ReturnsOneDocument` | Integration | Host | `tests/DevOpsCopilot.AppHost.Tests` |
 | AC-5 | `StatusDocument_WhenWorkerUnreachable_ReportsNotRunningAndZeros` | Unit | Host | `tests/DevOpsCopilot.Server.Tests` |
@@ -16,26 +16,25 @@
 | AC-7 | `npm run lint`, `npm run build`, `npm run test` in `src/DevOpsCopilot.Frontend`, wired into CI | CI | Frontend | `src/DevOpsCopilot.Frontend` |
 | AC-8 | `EndToEnd_EventsThroughEmulator_StatusShowsLiveCounts` | Integration | Host | `tests/DevOpsCopilot.AppHost.Tests` |
 | AC-9 | Existing architecture tests, extended only if a new rule is needed | Architecture | — | `tests/DevOpsCopilot.Architecture.Tests` |
-| AC-10 | `StatusEndpoint_WhenTelemetryDisabled_ReportsDisabledWithoutStatistics` | Integration | Host | `tests/DevOpsCopilot.Worker.Tests` |
+| AC-10 | `With_telemetry_disabled_the_endpoint_reports_disabled_without_statistics` | Integration | Host | `tests/DevOpsCopilot.Worker.Tests` |
 | AC-11 | Solution build, CI frontend steps and `rg -n "src/frontend"` finding nothing | CI / Manual | — | — |
 
 ## Unit tests (written first)
 
 `tests/DevOpsCopilot.Application.Tests` — the observer notifications, with a recording fake `IProcessingObserver`:
 
-- **`ProcessLogEvents_WhenEventHandled_NotifiesObserverRead`** (AC-1) – Arrange: a fake event source that yields one incident-starting event and a fake pipeline. Act: run. Assert: the observer saw one read, zero skipped, zero errors.
-- **`ProcessLogEvents_WhenEventDoesNotStartIncident_NotifiesObserverSkipped`** (AC-1) – Arrange: one `Warning` event without an exception. Act: run. Assert: one read, one skipped.
-- **`ProcessLogEvents_AfterCheckpoint_NotifiesObserverCheckpointed`** (AC-1) – Arrange: one event whose checkpoint delegate records its call order. Act: run. Assert: the checkpoint notification comes after the checkpoint call, exactly once.
-- **`ProcessLogEvents_WhenPipelineThrows_NotifiesObserverErrorAndRethrows`** (AC-1) – Arrange: a pipeline that throws. Act: run and catch. Assert: one error notified, the exception still propagates (behaviour unchanged).
-- **`ProcessLogEvents_WithoutObserver_BehavesAsBefore`** (AC-9) – Arrange: no observer registered (no-op default). Act: run one event. Assert: pipeline and checkpoint run exactly as today.
+- **`An_incident_starting_event_is_notified_as_read_and_checkpointed`** (AC-1) – Arrange: a fake event source that yields one incident-starting event and a fake pipeline. Act: run. Assert: the observer saw one read, zero skipped, zero errors.
+- **`An_event_that_does_not_start_an_incident_is_notified_as_skipped`** (AC-1) – Arrange: one `Warning` event without an exception. Act: run. Assert: one read, one skipped.
+- **`The_checkpoint_notification_comes_after_the_checkpoint_call`** (AC-1) – Arrange: one event whose checkpoint delegate records its call order. Act: run. Assert: the checkpoint notification comes after the checkpoint call, exactly once.
+- **`A_failing_event_is_notified_as_failed_and_the_exception_still_propagates`** (AC-1) – Arrange: a pipeline that throws. Act: run and catch. Assert: one error notified, the exception still propagates (behaviour unchanged).
+- **`Without_an_observer_processing_behaves_as_before`** (AC-9) – Arrange: no observer registered (no-op default). Act: run one event. Assert: pipeline and checkpoint run exactly as today.
 
 `tests/DevOpsCopilot.Worker.Tests` — the in-memory statistics:
 
-- **`WorkerStatistics_WhenEventRead_IncrementsEventsRead`** (AC-1) – Arrange: fresh statistics. Act: notify read. Assert: `eventsRead == 1`, others zero.
-- **`WorkerStatistics_WhenEventSkipped_IncrementsSkipped`** (AC-1) – as above for skipped; **`…Checkpointed…`** and **`…Error…`** likewise.
-- **`WorkerStatistics_WhenEventRead_SetsLastProcessedAt`** (AC-2) – Arrange: a fixed clock. Act: notify read. Assert: `lastProcessedAt` equals the clock's time.
-- **`WorkerStatistics_UptimeGrowsFromStartTime`** (AC-2) – Arrange: a fixed clock advanced by 5 minutes. Assert: uptime is 5 minutes.
-- **`WorkerStatistics_IsThreadSafe_UnderParallelIncrements`** (AC-1) – Act: N parallel notifications. Assert: the count is exactly N.
+- **`An_event_read_increments_events_read_and_sets_last_processed`** (AC-1) – Arrange: fresh statistics. Act: notify read. Assert: `eventsRead == 1`, others zero.
+- **`A_skipped_event_increments_only_the_skipped_count`** (AC-1) – as above for skipped; checkpointed and failed likewise, plus **`Before_any_event_the_last_processed_time_is_null`**.
+- **`Uptime_grows_from_the_start_time`** (AC-2, on `WorkerUptime`, which is kept even when telemetry is off) – Arrange: a fixed clock advanced by 5 minutes. Assert: uptime is 5 minutes.
+- **`Counters_are_exact_under_parallel_increments`** (AC-1) – Act: N parallel notifications. Assert: the count is exactly N.
 
 `tests/DevOpsCopilot.Server.Tests` — the status document mapping, with a stubbed worker HTTP handler:
 
@@ -51,8 +50,8 @@
 
 ## Integration tests
 
-- **`StatusEndpoint_ReturnsStatisticsAndDependencyHealth`** (AC-3) – boots the worker's status endpoint in-process (TestServer) with stub health checks, asserts the JSON shape and the enumerated dependencies. No emulator.
-- **`StatusEndpoint_WhenTelemetryDisabled_ReportsDisabledWithoutStatistics`** (AC-10) – same host with `HostTelemetry:Enabled=false` wiring: `telemetryEnabled` is `false`, `statistics` is null, dependency health is still present.
+- **`The_status_endpoint_returns_statistics_and_dependency_health`** (AC-3) – boots the worker's status endpoint in-process (TestServer) with stub health checks, asserts the JSON shape and the enumerated dependencies. No emulator.
+- **`With_telemetry_disabled_the_endpoint_reports_disabled_without_statistics`** (AC-10) – same host with `HostTelemetry:Enabled=false` wiring: `telemetryEnabled` is `false`, `statistics` is null, dependency health is still present.
 - **`StatusApi_AgainstAppHost_ReturnsOneDocument`** (AC-4) – starts the AppHost with `Aspire.Hosting.Testing`, waits for `server`, GETs the status API, asserts one well-formed document naming the three services. Needs Docker for the emulators.
 - **`EndToEnd_EventsThroughEmulator_StatusShowsLiveCounts`** (AC-8) – starts the AppHost, sends one incident-starting event and one `Warning`-only event to hub `logs` through the Event Hubs emulator, polls the status API until `eventsRead >= 2`, then asserts `eventsSkipped >= 1`, `batchesCheckpointed >= 1` and `lastProcessedAt` is set. Needs Docker.
 

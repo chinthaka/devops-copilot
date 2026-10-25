@@ -32,7 +32,8 @@ public class LayerDependencyTests
             (Domain, []),
             (Application, [Domain]),
             (Infrastructure, [Domain, Application]),
-            (Worker, [Domain, Application, Infrastructure]),
+            // The host also wires the shared service defaults (health checks, OpenTelemetry).
+            (Worker, [Domain, Application, Infrastructure, "DevOpsCopilot.ServiceDefaults"]),
         ];
 
         // Act

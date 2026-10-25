@@ -8,7 +8,7 @@ The technologies, versions and services DevOpsCopilot uses. Do not introduce any
 |---|---|---|
 | Runtime | .NET 10 (`net10.0`) | Every .NET project targets `net10.0`. Nullable reference types and implicit usings on. |
 | Language | C# | Match the style of the project you edit. |
-| Host model | .NET Worker Service (`BackgroundService`) | The product is a long-running worker, not a web API. |
+| Host model | `BackgroundService` in the ASP.NET Core minimal host | The product is a long-running worker; the web host exists only for `/health` and the status endpoint the dashboard reads (roadmap M1). |
 | Packaging | Containers | Built from the Aspire AppHost for deployment. |
 
 ## Solution structure
@@ -19,8 +19,8 @@ Strict Clean Architecture in four projects, with dependencies pointing inwards o
 |---|---|---|---|
 | Domain | `src/DevOpsCopilot.Domain` | Nothing beyond the base class library | None |
 | Application | `src/DevOpsCopilot.Application` | Domain | `Microsoft.Extensions.Logging.Abstractions` 10.0.12 |
-| Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain | The Azure, Kusto and Agent Framework packages below, plus `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12 |
-| Host | `src/DevOpsCopilot.Worker` | All of the above, for wiring only | `Microsoft.Extensions.Hosting` 10.0.8 |
+| Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain | The Azure, Kusto and Agent Framework packages below, plus `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.12 and `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions` 10.0.12 |
+| Host | `src/DevOpsCopilot.Worker` | All of the above plus `ServiceDefaults`, for wiring only | None; ASP.NET Core comes from the web SDK |
 
 The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and the architecture tests fail the build when a layer breaks them.
 
@@ -104,6 +104,7 @@ Currently the frontend is the Aspire weather sample. Roadmap M1 replaces it with
 | Framework | xUnit, projects under `tests/` in the solution folder `tests` |
 | Unit tests | Domain and Application: plain tests, no Azure SDK, network or emulator |
 | Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources |
+| Host tests | `tests/DevOpsCopilot.Worker.Tests`: the worker's statistics and status endpoint on an in-process test server (`Microsoft.AspNetCore.TestHost` 10.0.12) |
 | Architecture tests | `tests/DevOpsCopilot.Architecture.Tests`. Reflection over the built assemblies and the project files, so no extra package. Fail the build when a layer references something it must not. |
 | Evaluation | Staged-incident set for diagnosis quality (M8) |
 

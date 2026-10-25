@@ -3,7 +3,9 @@ using DevOpsCopilot.Domain;
 using DevOpsCopilot.Infrastructure;
 using DevOpsCopilot.Worker;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 // Composition root. Configuration is read only here; every layer below takes plain values.
 var incident = builder.Configuration.GetSection("Incident").Get<IncidentOptions>() ?? new IncidentOptions();
@@ -32,5 +34,27 @@ builder.Services.AddSingleton<RunIncidentPipeline>();
 builder.Services.AddSingleton<ProcessLogEvents>();
 builder.Services.AddHostedService<Worker>();
 
-var host = builder.Build();
-host.Run();
+// Host telemetry. Off means the no-op observer: nothing is collected, health is still served.
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<WorkerUptime>();
+if (builder.Configuration.GetValue("HostTelemetry:Enabled", true))
+{
+    builder.Services.AddSingleton<WorkerStatistics>();
+    builder.Services.AddSingleton<IProcessingObserver>(
+        provider => provider.GetRequiredService<WorkerStatistics>());
+}
+else
+{
+    builder.Services.AddSingleton<IProcessingObserver>(NullProcessingObserver.Instance);
+}
+
+builder.Services.AddHealthChecks()
+    .AddCheck<EventHubsHealthCheck>("eventhubs", tags: [WorkerStatusEndpoint.DependencyTag])
+    .AddCheck<CheckpointStorageHealthCheck>("storage", tags: [WorkerStatusEndpoint.DependencyTag]);
+
+var app = builder.Build();
+
+app.MapDefaultEndpoints();
+app.MapWorkerStatus();
+
+app.Run();
