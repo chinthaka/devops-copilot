@@ -51,11 +51,15 @@ var api = builder.AddProject<Projects.DevOpsCopilot_ApiService>("api")
 	.WaitFor(storage);
 
 
-builder.AddProject<Projects.DevOpsCopilot_Worker>("worker")
+var worker = builder.AddProject<Projects.DevOpsCopilot_Worker>("worker")
 	.WithReference(eventHub, "eventhubs")
 	.WithReference(checkpoints, "checkpoints")
 	.WaitFor(eventHub)
 	.WaitFor(checkpoints);
+
+// The server's status API reads the worker's status endpoint; no WaitFor, because the
+// document must report not-running while the worker is down.
+server.WithReference(worker);
 
 builder.AddAzureFunctionsProject<Projects.DevOpsCopilot_Functions>("functions")
 	.WithHostStorage(storage)

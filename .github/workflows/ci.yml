@@ -32,12 +32,15 @@ jobs:
       - name: Build EmailNotifier
         run: dotnet build src/DevOpsCopilot.EmailNotifier/DevOpsCopilot.EmailNotifier.csproj --configuration Release
 
+      # The AppHost and end-to-end tests need the Event Hubs and Azurite emulators, so they run
+      # locally against Docker rather than in CI.
       - name: Test
-        run: dotnet test src/DevOpsCopilot.sln --configuration Release --no-build
+        run: dotnet test src/DevOpsCopilot.sln --configuration Release --no-build --filter "Category!=RequiresDocker"
 
-      - name: Lint and build frontend
+      - name: Lint, test and build frontend
         working-directory: src/DevOpsCopilot.Frontend
         run: |
           npm ci
           npm run lint
+          npm run test
           npm run build

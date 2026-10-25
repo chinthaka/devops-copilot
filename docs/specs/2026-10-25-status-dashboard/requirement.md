@@ -4,7 +4,7 @@
 |---|---|
 | **Branch** | `features/2026-10-25-status-dashboard` |
 | **Milestone** | M1 – Status dashboard, covering M1.1, M1.2 and M1.3 ([roadmap](../roadmap.md#m1--status-dashboard-m)) |
-| **Status** | Draft |
+| **Status** | Done ([validation results](validation.md#results)) |
 | **Author** | Chinthaka Kumarasiri |
 | **Date** | 2026-10-25 |
 

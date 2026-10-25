@@ -66,4 +66,43 @@
 
 ## Results
 
-<!-- Filled in when the work is done. -->
+Run on 2026-10-25 against the branch's final commit.
+
+### Automated tests
+
+| Suite | Result |
+|---|---|
+| `dotnet test src/DevOpsCopilot.sln` | **43 passed, 0 failed**, 2 skipped (the Docker-gated AppHost tests; see below) |
+| `tests/DevOpsCopilot.Application.Tests` | 12 passed, including the five observer-notification tests (AC-1, AC-9) |
+| `tests/DevOpsCopilot.Worker.Tests` | 9 passed: the statistics unit tests (AC-1, AC-2) and both status-endpoint integration tests (AC-3, AC-10) |
+| `tests/DevOpsCopilot.Server.Tests` | 3 passed: `StatusDocument_MapsWorkerStatusAndServiceHealth`, `StatusDocument_WhenWorkerUnreachable_ReportsNotRunningAndZeros`, `StatusDocument_WhenWorkerDependencyUnhealthy_PropagatesThatHealth` (AC-4, AC-5) |
+| `tests/DevOpsCopilot.Architecture.Tests` | 8 passed unchanged; no new rule was needed (AC-9) |
+| `tests/DevOpsCopilot.AppHost.Tests` | **2 passed** against Docker: `StatusApi_AgainstAppHost_ReturnsOneDocument` (AC-4) and `EndToEnd_EventsThroughEmulator_StatusShowsLiveCounts` (AC-8) |
+| `npm run test` (Vitest) | 3 passed: renders not running and zeros, renders live statistics, polls the status endpoint (AC-5, AC-6) |
+| `npm run lint`, `npm run build` | Both clean (AC-7) |
+
+The AppHost tests carry `Category=RequiresDocker` and skip themselves when no Docker daemon
+answers, so a machine or CI run without the emulators skips rather than fails them. They were run
+explicitly against Docker Desktop for this result: 2 passed, 0 failed, 30 s.
+
+### Manual checks
+
+- `rg -i weather` over `src/DevOpsCopilot.Frontend` and `src/DevOpsCopilot.Server` returns nothing (AC-6). The only remaining matches in the repository are these spec documents and the roadmap describing what was replaced.
+- `rg -n "src/frontend"` finds nothing outside this spec folder, which records the rename (AC-11).
+- `aspire run` smoke check (the roadmap's **Done when**): **not run in this environment.** Docker Desktop's WSL integration is off for this distro, so the AppHost cannot be started from it. `EndToEnd_EventsThroughEmulator_StatusShowsLiveCounts` covers the same ground automatically — it starts the AppHost, sends one incident-starting and one `Warning`-only event through the Event Hubs emulator and asserts the status document shows live counts — which is why decision 8 made that check automated.
+
+### Acceptance criteria
+
+| AC | Status |
+|---|---|
+| AC-1 | Met — Application observer tests and `WorkerStatistics` unit tests |
+| AC-2 | Met — `An_event_read_increments_events_read_and_sets_last_processed`, `Uptime_grows_from_the_start_time` |
+| AC-3 | Met — `The_status_endpoint_returns_statistics_and_dependency_health` |
+| AC-4 | Met — mapping unit test and `StatusApi_AgainstAppHost_ReturnsOneDocument` |
+| AC-5 | Met — `StatusDocument_WhenWorkerUnreachable_ReportsNotRunningAndZeros` and the Vitest not-running test |
+| AC-6 | Met — Vitest component tests; no weather code in either project |
+| AC-7 | Met — lint, build and Vitest all pass and are wired into CI |
+| AC-8 | Met — `EndToEnd_EventsThroughEmulator_StatusShowsLiveCounts` passes against the emulator |
+| AC-9 | Met — architecture tests unchanged and green; Application gained only `IProcessingObserver` and no package |
+| AC-10 | Met — `With_telemetry_disabled_the_endpoint_reports_disabled_without_statistics` |
+| AC-11 | Met — solution builds, CI references the new path, no `src/frontend` references remain |
