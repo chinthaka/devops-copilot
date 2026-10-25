@@ -84,7 +84,7 @@ When a workspace or search service is not configured, the stage reports `unavail
 
 | Item | Choice | Version |
 |---|---|---|
-| Frontend | React with Vite and TypeScript, in `src/frontend` | React 19.2, Vite, TypeScript 5.9, ESLint 9 |
+| Frontend | React with Vite and TypeScript, in `src/DevOpsCopilot.Frontend` | React 19.2, Vite, TypeScript 5.9, ESLint 9 |
 | Backend for frontend | `src/DevOpsCopilot.Server` (ASP.NET Core), publishes the built frontend into `wwwroot` | |
 | Node | Node 22 | Required by CI |
 
@@ -118,7 +118,7 @@ Currently the frontend is the Aspire weather sample. Roadmap M1 replaces it with
 
 ## Leftover projects
 
-`src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions` and `src/DevOpsCopilot.EmailNotifier` are samples from the template, and `src/DevOpsCopilot.Server` plus `src/frontend` are the weather sample. Do not extend the samples. They are removed by a dedicated roadmap item once nothing in the AppHost depends on them.
+`src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions` and `src/DevOpsCopilot.EmailNotifier` are samples from the template, and `src/DevOpsCopilot.Server` plus `src/DevOpsCopilot.Frontend` are the weather sample. Do not extend the samples. They are removed by a dedicated roadmap item once nothing in the AppHost depends on them.
 
 ## Not used
 

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsCopilot.AppHost", "De
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DevOpsCopilot.Server", "DevOpsCopilot.Server\DevOpsCopilot.Server.csproj", "{72EBDFD6-BC95-4D8B-B77F-73D2C3469F44}"
 EndProject
-Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "frontend", "frontend\frontend.esproj", "{06313A36-FEEA-4912-831A-1F02E092686F}"
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "DevOpsCopilot.Frontend", "DevOpsCopilot.Frontend\DevOpsCopilot.Frontend.esproj", "{06313A36-FEEA-4912-831A-1F02E092686F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevOpsCopilot.Functions", "DevOpsCopilot.Functions\DevOpsCopilot.Functions.csproj", "{0014E3EE-0121-1008-5E71-BEDA521E2E20}"
 EndProject

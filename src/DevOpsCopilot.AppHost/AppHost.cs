@@ -4,7 +4,7 @@ var server = builder.AddProject<Projects.DevOpsCopilot_Server>("server")
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();
 
-var webfrontend = builder.AddViteApp("webfrontend", "../frontend")
+var webfrontend = builder.AddViteApp("webfrontend", "../DevOpsCopilot.Frontend")
     .WithReference(server)
     .WaitFor(server);
 
