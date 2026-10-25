@@ -18,16 +18,7 @@ public sealed class IncidentWorkflow
             .Build();
     }
 
-    public static bool ShouldStart(LogEvent logEvent)
-    {
-        if (!string.IsNullOrWhiteSpace(logEvent.Exception))
-        {
-            return true;
-        }
-
-        return logEvent.Level.Equals("Error", StringComparison.OrdinalIgnoreCase)
-            || logEvent.Level.Equals("Critical", StringComparison.OrdinalIgnoreCase);
-    }
+    public static bool ShouldStart(LogEvent logEvent) => logEvent.StartsIncident();
 
     public async Task<IncidentWorkflowResult?> RunAsync(LogEvent logEvent, CancellationToken cancellationToken = default)
     {

@@ -1,11 +1,7 @@
-using System.Globalization;
-
 namespace DevOpsCopilot.Daemon.Incident;
 
 public sealed class KustoQueryTool
 {
-    private static readonly string[] ControlCommands = [".set", ".drop", ".ingest", ".alter"];
-
     private readonly IKustoQueryRunner _runner;
     private readonly IncidentOptions _options;
 
@@ -15,10 +11,7 @@ public sealed class KustoQueryTool
         _options = options;
     }
 
-    public static bool IsControlCommand(string kql)
-    {
-        return ControlCommands.Any(command => kql.Contains(command, StringComparison.OrdinalIgnoreCase));
-    }
+    public static bool IsControlCommand(string kql) => KqlQuestions.IsControlCommand(kql);
 
     public async Task<KustoCall> ExecuteAsync(string kql, CancellationToken cancellationToken = default)
     {
@@ -65,75 +58,17 @@ public sealed class KustoQueryTool
             findings);
     }
 
-    public static string EventId(DateTimeOffset timestamp)
-    {
-        return "evt-" + timestamp.ToUniversalTime().ToString("yyyyMMddHHmmssfff", CultureInfo.InvariantCulture);
-    }
+    public static string EventId(DateTimeOffset timestamp) => EventIdentity.EventId(timestamp);
 
-    public static DateTimeOffset ParseEventId(string eventId)
-    {
-        var compact = eventId.StartsWith("evt-", StringComparison.Ordinal) ? eventId[4..] : eventId;
-        return DateTimeOffset.ParseExact(compact, "yyyyMMddHHmmssfff", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
-    }
+    public static DateTimeOffset ParseEventId(string eventId) => EventIdentity.ParseEventId(eventId);
 
-    public static string ExceptionType(LogEvent logEvent)
-    {
-        if (!string.IsNullOrWhiteSpace(logEvent.Exception))
-        {
-            var line = logEvent.Exception
-                .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(line))
-            {
-                return line;
-            }
-        }
+    public static string ExceptionType(LogEvent logEvent) => KqlQuestions.ExceptionType(logEvent);
 
-        return logEvent.Message.Trim();
-    }
-
-    public static IReadOnlyList<string> BuildQueries(LogEvent logEvent, IncidentOptions options)
-    {
-        var trace = Quote(logEvent.TraceId ?? "");
-        var category = Quote(logEvent.Category);
-        var exceptionType = Quote(ExceptionType(logEvent));
-        var timestamp = logEvent.Timestamp.ToUniversalTime();
-        var previous = KustoDate(timestamp.AddMinutes(-30));
-        var start = KustoDate(timestamp.AddMinutes(-15));
-        var end = KustoDate(timestamp.AddMinutes(15));
-        var exceptions = SafeTable(options.Kusto.ExceptionsTable, "ExceptionsTable");
-        var dependencies = SafeTable(options.Kusto.DependenciesTable, "DependenciesTable");
-
-        return
-        [
-            $"{exceptions} | where TraceId == {trace} | where Timestamp between ({start} .. {end})",
-            $"{exceptions} | extend ExceptionType = iff(isnotempty(Exception), tostring(split(Exception, \"\\n\")[0]), Message) | where Category == {category} | where ExceptionType == {exceptionType} | where Timestamp between ({previous} .. {end}) | summarize Count = count() by Window = iff(Timestamp < {start}, \"previous\", \"current\")",
-            $"{dependencies} | where TraceId == {trace} | where Success == false | where Timestamp between ({start} .. {end})",
-        ];
-    }
+    public static IReadOnlyList<string> BuildQueries(LogEvent logEvent, IncidentOptions options) =>
+        KqlQuestions.Build(logEvent, new LogQueryTargets(options.Kusto.ExceptionsTable, options.Kusto.DependenciesTable));
 
     private static string FormatRow(IReadOnlyDictionary<string, string> row)
     {
         return string.Join(", ", row.Select(pair => pair.Key + "=" + pair.Value));
-    }
-
-    private static string SafeTable(string configuredName, string placeholder)
-    {
-        if (configuredName.Length == 0 || configuredName.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not '_' and not '-'))
-        {
-            return placeholder;
-        }
-
-        return configuredName;
-    }
-
-    private static string Quote(string value)
-    {
-        return "\"" + value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
-    }
-
-    private static string KustoDate(DateTimeOffset timestamp)
-    {
-        return "datetime(" + timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture) + ")";
     }
 }

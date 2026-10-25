@@ -1,4 +1,4 @@
-namespace DevOpsCopilot.Daemon.Incident;
+namespace DevOpsCopilot.Domain;
 
 public sealed record GroundingHandoff(
     string EventId,

@@ -16,4 +16,12 @@
     <PackageReference Include="Microsoft.Azure.Kusto.Data" Version="14.2.4" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevOpsCopilot.Domain\DevOpsCopilot.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="DevOpsCopilot.Domain" />
+  </ItemGroup>
 </Project>
