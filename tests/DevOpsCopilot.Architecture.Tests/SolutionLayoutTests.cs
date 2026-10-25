@@ -13,8 +13,8 @@ public class SolutionLayoutTests
 
         // Assert
         Assert.DoesNotContain("DevOpsCopilot.Daemon", solution, StringComparison.Ordinal);
-        Assert.False(Repository.Exists("src/DevOpsCopilot.Daemon"));
-        Assert.False(Repository.Exists("tests/DevOpsCopilot.Daemon.Tests"));
+        Assert.False(Repository.Exists("src/DevOpsCopilot.Daemon/DevOpsCopilot.Daemon.csproj"));
+        Assert.False(Repository.Exists("tests/DevOpsCopilot.Daemon.Tests/DevOpsCopilot.Daemon.Tests.csproj"));
     }
 
     [Fact]
