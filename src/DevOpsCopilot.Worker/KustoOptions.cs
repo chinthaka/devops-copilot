@@ -1,4 +1,4 @@
-namespace DevOpsCopilot.Daemon.Incident;
+namespace DevOpsCopilot.Worker;
 
 public sealed class KustoOptions
 {
