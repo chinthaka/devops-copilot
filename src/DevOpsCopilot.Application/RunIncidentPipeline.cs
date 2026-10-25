@@ -29,7 +29,14 @@ public sealed class RunIncidentPipeline
         var diagnostic = await _evidence.DiagnoseAsync(logEvent, cancellationToken);
         var grounding = await _grounding.GroundAsync(diagnostic, cancellationToken);
         var handoff = new AgentHandoff(diagnostic, grounding);
-        var draft = IncidentDraft.Render(handoff.Diagnostic, handoff.Grounding);
+
+        // The diagnose stage (M5 task group 4) will choose between the model and this path.
+        // Until it lands, every report is the deterministic diagnosis.
+        var diagnosis = DiagnosisRules.ApplyConfidenceRule(
+            Diagnosis.Deterministic(diagnostic, grounding, "The diagnosis model was unavailable."),
+            diagnostic,
+            grounding);
+        var draft = IncidentReport.Render(diagnosis, handoff.Diagnostic, handoff.Grounding);
         var path = await _reportWriter.WriteAsync(handoff.Diagnostic, handoff.Grounding, draft, cancellationToken);
         return new IncidentWorkflowResult(handoff.Diagnostic, handoff.Grounding, path);
     }
