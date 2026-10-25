@@ -17,6 +17,9 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="DevOpsCopilot.Domain" />
+    <Using Include="DevOpsCopilot.Application" />
+    <Using Include="DevOpsCopilot.Application.ILogQuery" Alias="IKustoQueryRunner" />
+    <Using Include="DevOpsCopilot.Application.IKnowledgeSearch" Alias="IPostmortemSearch" />
   </ItemGroup>
 
   <ItemGroup>
