@@ -79,18 +79,35 @@ The `.csproj`- and `.sln`-reading tests locate the repository root by walking up
 
 | AC | Test or check | Result | Notes |
 |---|---|---|---|
-| AC-1 | | Pass / Fail | |
-| AC-2 | | | |
-| AC-3 | | | |
-| AC-4 | | | |
-| AC-5 | | | |
-| AC-6 | | | |
-| AC-7 | | | |
-| AC-8 | | | |
-| AC-9 | | | |
-| AC-10 | | | |
+| AC-1 | `dotnet build src/DevOpsCopilot.sln`; `Every_layer_project_targets_net10_and_references_only_inwards` | Pass | Solution builds with 0 errors. The 9 warnings are pre-existing NU1902/NU1903 advisories on the sample projects and one Aspire ASPIRE010, none from the new projects. |
+| AC-2 | `Domain_references_no_external_framework` | Pass | Domain has zero `PackageReference`. |
+| AC-3 | `Application_references_no_azure_sdk_or_agent_framework` | Pass | Application's only package is `Microsoft.Extensions.Logging.Abstractions`. |
+| AC-4 | `Domain_does_not_reference_application_or_infrastructure`; `Infrastructure_does_not_reference_the_host` | Pass | |
+| AC-5 | `Pipeline_runs_evidence_then_grounding_then_report`; `Application_tests_reference_no_infrastructure_project` | Pass | `RunIncidentPipeline` is constructed from three interfaces with no container and no Infrastructure type. |
+| AC-6 | The eight moved tests plus `Draft_file_is_named_from_the_event_day_and_id` | Pass | All eight ran green against the Domain and Application types before `DevOpsCopilot.Daemon` was deleted, which is what proves the move kept behaviour. |
+| AC-7 | `Restart_resumes_after_the_last_handled_checkpoint` | Pass | Report written before every checkpoint; second run resumes at the next event. |
+| AC-8 | `Daemon_project_no_longer_exists_in_the_solution`; `The_app_host_runs_the_worker` | Pass (automated); **manual half not run** | Both directories and all solution entries are gone, and the AppHost registers `Projects.DevOpsCopilot_Worker` with the `eventhubs` and `checkpoints` references. `aspire run` was **not** executed — see Environment below. |
+| AC-9 | Deliberate violation | Pass | An `Azure.Search.Documents` reference added to Application failed `Application_references_no_azure_sdk_or_agent_framework` with `Assert.DoesNotContain() Failure: Filter matched in collection`; 1 failed / 7 passed. Reverted, back to 8/8. |
+| AC-10 | Documentation review | Pass | `AGENTS.md § Layout` now lists four projects, `tech-stack.md § Solution structure` describes the built state with per-layer packages, `§ Testing` marks the architecture tests built, `pipeline.md § 1` names `src/DevOpsCopilot.Worker`, and roadmap M3, M3.1–M3.3 are marked done with the layer-split gap row removed. No file still describes the worker as one project. |
 
-- **`dotnet build`:** 
-- **`dotnet test`:** <passed> / <total>
+- **`dotnet build src/DevOpsCopilot.sln`:** succeeded, 0 errors.
+- **`dotnet test`:** 23 / 23 passed across the projects this feature owns and the untouched `LogForwarder` — Domain 1, Application 7, Infrastructure 2, Architecture 8, LogForwarder 5.
+- **Known unrelated failure:** `DevOpsCopilot.ApiService.Tests` is 2 / 3, failing with `Timed out waiting for the entry point to build the IHost after 00:05:00`. This is the leftover Aspire sample (roadmap M18); it needs the Azurite emulator and there is no Docker daemon in this environment. This branch changes no file under `src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Server`, `src/DevOpsCopilot.ServiceDefaults` or `tests/DevOpsCopilot.ApiService.Tests`.
 - **Evaluation run:** Not applicable — this feature changes no LLM behaviour.
-- **Date:** YYYY-MM-DD
+- **Date:** 2026-10-25
+
+### Environment and what was not verified
+
+The work was done in a Linux worktree with no .NET SDK installed; builds and tests ran against the Windows SDK (`11.0.100-rc.2`) over the WSL mount, targeting `net10.0`. Two manual checks in this document could **not** be run here and are still outstanding:
+
+- **`aspire run` (AC-8, end-to-end smoke).** There is no Docker daemon, so the Event Hubs and Azurite emulators cannot start. The automated test proves the AppHost wiring is correct, but nobody has yet watched the `worker` resource start, create the checkpoint container and write a draft from a `LogForwarder` event. **Run this before merging.**
+- **User secrets.** `DevOpsCopilot.Worker.csproj` carries the Daemon's `UserSecretsId` verbatim (`dotnet-DevOpsCopilot.Daemon-f6bcefe1-0b1e-448b-a7a0-18f3ac74fa34`), which was verified by reading the file, not by resolving a secret at runtime.
+
+### Deviations from the plan
+
+- **Package versions.** Application and Infrastructure take `Microsoft.Extensions.*.Abstractions` at 10.0.12, not 10.0.8: the Agent Framework and `Microsoft.Extensions.Hosting` pull 10.0.12 transitively and NuGet treats the downgrade as an error. Recorded in `tech-stack.md`.
+- **Application takes one package, not two.** `Microsoft.Extensions.DependencyInjection.Abstractions` turned out to be unnecessary there, because the host registers the use cases directly. Infrastructure keeps it for `AddInfrastructure`.
+- **`EventHubSettings` added.** `EventHubLogConsumer` took `IConfiguration` directly. Decision D-5 only named three settings records; a fourth was needed to keep `IConfiguration` out of Infrastructure entirely.
+- **Plan step 4.6 skipped.** The Daemon was never pointed at `RunIncidentPipeline`; it kept its own workflow graph until it was deleted in group 7. By then its eight tests were duplicated by the Application, Domain and Infrastructure tests, so shimming it would have been throwaway work. The Daemon and its tests stayed green up to the moment of deletion, which is what the step existed to guarantee.
+- **AC-9 demonstrated with a package, not a project reference.** Adding an Application → Infrastructure `ProjectReference` is a circular dependency that MSBuild rejects during restore, so no test ever runs. A forbidden `Azure.Search.Documents` package reference compiles cleanly and is caught by the architecture test, which is the more meaningful demonstration.
+- **One extra architecture test.** `The_app_host_runs_the_worker` was added so AC-8's AppHost wiring is covered automatically rather than only by the manual `aspire run` check.
