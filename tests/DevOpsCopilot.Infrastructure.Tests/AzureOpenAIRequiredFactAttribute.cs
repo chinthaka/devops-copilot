@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Configuration;
-
 namespace DevOpsCopilot.Infrastructure.Tests;
 
 /// <summary>
@@ -15,37 +13,5 @@ public sealed class AzureOpenAIRequiredFactAttribute : FactAttribute
         {
             Skip = "Requires an Azure OpenAI deployment. Set Incident:AzureOpenAI:Endpoint and :Deployment in user secrets.";
         }
-    }
-}
-
-/// <summary>
-/// Reads the Azure OpenAI configuration from user secrets or the environment. Nothing is read from
-/// the repository and no value is defaulted, so a missing configuration simply means "not set".
-/// </summary>
-internal static class AzureOpenAIConfiguration
-{
-    private static readonly Lazy<AzureOpenAISettings?> Lazy = new(Read);
-
-    public static AzureOpenAISettings? Settings => Lazy.Value;
-
-    private static AzureOpenAISettings? Read()
-    {
-        var configuration = new ConfigurationBuilder()
-            .AddUserSecrets(typeof(AzureOpenAIConfiguration).Assembly, optional: true)
-            .AddEnvironmentVariables()
-            .Build();
-        var section = configuration.GetSection("Incident:AzureOpenAI");
-        var endpoint = section["Endpoint"] ?? "";
-        var deployment = section["Deployment"] ?? "";
-        if (string.IsNullOrWhiteSpace(endpoint) || string.IsNullOrWhiteSpace(deployment))
-        {
-            return null;
-        }
-
-        return new AzureOpenAISettings(
-            endpoint,
-            deployment,
-            section["ApiKey"] ?? "",
-            int.TryParse(section["TimeoutSeconds"], out var seconds) ? seconds : 0);
     }
 }

@@ -9,18 +9,3 @@ public sealed record StatusDocument(
     WorkerStatus Worker,
     IReadOnlyList<ServiceHealth> Services,
     DateTimeOffset GeneratedAt);
-
-public sealed record WorkerStatus(
-    string Status,
-    bool TelemetryEnabled,
-    double UptimeSeconds,
-    WorkerStatisticsDocument? Statistics);
-
-public sealed record WorkerStatisticsDocument(
-    long EventsRead,
-    long EventsSkipped,
-    long BatchesCheckpointed,
-    long Errors,
-    DateTimeOffset? LastProcessedAt);
-
-public sealed record ServiceHealth(string Name, string Status);

@@ -6,7 +6,7 @@ namespace DevOpsCopilot.Application.Tests;
 public class IncidentPipelineTests
 {
     [Fact]
-    public async Task Pipeline_runs_evidence_then_grounding_then_report()
+    public async Task RunAsync_WithAnIncidentStartingEvent_RunsEvidenceThenGroundingThenReport()
     {
         // Arrange
         var calls = new List<string>();
@@ -27,7 +27,7 @@ public class IncidentPipelineTests
     }
 
     [Fact]
-    public async Task Warning_without_an_exception_does_not_run_the_team()
+    public async Task RunAsync_WithAWarningWithoutAnException_DoesNotRunTheTeam()
     {
         // Arrange
         var logQuery = new RecordingLogQuery();
@@ -46,7 +46,7 @@ public class IncidentPipelineTests
     }
 
     [Fact]
-    public async Task Error_without_kusto_configuration_records_three_queries_and_no_rows()
+    public async Task RunAsync_WithAnErrorButNoKustoConfiguration_RecordsThreeQueriesAndNoRows()
     {
         // Arrange
         var logQuery = new RecordingLogQuery { IsConfigured = false };
@@ -70,7 +70,7 @@ public class IncidentPipelineTests
     }
 
     [Fact]
-    public async Task Missing_search_configuration_returns_no_hits()
+    public async Task RunAsync_WithoutSearchConfiguration_ReturnsNoHits()
     {
         // Arrange
         var search = new RecordingKnowledgeSearch { IsConfigured = false };
@@ -89,7 +89,7 @@ public class IncidentPipelineTests
     }
 
     [Fact]
-    public async Task Search_keeps_five_overlapping_hits_and_drops_an_unrelated_service()
+    public async Task RunAsync_WithOverlappingAndUnrelatedHits_KeepsFiveAndDropsTheUnrelatedService()
     {
         // Arrange
         var search = new RecordingKnowledgeSearch { IsConfigured = true, Hits = CreateHits() };
@@ -107,7 +107,7 @@ public class IncidentPipelineTests
     }
 
     [Fact]
-    public async Task Kql_that_contains_drop_is_not_executed()
+    public async Task ExecuteAsync_WithKqlThatContainsADropCommand_DoesNotExecuteTheQuery()
     {
         // Arrange
         var logQuery = new RecordingLogQuery { IsConfigured = true };

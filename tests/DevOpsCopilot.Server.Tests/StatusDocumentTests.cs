@@ -13,7 +13,7 @@ public class StatusDocumentTests
     private static readonly DateTimeOffset Now = new(2026, 10, 25, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public async Task StatusDocument_MapsWorkerStatusAndServiceHealth()
+    public async Task GetStatusDocumentAsync_WhenTheWorkerResponds_MapsWorkerStatusAndServiceHealth()
     {
         // Arrange
         var client = Client(WorkerResponds("""
@@ -55,7 +55,7 @@ public class StatusDocumentTests
     }
 
     [Fact]
-    public async Task StatusDocument_WhenWorkerUnreachable_ReportsNotRunningAndZeros()
+    public async Task GetStatusDocumentAsync_WhenTheWorkerIsUnreachable_ReportsNotRunningAndZeros()
     {
         // Arrange
         var client = Client(new ThrowingHandler(new HttpRequestException("connection refused")));
@@ -79,7 +79,7 @@ public class StatusDocumentTests
     }
 
     [Fact]
-    public async Task StatusDocument_WhenWorkerDependencyUnhealthy_PropagatesThatHealth()
+    public async Task GetStatusDocumentAsync_WhenAWorkerDependencyIsUnhealthy_PropagatesThatHealth()
     {
         // Arrange
         var client = Client(WorkerResponds("""

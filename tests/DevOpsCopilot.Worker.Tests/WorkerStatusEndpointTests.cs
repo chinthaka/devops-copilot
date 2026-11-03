@@ -16,7 +16,7 @@ namespace DevOpsCopilot.Worker.Tests;
 public class WorkerStatusEndpointTests
 {
     [Fact]
-    public async Task The_status_endpoint_returns_statistics_and_dependency_health()
+    public async Task GetStatus_WithTelemetryEnabled_ReturnsStatisticsAndDependencyHealth()
     {
         // Arrange
         await using var app = await StartAsync(telemetryEnabled: true, storageStatus: HealthStatus.Unhealthy);
@@ -42,7 +42,7 @@ public class WorkerStatusEndpointTests
     }
 
     [Fact]
-    public async Task With_telemetry_disabled_the_endpoint_reports_disabled_without_statistics()
+    public async Task GetStatus_WithTelemetryDisabled_ReportsDisabledWithoutStatistics()
     {
         // Arrange
         await using var app = await StartAsync(telemetryEnabled: false, storageStatus: HealthStatus.Healthy);

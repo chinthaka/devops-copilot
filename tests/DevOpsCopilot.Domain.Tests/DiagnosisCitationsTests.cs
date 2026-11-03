@@ -5,7 +5,7 @@ namespace DevOpsCopilot.Domain.Tests;
 public class DiagnosisCitationsTests
 {
     [Fact]
-    public void A_citation_to_a_kql_entry_that_does_not_exist_is_invalid()
+    public void Validate_WithACitationToAMissingKqlEntry_ReturnsInvalid()
     {
         // Arrange
         var diagnostic = TwoEntryDiagnostic();
@@ -21,7 +21,7 @@ public class DiagnosisCitationsTests
     }
 
     [Fact]
-    public void A_citation_to_a_row_that_does_not_exist_is_invalid()
+    public void Validate_WithACitationToAMissingRow_ReturnsInvalid()
     {
         // Arrange
         var diagnostic = TwoEntryDiagnostic();
@@ -37,7 +37,7 @@ public class DiagnosisCitationsTests
     }
 
     [Fact]
-    public void A_similar_incident_that_was_not_a_hit_is_invalid()
+    public void Validate_WithASimilarIncidentThatWasNotAHit_ReturnsInvalid()
     {
         // Arrange
         var diagnostic = TwoEntryDiagnostic();
@@ -53,7 +53,7 @@ public class DiagnosisCitationsTests
     }
 
     [Fact]
-    public void A_diagnosis_citing_only_returned_evidence_is_valid()
+    public void Validate_WhenOnlyReturnedEvidenceIsCited_ReturnsValid()
     {
         // Arrange
         var diagnostic = TwoEntryDiagnostic();

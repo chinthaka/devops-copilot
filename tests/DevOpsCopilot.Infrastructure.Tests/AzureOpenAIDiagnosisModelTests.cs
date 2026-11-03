@@ -18,7 +18,7 @@ public class AzureOpenAIDiagnosisModelTests
         """;
 
     [Fact]
-    public void Without_a_chat_client_the_model_is_not_configured()
+    public void IsConfigured_WithoutAChatClient_ReturnsFalse()
     {
         // Arrange
         var model = new AzureOpenAIDiagnosisModel(chatClient: null);
@@ -31,7 +31,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public void With_a_chat_client_the_model_is_configured()
+    public void IsConfigured_WithAChatClient_ReturnsTrue()
     {
         // Arrange
         var model = new AzureOpenAIDiagnosisModel(new FakeChatClient(WellFormed));
@@ -44,7 +44,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task An_unconfigured_model_proposes_nothing_without_calling_anything()
+    public async Task ProposeAsync_WhenTheModelIsUnconfigured_ReturnsNullWithoutCallingTheClient()
     {
         // Arrange
         var model = new AzureOpenAIDiagnosisModel(chatClient: null);
@@ -57,7 +57,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task A_well_formed_answer_is_mapped_to_the_domain_diagnosis()
+    public async Task ProposeAsync_WithAWellFormedAnswer_MapsItToTheDomainDiagnosis()
     {
         // Arrange
         var model = new AzureOpenAIDiagnosisModel(new FakeChatClient(WellFormed));
@@ -81,7 +81,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task The_incident_id_always_comes_from_the_handoff_not_the_model()
+    public async Task ProposeAsync_WhenTheAnswerCarriesAnIncidentId_UsesTheHandoffIdInstead()
     {
         // Arrange
         var answer = WellFormed.Replace("\"title\":", "\"incidentId\": \"evt-99999999999999999\", \"title\":", StringComparison.Ordinal);
@@ -97,7 +97,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task An_answer_that_is_not_json_proposes_nothing()
+    public async Task ProposeAsync_WithAnAnswerThatIsNotJson_ReturnsNull()
     {
         // Arrange
         var model = new AzureOpenAIDiagnosisModel(new FakeChatClient("I think the gateway is down."));
@@ -110,7 +110,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task An_answer_with_a_confidence_outside_the_contract_proposes_nothing()
+    public async Task ProposeAsync_WithAConfidenceOutsideTheContract_ReturnsNull()
     {
         // Arrange
         var answer = WellFormed.Replace("\"medium\"", "\"certain\"", StringComparison.Ordinal);
@@ -124,7 +124,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task An_answer_without_a_likely_cause_proposes_nothing()
+    public async Task ProposeAsync_WithAnAnswerWithoutALikelyCause_ReturnsNull()
     {
         // Arrange
         var answer = WellFormed.Replace("\"The payment gateway stopped answering within the timeout.\"", "\"\"", StringComparison.Ordinal);
@@ -138,7 +138,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task Missing_lists_are_mapped_to_empty_lists_never_null()
+    public async Task ProposeAsync_WithMissingLists_MapsThemToEmptyListsNeverNull()
     {
         // Arrange
         var answer = """
@@ -164,7 +164,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task The_prompt_lists_the_evidence_by_index_and_forbids_infrastructure_code()
+    public async Task ProposeAsync_WithOkHandoffs_PromptsWithIndexedEvidenceAndForbidsInfrastructureCode()
     {
         // Arrange
         var client = new FakeChatClient(WellFormed);
@@ -185,7 +185,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task The_prompt_says_a_tool_was_unavailable_rather_than_inventing_evidence()
+    public async Task ProposeAsync_WhenAToolWasUnavailable_SaysSoInThePromptRatherThanInventingEvidence()
     {
         // Arrange
         var client = new FakeChatClient(WellFormed);
@@ -201,7 +201,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task The_model_is_asked_exactly_once_per_event()
+    public async Task ProposeAsync_ForOneEvent_AsksTheModelExactlyOnce()
     {
         // Arrange
         var client = new FakeChatClient(WellFormed);
@@ -215,7 +215,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task A_cancelled_call_propagates_so_the_stage_can_decide()
+    public async Task ProposeAsync_WhenTheCallIsCancelled_PropagatesTheCancellation()
     {
         // Arrange
         using var cancelled = new CancellationTokenSource();
@@ -235,7 +235,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task A_failing_transport_propagates_so_the_stage_can_decide()
+    public async Task ProposeAsync_WhenTheTransportFails_PropagatesTheException()
     {
         // Arrange
         var client = new FakeChatClient((_, _) => throw new HttpRequestException("the endpoint refused the call"));

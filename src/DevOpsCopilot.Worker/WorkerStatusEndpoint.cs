@@ -46,12 +46,3 @@ public static class WorkerStatusEndpoint
         _ => "unhealthy",
     };
 }
-
-public sealed record WorkerStatusResponse(
-    bool TelemetryEnabled,
-    DateTimeOffset StartedAt,
-    double UptimeSeconds,
-    WorkerStatisticsSnapshot? Statistics,
-    IReadOnlyList<DependencyHealthResponse> Dependencies);
-
-public sealed record DependencyHealthResponse(string Name, string Status);

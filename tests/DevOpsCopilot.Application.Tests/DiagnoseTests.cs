@@ -6,7 +6,7 @@ namespace DevOpsCopilot.Application.Tests;
 public class DiagnoseTests
 {
     [Fact]
-    public async Task Without_a_configured_model_the_deterministic_diagnosis_is_used()
+    public async Task DiagnoseAsync_WithoutAConfiguredModel_UsesTheDeterministicDiagnosis()
     {
         // Arrange
         var model = new RecordingDiagnosisModel { IsConfigured = false };
@@ -27,7 +27,7 @@ public class DiagnoseTests
     }
 
     [Fact]
-    public async Task The_deterministic_diagnosis_records_the_model_as_unavailable()
+    public async Task DiagnoseAsync_WithoutAConfiguredModel_RecordsTheModelAsUnavailableInTheOpenQuestions()
     {
         // Arrange
         var model = new RecordingDiagnosisModel { IsConfigured = false };
@@ -42,7 +42,7 @@ public class DiagnoseTests
     }
 
     [Fact]
-    public async Task A_well_formed_model_diagnosis_is_used()
+    public async Task DiagnoseAsync_WithAWellFormedModelDiagnosis_UsesTheModelDiagnosis()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("ok", findings: ["Query `query-one` returned ServiceName=Checkout.Api."]);
@@ -61,7 +61,7 @@ public class DiagnoseTests
     }
 
     [Fact]
-    public async Task A_high_confidence_from_the_model_is_lowered_when_both_tools_were_unavailable()
+    public async Task DiagnoseAsync_WhenBothToolsWereUnavailable_LowersAHighModelConfidenceToLow()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("unavailable", kql: ["query-one"], rows: [], findings: []);
@@ -80,7 +80,7 @@ public class DiagnoseTests
     }
 
     [Fact]
-    public async Task A_rejected_model_diagnosis_falls_back_with_an_open_question()
+    public async Task DiagnoseAsync_WhenTheModelDiagnosisIsRejected_FallsBackWithAnOpenQuestion()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("ok", findings: ["Query `query-one` returned ServiceName=Checkout.Api."]);
@@ -103,7 +103,7 @@ public class DiagnoseTests
     }
 
     [Fact]
-    public async Task A_throwing_model_falls_back_and_does_not_propagate()
+    public async Task DiagnoseAsync_WhenTheModelThrows_FallsBackWithoutPropagatingTheException()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("ok", findings: ["Query `query-one` returned ServiceName=Checkout.Api."]);
@@ -124,7 +124,7 @@ public class DiagnoseTests
     }
 
     [Fact]
-    public async Task A_model_that_returns_nothing_falls_back()
+    public async Task DiagnoseAsync_WhenTheModelReturnsNothing_FallsBackToTheDeterministicDiagnosis()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("ok", findings: ["Query `query-one` returned ServiceName=Checkout.Api."]);
@@ -142,7 +142,7 @@ public class DiagnoseTests
     }
 
     [Fact]
-    public async Task A_timed_out_model_falls_back()
+    public async Task DiagnoseAsync_WhenTheModelTimesOut_FallsBackToTheDeterministicDiagnosis()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("ok", findings: ["Query `query-one` returned ServiceName=Checkout.Api."]);
@@ -159,7 +159,7 @@ public class DiagnoseTests
     }
 
     [Fact]
-    public async Task A_shutdown_while_the_model_is_running_still_stops_the_worker()
+    public async Task DiagnoseAsync_WhenShutdownIsRequestedWhileTheModelRuns_PropagatesTheCancellation()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("ok", findings: ["Query `query-one` returned ServiceName=Checkout.Api."]);

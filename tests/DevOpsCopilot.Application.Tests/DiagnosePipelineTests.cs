@@ -7,7 +7,7 @@ namespace DevOpsCopilot.Application.Tests;
 public class DiagnosePipelineTests
 {
     [Fact]
-    public async Task Without_a_model_the_pipeline_still_writes_a_report()
+    public async Task RunAsync_WithoutAConfiguredModel_StillWritesAFullReport()
     {
         // Arrange
         var writer = new RecordingReportWriter();
@@ -42,7 +42,7 @@ public class DiagnosePipelineTests
     }
 
     [Fact]
-    public async Task A_well_formed_model_diagnosis_is_used_in_the_report()
+    public async Task RunAsync_WithAWellFormedModelDiagnosis_UsesItInTheReport()
     {
         // Arrange
         var writer = new RecordingReportWriter();
@@ -75,7 +75,7 @@ public class DiagnosePipelineTests
     }
 
     [Fact]
-    public async Task An_event_whose_model_fails_is_still_checkpointed()
+    public async Task RunAsync_WhenTheModelFails_StillCheckpointsTheEvent()
     {
         // Arrange
         var observer = new RecordingProcessingObserver();

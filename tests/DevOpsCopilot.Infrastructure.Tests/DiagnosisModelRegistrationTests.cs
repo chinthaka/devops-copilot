@@ -11,7 +11,7 @@ namespace DevOpsCopilot.Infrastructure.Tests;
 public class DiagnosisModelRegistrationTests
 {
     [Fact]
-    public void Without_azure_openai_the_registered_model_is_unconfigured()
+    public void AddInfrastructure_WithoutAzureOpenAI_RegistersAnUnconfiguredModel()
     {
         // Arrange
         var services = Services(AzureOpenAISettings.Unconfigured);
@@ -26,7 +26,7 @@ public class DiagnosisModelRegistrationTests
     }
 
     [Fact]
-    public void With_azure_openai_the_registered_model_is_configured()
+    public void AddInfrastructure_WithAzureOpenAI_RegistersAConfiguredModel()
     {
         // Arrange
         var services = Services(new AzureOpenAISettings("https://contoso.openai.azure.com/", "gpt-4o", "a-local-test-key", 30));
@@ -41,7 +41,7 @@ public class DiagnosisModelRegistrationTests
     }
 
     [Fact]
-    public void The_diagnose_stage_is_registered_with_the_configured_timeout()
+    public void AddInfrastructure_WithAConfiguredTimeout_RegistersTheDiagnoseStageWithThatTimeout()
     {
         // Arrange
         var services = Services(new AzureOpenAISettings("https://contoso.openai.azure.com/", "gpt-4o", "", 45));
@@ -56,7 +56,7 @@ public class DiagnosisModelRegistrationTests
     }
 
     [Fact]
-    public void Omitting_the_azure_openai_settings_keeps_the_deterministic_path()
+    public void AddInfrastructure_WhenTheAzureOpenAISettingsAreOmitted_KeepsTheDeterministicPath()
     {
         // Arrange
         var services = new ServiceCollection();

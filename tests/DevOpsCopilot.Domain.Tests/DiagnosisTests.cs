@@ -5,7 +5,7 @@ namespace DevOpsCopilot.Domain.Tests;
 public class DiagnosisTests
 {
     [Fact]
-    public void Confidence_rejects_a_value_outside_the_three_levels()
+    public void Create_WithAValueOutsideTheThreeLevels_ThrowsArgumentException()
     {
         // Arrange
         string[] allowed = ["low", "medium", "high", "Low", "MEDIUM", "High"];
@@ -20,7 +20,7 @@ public class DiagnosisTests
     }
 
     [Fact]
-    public void A_diagnosis_carries_the_contract_fields()
+    public void Deterministic_WithOkHandoffs_CarriesTheContractFields()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("ok", findings: ["Query `q` returned ServiceName=Checkout.Api."]);
@@ -42,7 +42,7 @@ public class DiagnosisTests
     }
 
     [Fact]
-    public void Confidence_is_low_when_both_tools_were_unavailable()
+    public void ApplyConfidenceRule_WhenBothToolsWereUnavailable_LowersTheConfidenceToLow()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("unavailable");
@@ -57,7 +57,7 @@ public class DiagnosisTests
     }
 
     [Fact]
-    public void Impact_for_one_event_is_one_event_its_category_and_no_resources()
+    public void Deterministic_ForASingleEvent_SetsImpactToOneEventItsServiceAndNoResources()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("unavailable");
@@ -74,7 +74,7 @@ public class DiagnosisTests
     }
 
     [Fact]
-    public void The_deterministic_diagnosis_is_byte_identical_for_the_same_handoffs()
+    public void Deterministic_WithTheSameHandoffs_RendersByteIdenticalReports()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("ok", findings: ["Query `q` returned ServiceName=Checkout.Api."]);

@@ -5,7 +5,7 @@ namespace DevOpsCopilot.Domain.Tests;
 public class IncidentReportTests
 {
     [Fact]
-    public void The_report_has_the_seven_contract_sections_in_order()
+    public void Render_WithACompleteDiagnosis_WritesTheSevenContractSectionsInOrder()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("ok", findings: ["Query `q` returned ServiceName=Checkout.Api."]);
@@ -37,7 +37,7 @@ public class IncidentReportTests
     }
 
     [Fact]
-    public void The_header_names_the_event_the_trace_and_the_hub()
+    public void Render_ForAnyDiagnosis_NamesTheEventTheTraceAndTheHubInTheHeader()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("unavailable");
@@ -57,7 +57,7 @@ public class IncidentReportTests
     }
 
     [Fact]
-    public void The_likely_cause_section_states_the_confidence()
+    public void Render_WithAMediumConfidenceDiagnosis_StatesTheConfidenceInTheLikelyCauseSection()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("ok", findings: ["Query `q` returned ServiceName=Checkout.Api."]);
@@ -79,7 +79,7 @@ public class IncidentReportTests
     }
 
     [Fact]
-    public void With_both_tools_unavailable_the_report_says_so_and_lists_nothing()
+    public void Render_WhenBothToolsWereUnavailable_SaysSoAndListsNoEvidence()
     {
         // Arrange
         var diagnostic = Handoffs.Diagnostic("unavailable");

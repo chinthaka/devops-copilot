@@ -7,7 +7,7 @@ namespace DevOpsCopilot.Application.Tests;
 public class ProcessLogEventsTests
 {
     [Fact]
-    public async Task Restart_resumes_after_the_last_handled_checkpoint()
+    public async Task RunAsync_AfterARestart_ResumesFromTheLastHandledCheckpoint()
     {
         // Arrange
         var writer = new CountingReportWriter();

@@ -45,26 +45,3 @@ public sealed class WorkerStatistics : IProcessingObserver
             lastProcessedTicks == 0 ? null : new DateTimeOffset(lastProcessedTicks, TimeSpan.Zero));
     }
 }
-
-public sealed record WorkerStatisticsSnapshot(
-    long EventsRead,
-    long EventsSkipped,
-    long BatchesCheckpointed,
-    long Errors,
-    DateTimeOffset? LastProcessedAt);
-
-/// <summary>When the worker started, kept separately so uptime is known even with telemetry off.</summary>
-public sealed class WorkerUptime
-{
-    private readonly TimeProvider _time;
-
-    public WorkerUptime(TimeProvider time)
-    {
-        _time = time;
-        StartedAt = time.GetUtcNow();
-    }
-
-    public DateTimeOffset StartedAt { get; }
-
-    public TimeSpan Elapsed => _time.GetUtcNow() - StartedAt;
-}

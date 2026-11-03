@@ -85,19 +85,3 @@ public sealed class WorkerStatusClient(HttpClient http, TimeProvider time)
             ],
             time.GetUtcNow());
 }
-
-/// <summary>The worker's /status answer; mirrors WorkerStatusResponse in DevOpsCopilot.Worker.</summary>
-internal sealed record WorkerStatusResponse(
-    bool TelemetryEnabled,
-    double UptimeSeconds,
-    WorkerStatisticsResponse? Statistics,
-    WorkerDependencyResponse[]? Dependencies);
-
-internal sealed record WorkerStatisticsResponse(
-    long EventsRead,
-    long EventsSkipped,
-    long BatchesCheckpointed,
-    long Errors,
-    DateTimeOffset? LastProcessedAt);
-
-internal sealed record WorkerDependencyResponse(string? Name, string? Status);

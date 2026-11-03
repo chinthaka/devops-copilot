@@ -19,29 +19,3 @@ public interface IProcessingObserver
     /// <summary>Handling the event threw; the failure still propagates to the caller.</summary>
     void OnEventFailed();
 }
-
-/// <summary>The default observer: ignores every notification.</summary>
-public sealed class NullProcessingObserver : IProcessingObserver
-{
-    public static NullProcessingObserver Instance { get; } = new();
-
-    private NullProcessingObserver()
-    {
-    }
-
-    public void OnEventRead()
-    {
-    }
-
-    public void OnEventSkipped()
-    {
-    }
-
-    public void OnCheckpointed()
-    {
-    }
-
-    public void OnEventFailed()
-    {
-    }
-}

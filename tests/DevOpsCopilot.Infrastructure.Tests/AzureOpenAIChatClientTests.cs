@@ -7,7 +7,7 @@ public class AzureOpenAIChatClientTests
     [InlineData("   ", "gpt-4o", "key")]
     [InlineData("https://contoso.openai.azure.com/", "", "key")]
     [InlineData("https://contoso.openai.azure.com/", "   ", "key")]
-    public void Without_an_endpoint_and_a_deployment_no_client_is_built(string endpoint, string deployment, string apiKey)
+    public void TryCreate_WithoutAnEndpointOrADeployment_ReturnsNull(string endpoint, string deployment, string apiKey)
     {
         // Arrange
         var settings = new AzureOpenAISettings(endpoint, deployment, apiKey, 30);
@@ -20,7 +20,7 @@ public class AzureOpenAIChatClientTests
     }
 
     [Fact]
-    public void An_endpoint_that_is_not_a_url_builds_no_client_rather_than_throwing()
+    public void TryCreate_WithAnEndpointThatIsNotAUrl_ReturnsNullRatherThanThrowing()
     {
         // Arrange
         var settings = new AzureOpenAISettings("not a url", "gpt-4o", "key", 30);
@@ -33,7 +33,7 @@ public class AzureOpenAIChatClientTests
     }
 
     [Fact]
-    public void An_endpoint_and_a_deployment_with_a_key_build_a_client()
+    public void TryCreate_WithAnEndpointADeploymentAndAKey_BuildsAClient()
     {
         // Arrange
         var settings = new AzureOpenAISettings("https://contoso.openai.azure.com/", "gpt-4o", "a-local-test-key", 30);
@@ -46,7 +46,7 @@ public class AzureOpenAIChatClientTests
     }
 
     [Fact]
-    public void Without_a_key_a_client_is_still_built_for_managed_identity()
+    public void TryCreate_WithoutAKey_StillBuildsAClientForManagedIdentity()
     {
         // Arrange
         var settings = new AzureOpenAISettings("https://contoso.openai.azure.com/", "gpt-4o", "", 30);
@@ -59,7 +59,7 @@ public class AzureOpenAIChatClientTests
     }
 
     [Fact]
-    public void The_settings_never_carry_a_default_endpoint_deployment_or_key()
+    public void TryCreate_WithTheUnconfiguredSettings_ReturnsNullAndTheSettingsCarryNoDefaults()
     {
         // Arrange
         var settings = AzureOpenAISettings.Unconfigured;
@@ -75,7 +75,7 @@ public class AzureOpenAIChatClientTests
     }
 
     [Fact]
-    public void A_non_positive_timeout_falls_back_to_the_default()
+    public void Timeout_WithANonPositiveConfiguredValue_FallsBackToTheDefault()
     {
         // Arrange
         var zero = new AzureOpenAISettings("https://contoso.openai.azure.com/", "gpt-4o", "", 0);
@@ -91,7 +91,7 @@ public class AzureOpenAIChatClientTests
     }
 
     [Fact]
-    public void A_configured_timeout_is_used()
+    public void Timeout_WithAPositiveConfiguredValue_ReturnsTheConfiguredValue()
     {
         // Arrange
         var settings = new AzureOpenAISettings("https://contoso.openai.azure.com/", "gpt-4o", "", 45);
@@ -104,7 +104,7 @@ public class AzureOpenAIChatClientTests
     }
 
     [Fact]
-    public void The_settings_do_not_print_the_api_key()
+    public void ToString_WithAnApiKey_DoesNotPrintTheKey()
     {
         // Arrange
         var settings = new AzureOpenAISettings("https://contoso.openai.azure.com/", "gpt-4o", "super-secret-key", 30);

@@ -2,16 +2,6 @@ using System.Globalization;
 
 namespace DevOpsCopilot.Domain;
 
-/// <summary>A pointer into the diagnostic handoff: the KQL entry and the row a claim rests on.</summary>
-public sealed record EvidenceCitation(int Kql, int Row);
-
-/// <summary>What one incident touched: its services, resources, event count and time window.</summary>
-public sealed record Impact(
-    IReadOnlyList<string> Services,
-    IReadOnlyList<string> Resources,
-    int EventCount,
-    string Window);
-
 /// <summary>
 /// The structured result of the diagnose stage. Until incidents exist (M12), the incident id is
 /// the event id. The deterministic form is built from the handoffs alone and invents nothing.

@@ -97,6 +97,14 @@ The spec is the source of truth. Code, tests and AI-agent prompts are written to
 
 We use TDD on every occasion where it is possible: a failing test is written from the spec's acceptance criteria first, then the code to make it pass, then refactoring with the tests green. This applies to logic with clear right answers, such as event parsing, triage, fingerprinting, correlation, tool safety rules and report formatting.
 
+Every test is named in three underscore-separated parts, the **`Method_Scenario_ExpectedBehavior`** pattern:
+
+1. **Method** – the name of the method being tested,
+2. **Scenario** – the scenario under which the method is being tested,
+3. **Expected behaviour** – what must happen when the scenario is invoked.
+
+For example, `DiagnoseAsync_WhenTheModelTimesOut_FallsBackToTheDeterministicDiagnosis` tests the `DiagnoseAsync` method, in the scenario where the model times out, and expects the fall-back to the deterministic diagnosis. A failing test therefore reads as a sentence that says exactly which behaviour broke, without opening the test body.
+
 Where TDD does not fit naturally, we still verify against the spec:
 
 - **AI diagnosis quality** is checked with an evaluation set of staged incidents with known causes, run in CI so prompt changes cannot silently make diagnoses worse.

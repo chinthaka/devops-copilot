@@ -160,6 +160,4 @@ static async Task<IResult> GetDevOpsCopilotStatus(
 	});
 }
 
-public record DevOpsCopilotRequest(string AdviserName, string MemeberEmail, string? SchemeName);
-
 public partial class Program { }

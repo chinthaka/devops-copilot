@@ -7,7 +7,7 @@ namespace DevOpsCopilot.Infrastructure.Tests;
 public class LogEventParserTests
 {
     [Fact]
-    public void Parse_reads_the_log_fields_and_w3c_trace_context()
+    public void Parse_WithAFullJsonBody_ReadsTheLogFieldsAndW3CTraceContext()
     {
         // Arrange
         var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new

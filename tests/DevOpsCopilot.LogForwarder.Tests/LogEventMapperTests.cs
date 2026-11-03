@@ -8,7 +8,7 @@ namespace DevOpsCopilot.LogForwarder.Tests;
 public class LogEventMapperTests
 {
 	[Fact]
-	public void ToJson_serializes_the_log_event_fields()
+	public void ToJson_WithAFullLogRecord_SerializesTheLogEventFields()
 	{
 		// Arrange
 		using var activity = new Activity("test");
@@ -40,7 +40,7 @@ public class LogEventMapperTests
 	}
 
 	[Fact]
-	public void ToJson_keeps_null_exception_and_attributes()
+	public void ToJson_WithNullExceptionAndAttributes_KeepsThemNull()
 	{
 		// Arrange
 		string? jsonText = null;

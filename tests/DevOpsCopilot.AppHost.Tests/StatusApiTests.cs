@@ -21,7 +21,7 @@ public class StatusApiTests(AppHostFixture fixture) : IClassFixture<AppHostFixtu
     private static readonly string[] HealthStates = ["healthy", "degraded", "unhealthy", "unknown"];
 
     [DockerRequiredFact]
-    public async Task StatusApi_AgainstAppHost_ReturnsOneDocument()
+    public async Task GetApiStatus_AgainstTheRealAppHost_ReturnsOneStatusDocument()
     {
         // Arrange
         using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(10));
@@ -46,7 +46,7 @@ public class StatusApiTests(AppHostFixture fixture) : IClassFixture<AppHostFixtu
     }
 
     [DockerRequiredFact]
-    public async Task EndToEnd_EventsThroughEmulator_StatusShowsLiveCounts()
+    public async Task GetApiStatus_AfterEventsFlowThroughTheEmulator_ReportsLiveCounts()
     {
         // Arrange: one event that starts an incident and one Warning that does not.
         using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(10));

@@ -46,7 +46,7 @@ Tests first within every group, per [AGENTS.md](../../../AGENTS.md). Each group 
 3. Pass the configured timeout (30 s, pending open question 4) to the Application stage, which already bounds the call with a linked cancellation token. Infrastructure does not time itself out: a timeout is a fallback decision, and decision D2 keeps those in Application.
 4. Register the chat client so the three existing agents keep resolving `IChatClient` as they do now, and give the third agent the diagnosis model.
 5. In `src/DevOpsCopilot.Worker/Program.cs`, read `Incident:AzureOpenAI` into the settings record. No configuration is read anywhere else.
-6. Write the integration test `AzureOpenAI_ReturnsABindableAndCitedDiagnosis`, gated on the configuration being present.
+6. Write the integration test `ProposeAsync_AgainstARealAzureOpenAIDeployment_ReturnsABindableAndCitedDiagnosis`, gated on the configuration being present.
 
 ### 6. End to end and documentation
 
@@ -115,7 +115,7 @@ identity.
 
 | Risk | Mitigation |
 |---|---|
-| The model returns prose or a shape that will not bind | Structured output plus decision D5: an unbindable response is a fallback, not a failure, and is covered by `A_model_that_returns_nothing_falls_back`. |
+| The model returns prose or a shape that will not bind | Structured output plus decision D5: an unbindable response is a fallback, not a failure, and is covered by `DiagnoseAsync_WhenTheModelReturnsNothing_FallsBackToTheDeterministicDiagnosis`. |
 | The model cites evidence that does not exist | The citation guard rejects it and the deterministic diagnosis is used (AC-7). |
 | The model emits Bicep or a script in the suggested steps | The prompt forbids it, and the manual check looks for it. A test-level ban lands with M8's scoring; flagged here rather than silently assumed. |
 | `Azure.AI.OpenAI` and `Microsoft.Extensions.AI` version drift against Agent Framework 1.25.0 | Pin the version in `tech-stack.md`; if the transitive `Microsoft.Extensions.AI` conflicts, pin it explicitly in the Infrastructure project. |

@@ -101,14 +101,14 @@ Every type in `src/DevOpsCopilot.Daemon` today, with its target layer. 31 types 
 
 | Test | From | To |
 |---|---|---|
-| `Parse_reads_the_log_fields_and_w3c_trace_context` | `EventHubLogProcessingTests` | `tests/DevOpsCopilot.Infrastructure.Tests` (the parser is an Infrastructure mapper) |
-| `Restart_resumes_after_the_last_handled_checkpoint` | `EventHubLogProcessingTests` | `tests/DevOpsCopilot.Application.Tests` |
-| `Warning_without_an_exception_does_not_run_the_team` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
-| `Error_without_kusto_configuration_records_three_queries_and_no_rows` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
-| `Missing_search_configuration_returns_no_hits` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
-| `Search_keeps_five_overlapping_hits_and_drops_an_unrelated_service` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
-| `Draft_has_seven_sections_and_no_bicep_fence_when_no_resource_is_named` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
-| `Kql_that_contains_drop_is_not_executed` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
+| `Parse_WithAFullJsonBody_ReadsTheLogFieldsAndW3CTraceContext` | `EventHubLogProcessingTests` | `tests/DevOpsCopilot.Infrastructure.Tests` (the parser is an Infrastructure mapper) |
+| `RunAsync_AfterARestart_ResumesFromTheLastHandledCheckpoint` | `EventHubLogProcessingTests` | `tests/DevOpsCopilot.Application.Tests` |
+| `RunAsync_WithAWarningWithoutAnException_DoesNotRunTheTeam` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
+| `RunAsync_WithAnErrorButNoKustoConfiguration_RecordsThreeQueriesAndNoRows` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
+| `RunAsync_WithoutSearchConfiguration_ReturnsNoHits` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
+| `RunAsync_WithOverlappingAndUnrelatedHits_KeepsFiveAndDropsTheUnrelatedService` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
+| `Render_WhenNoResourceIsNamed_WritesSevenSectionsWithoutABicepFence` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
+| `ExecuteAsync_WithKqlThatContainsADropCommand_DoesNotExecuteTheQuery` | `IncidentWorkflowTests` | `tests/DevOpsCopilot.Application.Tests` |
 
 ## Decisions
 

@@ -17,7 +17,7 @@ public class DevOpsCopilotEndpointTests : IClassFixture<WebApplicationFactory<Pr
 	[InlineData("", "member@example.com")]
 	[InlineData("Ada", "")]
 	[InlineData("   ", "   ")]
-	public async Task Post_returns_400_when_adviser_name_or_member_email_is_blank(string adviserName, string memberEmail)
+	public async Task Post_WithABlankAdviserNameOrMemberEmail_ReturnsBadRequest(string adviserName, string memberEmail)
 	{
 		// Arrange
 		var body = new

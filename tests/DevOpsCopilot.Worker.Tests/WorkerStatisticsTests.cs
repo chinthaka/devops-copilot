@@ -5,7 +5,7 @@ namespace DevOpsCopilot.Worker.Tests;
 public class WorkerStatisticsTests
 {
     [Fact]
-    public void An_event_read_increments_events_read_and_sets_last_processed()
+    public void OnEventRead_WithFreshStatistics_IncrementsOnlyEventsReadAndSetsLastProcessedAt()
     {
         // Arrange
         var clock = new FixedClock(new DateTimeOffset(2026, 10, 25, 10, 0, 0, TimeSpan.Zero));
@@ -24,7 +24,7 @@ public class WorkerStatisticsTests
     }
 
     [Fact]
-    public void A_skipped_event_increments_only_the_skipped_count()
+    public void OnEventSkipped_WithFreshStatistics_IncrementsOnlyTheSkippedCount()
     {
         // Arrange
         var statistics = new WorkerStatistics(TimeProvider.System);
@@ -38,7 +38,7 @@ public class WorkerStatisticsTests
     }
 
     [Fact]
-    public void A_checkpoint_increments_only_the_checkpoint_count()
+    public void OnCheckpointed_WithFreshStatistics_IncrementsOnlyTheCheckpointCount()
     {
         // Arrange
         var statistics = new WorkerStatistics(TimeProvider.System);
@@ -51,7 +51,7 @@ public class WorkerStatisticsTests
     }
 
     [Fact]
-    public void A_failed_event_increments_only_the_error_count()
+    public void OnEventFailed_WithFreshStatistics_IncrementsOnlyTheErrorCount()
     {
         // Arrange
         var statistics = new WorkerStatistics(TimeProvider.System);
@@ -64,7 +64,7 @@ public class WorkerStatisticsTests
     }
 
     [Fact]
-    public void Before_any_event_the_last_processed_time_is_null()
+    public void Snapshot_BeforeAnyEvent_ReturnsANullLastProcessedAt()
     {
         // Arrange & Act
         var statistics = new WorkerStatistics(TimeProvider.System);
@@ -74,7 +74,7 @@ public class WorkerStatisticsTests
     }
 
     [Fact]
-    public void Uptime_grows_from_the_start_time()
+    public void Elapsed_AsTheClockAdvances_GrowsFromTheStartTime()
     {
         // Arrange
         var clock = new FixedClock(new DateTimeOffset(2026, 10, 25, 10, 0, 0, TimeSpan.Zero));
@@ -89,7 +89,7 @@ public class WorkerStatisticsTests
     }
 
     [Fact]
-    public async Task Counters_are_exact_under_parallel_increments()
+    public async Task Snapshot_AfterParallelIncrements_ReportsExactCounts()
     {
         // Arrange
         const int increments = 10_000;

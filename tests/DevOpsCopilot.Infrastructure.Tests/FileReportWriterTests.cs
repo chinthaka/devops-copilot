@@ -6,7 +6,7 @@ namespace DevOpsCopilot.Infrastructure.Tests;
 public class FileReportWriterTests
 {
     [Fact]
-    public async Task Draft_file_is_named_from_the_event_day_and_id()
+    public async Task WriteAsync_ForADraft_NamesTheFileFromTheEventDayAndId()
     {
         // Arrange
         using var drafts = new DraftDirectory();

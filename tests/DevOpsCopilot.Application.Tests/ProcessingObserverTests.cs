@@ -7,7 +7,7 @@ namespace DevOpsCopilot.Application.Tests;
 public class ProcessingObserverTests
 {
     [Fact]
-    public async Task An_incident_starting_event_is_notified_as_read_and_checkpointed()
+    public async Task RunAsync_WithAnIncidentStartingEvent_NotifiesReadThenCheckpointed()
     {
         // Arrange
         var observer = new RecordingObserver();
@@ -21,7 +21,7 @@ public class ProcessingObserverTests
     }
 
     [Fact]
-    public async Task An_event_that_does_not_start_an_incident_is_notified_as_skipped()
+    public async Task RunAsync_WithAnEventThatDoesNotStartAnIncident_NotifiesSkipped()
     {
         // Arrange
         var observer = new RecordingObserver();
@@ -35,7 +35,7 @@ public class ProcessingObserverTests
     }
 
     [Fact]
-    public async Task The_checkpoint_notification_comes_after_the_checkpoint_call()
+    public async Task RunAsync_WhenAnEventIsCheckpointed_NotifiesCheckpointedAfterTheCheckpointCall()
     {
         // Arrange
         var observer = new RecordingObserver();
@@ -50,7 +50,7 @@ public class ProcessingObserverTests
     }
 
     [Fact]
-    public async Task A_failing_event_is_notified_as_failed_and_the_exception_still_propagates()
+    public async Task RunAsync_WithAFailingEvent_NotifiesFailedAndStillPropagatesTheException()
     {
         // Arrange
         var observer = new RecordingObserver();
@@ -68,7 +68,7 @@ public class ProcessingObserverTests
     }
 
     [Fact]
-    public async Task Without_an_observer_processing_behaves_as_before()
+    public async Task RunAsync_WithoutAnObserver_ProcessesAndCheckpointsAsBefore()
     {
         // Arrange
         var source = new ListSource(trace: null, ErrorEvent());

@@ -5,7 +5,7 @@ namespace DevOpsCopilot.Domain.Tests;
 public class IncidentDraftTests
 {
     [Fact]
-    public void Draft_has_seven_sections_and_no_bicep_fence_when_no_resource_is_named()
+    public void Render_WhenNoResourceIsNamed_WritesSevenSectionsWithoutABicepFence()
     {
         // Arrange
         var diagnostic = UnavailableDiagnostic("System.IO.IOException: disk");

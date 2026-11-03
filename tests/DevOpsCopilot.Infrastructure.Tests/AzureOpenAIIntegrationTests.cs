@@ -18,7 +18,7 @@ namespace DevOpsCopilot.Infrastructure.Tests;
 public class AzureOpenAIIntegrationTests
 {
     [AzureOpenAIRequiredFact]
-    public async Task AzureOpenAI_ReturnsABindableAndCitedDiagnosis()
+    public async Task ProposeAsync_AgainstARealAzureOpenAIDeployment_ReturnsABindableAndCitedDiagnosis()
     {
         // Arrange
         var settings = AzureOpenAIConfiguration.Settings!;
