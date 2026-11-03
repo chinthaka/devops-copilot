@@ -1,11 +1,12 @@
-using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
+using DevOpsCopilot.AppHost.Tests.Common;
+using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 
 namespace DevOpsCopilot.AppHost.Tests;
 

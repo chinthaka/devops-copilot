@@ -1,3 +1,5 @@
+using DevOpsCopilot.Architecture.Tests.Common;
+
 namespace DevOpsCopilot.Architecture.Tests;
 
 public class SolutionLayoutTests

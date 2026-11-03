@@ -1,5 +1,13 @@
-using DevOpsCopilot.Application;
+using DevOpsCopilot.Application.Diagnoses;
+using DevOpsCopilot.Application.Grounding;
+using DevOpsCopilot.Application.Interfaces;
+using DevOpsCopilot.Application.Kql;
 using DevOpsCopilot.Infrastructure.Agents;
+using DevOpsCopilot.Infrastructure.Diagnoses;
+using DevOpsCopilot.Infrastructure.Events;
+using DevOpsCopilot.Infrastructure.Grounding;
+using DevOpsCopilot.Infrastructure.Kql;
+using DevOpsCopilot.Infrastructure.Reporting;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

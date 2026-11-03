@@ -1,7 +1,8 @@
+using DevOpsCopilot.LogForwarder;
+using DevOpsCopilot.LogForwarder.Tests.Common;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Text.Json;
-using DevOpsCopilot.LogForwarder;
-using Microsoft.Extensions.Logging;
 
 namespace DevOpsCopilot.LogForwarder.Tests;
 

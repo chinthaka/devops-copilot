@@ -1,5 +1,6 @@
-using DevOpsCopilot.Application;
-using DevOpsCopilot.Domain;
+using DevOpsCopilot.Application.Kql;
+using DevOpsCopilot.Domain.Events;
+using DevOpsCopilot.Domain.Kql;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 

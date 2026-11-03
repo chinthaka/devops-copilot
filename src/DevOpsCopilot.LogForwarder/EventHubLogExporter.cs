@@ -1,9 +1,10 @@
-using System.Text;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
+using DevOpsCopilot.LogForwarder.Interfaces;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
+using System.Text;
 
 namespace DevOpsCopilot.LogForwarder;
 

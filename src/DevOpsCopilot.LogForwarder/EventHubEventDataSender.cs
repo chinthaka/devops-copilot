@@ -1,5 +1,6 @@
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
+using DevOpsCopilot.LogForwarder.Interfaces;
 
 namespace DevOpsCopilot.LogForwarder;
 

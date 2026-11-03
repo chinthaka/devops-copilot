@@ -1,3 +1,4 @@
+using DevOpsCopilot.Architecture.Tests.Common;
 using System.Reflection;
 
 namespace DevOpsCopilot.Architecture.Tests;

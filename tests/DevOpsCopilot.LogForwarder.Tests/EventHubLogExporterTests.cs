@@ -1,5 +1,7 @@
 using Azure.Messaging.EventHubs;
 using DevOpsCopilot.LogForwarder;
+using DevOpsCopilot.LogForwarder.Interfaces;
+using DevOpsCopilot.LogForwarder.Tests.Common;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;

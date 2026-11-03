@@ -1,5 +1,8 @@
-using DevOpsCopilot.Application;
-using DevOpsCopilot.Domain;
+using DevOpsCopilot.Application.Interfaces;
+using DevOpsCopilot.Domain.Grounding;
+using DevOpsCopilot.Domain.Kql;
+using DevOpsCopilot.Domain.Pipeline;
+using DevOpsCopilot.Domain.Reporting;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 
