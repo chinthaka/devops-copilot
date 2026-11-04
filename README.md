@@ -118,7 +118,7 @@ Where TDD does not fit naturally, we still verify against the spec:
 
 ### Working rules
 
-- Every change is made on a feature branch named `features/YYYY-MM-DD-name-of-the-feature` (for example `features/2026-10-24-triage-fingerprinting`) and merged through a pull request; nothing is committed directly to `main`.
+- Every change is made on a feature branch named `features/YYYY-MM-DD-m<milestone>-feature-name`, carrying the roadmap milestone (for example `features/2026-11-04-m4-report-contract`), and merged through a pull request; nothing is committed directly to `main`. The feature's spec folder uses the same date and name.
 - Each pull request covers one feature from its spec, and CI (build, tests and evaluation) must pass before merging.
 - AI coding agents follow the same rules, described in [AGENTS.md](AGENTS.md).
 
@@ -176,7 +176,7 @@ dotnet test
 | [docs/specs/tech-stack.md](docs/specs/tech-stack.md) | Technologies and services used |
 | [docs/specs/roadmap.md](docs/specs/roadmap.md) | Phases, milestones, estimates and risks |
 | [docs/pipeline.md](docs/pipeline.md) | Handoff shapes and tool rules between workflow stages |
-| `docs/specs/YYYY-MM-DD-feature-name/` | One folder per feature, holding its spec |
+| `docs/specs/YYYY-MM-DD-m<milestone>-feature-name/` | One folder per feature, holding its spec (for example `docs/specs/2026-11-04-m4-report-contract/`) |
 | [AGENTS.md](AGENTS.md) | Instructions for AI coding agents working on this repo |
 
 ---

@@ -1,12 +1,12 @@
 # Roadmap
 
-The order of work for DevOpsCopilot, in small milestones. Each milestone is one or a few feature branches, each with its own spec folder under `docs/specs/YYYY-MM-DD-feature-name/`. A milestone is done only when its **Done when** check passes.
+The order of work for DevOpsCopilot, in small milestones. Each milestone is one or a few feature branches, each with its own spec folder under `docs/specs/YYYY-MM-DD-m<milestone>-feature-name/` (for example `docs/specs/2026-11-04-m4-report-contract/`). A milestone is done only when its **Done when** check passes.
 
 This file sets the order. It does not change the rules in [docs/pipeline.md](../pipeline.md), [mission.md](mission.md) or [tech-stack.md](tech-stack.md). If a milestone needs a rule to change, the spec changes the rule in the same pull request.
 
 Sizes are relative: **S** fits in one short feature branch, **M** is a few days of focused work, **L** is a week or more and should be split further when its spec is written.
 
-Last updated: 2026-10-25.
+Last updated: 2026-11-04.
 
 ## Where the code is now
 
@@ -81,9 +81,11 @@ Split into:
 
 ### M4 – Report matches the contract (S)
 
-Rename the remediation agent to the diagnosis agent and make the written report follow the seven sections in [pipeline.md § 7](../pipeline.md#7-report-and-notify): header, impact, likely cause with confidence, evidence, similar incidents, suggested steps, open questions. Remove the Bicep section and the resource-change detection. For a single event, impact is the event's resource and a one-event window.
+Scope reduced by M5's decision [D1](2026-10-25-m5-diagnosis-agent/requirement.md#decisions): M5 delivered the seven-section report of [pipeline.md § 7](../pipeline.md#7-report-and-notify) and the pipeline writes through it, so M4 removes what that superseded. Rename `RemediationAgent` to `DiagnosisAgent`, put the diagnose-and-render path behind it, and give it instructions that forbid infrastructure code. Delete the unused `IncidentDraft` renderer with its Slack, Teams and Bicep sections and its tests, and sweep the repository for "remediation" and "Bicep".
 
-**Done when:** the draft test asserts the seven contract sections, no test or code mentions Bicep, and the agent's instructions forbid infrastructure code.
+Specified in [2026-11-04-m4-report-contract](2026-11-04-m4-report-contract/requirement.md).
+
+**Done when:** the only report renderer is `IncidentReport`, no type or file named `RemediationAgent` or `IncidentDraft` remains, the agent's instructions forbid infrastructure code, and the only remaining "Bicep" and "remediation" mentions state the prohibition or sit in historical specs.
 
 ### M5 – Azure OpenAI diagnosis (M)
 
@@ -257,6 +259,6 @@ See [mission.md](mission.md#boundaries). In short: automated remediation or any 
 
 ## Working on a milestone
 
-1. Branch `features/YYYY-MM-DD-name-of-the-feature` from `main`.
-2. Copy `docs/specs/_template/` to `docs/specs/YYYY-MM-DD-name-of-the-feature/` and write `requirement.md`, `validation.md` and `plan.md`. Name the milestone in the requirement header.
+1. Branch `features/YYYY-MM-DD-m<milestone>-feature-name` from `main` (for example `features/2026-11-04-m4-report-contract`).
+2. Copy `docs/specs/_template/` to `docs/specs/YYYY-MM-DD-m<milestone>-feature-name/` (same date and name as the branch) and write `requirement.md`, `validation.md` and `plan.md`. Name the milestone in the requirement header.
 3. Follow [AGENTS.md](../../AGENTS.md): tests first, one feature per branch, update this file's status when the milestone's check passes.

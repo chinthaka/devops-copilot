@@ -1,13 +1,14 @@
 # Requirement: <Feature name>
 
 <!--
-Copy this folder to docs/specs/YYYY-MM-DD-feature-name/ (same date and name as the branch).
+Copy this folder to docs/specs/YYYY-MM-DD-m<milestone>-feature-name/ (same date and name as the
+branch, with the roadmap milestone included, e.g. docs/specs/2026-11-04-m4-report-contract/).
 Write this file first. Describe WHAT and WHY, not HOW. Delete these comments when done.
 -->
 
 | | |
 |---|---|
-| **Branch** | `features/YYYY-MM-DD-feature-name` |
+| **Branch** | `features/YYYY-MM-DD-m<milestone>-feature-name` |
 | **Milestone** | <e.g. M5 – Triage> ([roadmap](../roadmap.md)) |
 | **Status** | Draft / In review / Approved / Done |
 | **Author** | <name> |

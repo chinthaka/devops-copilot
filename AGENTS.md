@@ -12,7 +12,7 @@ The worker consumes error events from Azure Event Hubs and runs eight stages in 
 | [docs/specs/tech-stack.md](docs/specs/tech-stack.md) | The technologies, versions and services the project uses. Do not introduce anything outside it without updating it in the same pull request. |
 | [docs/specs/roadmap.md](docs/specs/roadmap.md) | Phases, milestones and scope. |
 | [docs/pipeline.md](docs/pipeline.md) | The system contract: stages, handoff shapes, evidence rules and tool rules. Read it before changing any stage, schema, tool contract or report section. |
-| `docs/specs/YYYY-MM-DD-feature-name/` | One folder per feature: `requirement.md`, `validation.md` and `plan.md`. |
+| `docs/specs/YYYY-MM-DD-m<milestone>-feature-name/` | One folder per feature: `requirement.md`, `validation.md` and `plan.md`. The folder name carries the roadmap milestone, e.g. `docs/specs/2026-11-04-m4-report-contract/`. |
 | [README.md](README.md) | Project overview for people. |
 
 Do not restate `docs/pipeline.md` here or in specs. Link to the relevant section instead.
@@ -21,8 +21,8 @@ Do not restate `docs/pipeline.md` here or in specs. Link to the relevant section
 
 This project follows Spec-Driven Development and uses Test-Driven Development wherever possible.
 
-1. **Branch.** Create a branch from the latest `main` before any change, named `features/YYYY-MM-DD-name-of-the-feature`. Never commit directly to `main`.
-2. **Spec first.** Find the feature's folder `docs/specs/YYYY-MM-DD-feature-name/`, using the same date and name as the branch. If it does not exist, create it by copying `docs/specs/_template/`. Check the feature against `mission.md`, `tech-stack.md` and `roadmap.md` first. Write the three files in this order:
+1. **Branch.** Create a branch from the latest `main` before any change, named `features/YYYY-MM-DD-m<milestone>-feature-name` with the roadmap milestone included (for example `features/2026-11-04-m4-report-contract`). Never commit directly to `main`.
+2. **Spec first.** Find the feature's folder `docs/specs/YYYY-MM-DD-m<milestone>-feature-name/`, using the same date and name as the branch. If it does not exist, create it by copying `docs/specs/_template/`. Check the feature against `mission.md`, `tech-stack.md` and `roadmap.md` first. Write the three files in this order:
    1. `requirement.md` – what the feature must do and why, its inputs and outputs, the `pipeline.md` rules it touches, and numbered acceptance criteria.
    2. `validation.md` – how each acceptance criterion will be proven: the unit tests (written first, TDD), integration tests and evaluation runs, each linked to a criterion number. Leave a **Results** section empty.
    3. `plan.md` – the technical approach, the files and classes affected, any `pipeline.md` contract changes, and ordered implementation steps.
@@ -108,7 +108,7 @@ Solution: `src/DevOpsCopilot.sln`. Orchestration: `src/DevOpsCopilot.AppHost/App
 | `src/DevOpsCopilot.LogForwarder` | OpenTelemetry exporter that sends application logs to hub `logs`. Used as a **local test producer**, because Azure Monitor and Application Insights cannot stream into the local emulator. It is not the product's ingestion path. |
 | `src/DevOpsCopilot.ServiceDefaults` | Health checks, service discovery, OpenTelemetry. OTLP export only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set. |
 | `docs/pipeline.md` | System contract for stages, handoffs and tool rules. |
-| `docs/specs/` | `mission.md`, `tech-stack.md`, `roadmap.md`, `_template/` (blank feature files to copy), and one `YYYY-MM-DD-feature-name/` folder per feature containing `requirement.md`, `validation.md` and `plan.md`. |
+| `docs/specs/` | `mission.md`, `tech-stack.md`, `roadmap.md`, `_template/` (blank feature files to copy), and one `YYYY-MM-DD-m<milestone>-feature-name/` folder per feature containing `requirement.md`, `validation.md` and `plan.md`. |
 | `incidents/` | Local report output. Gitignored; do not commit unless the user asks. |
 | `tests/` | xUnit projects, grouped in the solution folder `tests`. |
 
