@@ -1,9 +1,11 @@
+using DevOpsCopilot.Architecture.Tests.Common;
+
 namespace DevOpsCopilot.Architecture.Tests;
 
 public class SolutionLayoutTests
 {
     [Fact]
-    public void Daemon_project_no_longer_exists_in_the_solution()
+    public void Solution_AfterTheDaemonRemoval_ContainsNoDaemonProject()
     {
         // Arrange
         const string solutionPath = "src/DevOpsCopilot.sln";
@@ -18,7 +20,7 @@ public class SolutionLayoutTests
     }
 
     [Fact]
-    public void The_app_host_runs_the_worker()
+    public void AppHost_WhenComposed_RunsTheWorkerWithItsEventHubAndCheckpointReferences()
     {
         // Arrange
         var appHost = Repository.Project("src/DevOpsCopilot.AppHost/DevOpsCopilot.AppHost.csproj");

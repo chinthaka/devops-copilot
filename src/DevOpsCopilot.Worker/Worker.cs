@@ -1,4 +1,4 @@
-using DevOpsCopilot.Application;
+using DevOpsCopilot.Application.Events;
 
 namespace DevOpsCopilot.Worker;
 

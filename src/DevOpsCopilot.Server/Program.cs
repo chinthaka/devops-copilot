@@ -1,4 +1,4 @@
-using DevOpsCopilot.Server;
+using DevOpsCopilot.Server.Status;
 
 var builder = WebApplication.CreateBuilder(args);
 

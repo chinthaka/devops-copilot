@@ -4,82 +4,82 @@
 
 | AC | Test or check | Type | Layer | Project |
 |---|---|---|---|---|
-| AC-1 | `Confidence_rejects_a_value_outside_the_three_levels`, `A_diagnosis_carries_the_contract_fields` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
-| AC-2 | `The_report_has_the_seven_contract_sections_in_order`, `The_header_names_the_event_the_trace_and_the_hub`, `The_likely_cause_section_states_the_confidence` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
-| AC-3 | `With_both_tools_unavailable_the_report_says_so_and_lists_nothing` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
-| AC-4 | `Without_a_configured_model_the_deterministic_diagnosis_is_used`, `The_deterministic_diagnosis_records_the_model_as_unavailable` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
-| AC-4 | `Without_a_model_the_pipeline_still_writes_a_report` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
-| AC-5 | `A_well_formed_model_diagnosis_is_used_in_the_report` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
-| AC-6 | `Confidence_is_low_when_both_tools_were_unavailable` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
-| AC-6 | `A_high_confidence_from_the_model_is_lowered_when_both_tools_were_unavailable` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
-| AC-7 | `A_citation_to_a_kql_entry_that_does_not_exist_is_invalid`, `A_citation_to_a_row_that_does_not_exist_is_invalid`, `A_similar_incident_that_was_not_a_hit_is_invalid`, `A_diagnosis_citing_only_returned_evidence_is_valid` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
-| AC-7 | `A_rejected_model_diagnosis_falls_back_with_an_open_question` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
-| AC-8 | `A_throwing_model_falls_back_and_does_not_propagate`, `A_model_that_returns_nothing_falls_back`, `A_timed_out_model_falls_back` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
-| AC-8 | `An_event_whose_model_fails_is_still_checkpointed` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
-| AC-9 | `Impact_for_one_event_is_one_event_its_category_and_no_resources` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
+| AC-1 | `Create_WithAValueOutsideTheThreeLevels_ThrowsArgumentException`, `Deterministic_WithOkHandoffs_CarriesTheContractFields` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
+| AC-2 | `Render_WithACompleteDiagnosis_WritesTheSevenContractSectionsInOrder`, `Render_ForAnyDiagnosis_NamesTheEventTheTraceAndTheHubInTheHeader`, `Render_WithAMediumConfidenceDiagnosis_StatesTheConfidenceInTheLikelyCauseSection` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
+| AC-3 | `Render_WhenBothToolsWereUnavailable_SaysSoAndListsNoEvidence` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
+| AC-4 | `DiagnoseAsync_WithoutAConfiguredModel_UsesTheDeterministicDiagnosis`, `DiagnoseAsync_WithoutAConfiguredModel_RecordsTheModelAsUnavailableInTheOpenQuestions` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
+| AC-4 | `RunAsync_WithoutAConfiguredModel_StillWritesAFullReport` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
+| AC-5 | `RunAsync_WithAWellFormedModelDiagnosis_UsesItInTheReport` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
+| AC-6 | `ApplyConfidenceRule_WhenBothToolsWereUnavailable_LowersTheConfidenceToLow` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
+| AC-6 | `DiagnoseAsync_WhenBothToolsWereUnavailable_LowersAHighModelConfidenceToLow` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
+| AC-7 | `Validate_WithACitationToAMissingKqlEntry_ReturnsInvalid`, `Validate_WithACitationToAMissingRow_ReturnsInvalid`, `Validate_WithASimilarIncidentThatWasNotAHit_ReturnsInvalid`, `Validate_WhenOnlyReturnedEvidenceIsCited_ReturnsValid` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
+| AC-7 | `DiagnoseAsync_WhenTheModelDiagnosisIsRejected_FallsBackWithAnOpenQuestion` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
+| AC-8 | `DiagnoseAsync_WhenTheModelThrows_FallsBackWithoutPropagatingTheException`, `DiagnoseAsync_WhenTheModelReturnsNothing_FallsBackToTheDeterministicDiagnosis`, `DiagnoseAsync_WhenTheModelTimesOut_FallsBackToTheDeterministicDiagnosis` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
+| AC-8 | `RunAsync_WhenTheModelFails_StillCheckpointsTheEvent` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
+| AC-9 | `Deterministic_ForASingleEvent_SetsImpactToOneEventItsServiceAndNoResources` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
 | AC-10 | Existing architecture tests, extended with the Azure OpenAI package rule | Architecture | — | `tests/DevOpsCopilot.Architecture.Tests` |
-| AC-11 | `AzureOpenAI_ReturnsABindableAndCitedDiagnosis` | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
+| AC-11 | `ProposeAsync_AgainstARealAzureOpenAIDeployment_ReturnsABindableAndCitedDiagnosis` | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-2, AC-4 | `EndToEnd_AnErrorEvent_WritesASevenSectionReport` | Integration | Host | `tests/DevOpsCopilot.AppHost.Tests` |
 
 ## Unit tests (written first)
 
 `tests/DevOpsCopilot.Domain.Tests` — the diagnosis, the renderer and the guard, all pure:
 
-- **`Confidence_rejects_a_value_outside_the_three_levels`** (AC-1) – Arrange: the strings `low`, `medium`, `high` and `certain`. Act: create a `Confidence` from each. Assert: the first three succeed and are case-insensitive; `certain` throws.
-- **`A_diagnosis_carries_the_contract_fields`** (AC-1) – Arrange: handoffs with one finding and one hit. Act: build the deterministic diagnosis. Assert: every field in [pipeline.md § 6](../../pipeline.md#6-diagnose-diagnosis-agent) is populated or empty, never null.
-- **`The_report_has_the_seven_contract_sections_in_order`** (AC-2) – Arrange: a diagnosis with every field filled. Act: render. Assert: the seven section headings appear exactly once each and their indexes in the document ascend in contract order.
-- **`The_header_names_the_event_the_trace_and_the_hub`** (AC-2) – Arrange: a diagnosis for an event with a trace id. Act: render. Assert: the header contains the title, the status, the event id, the trace id and `logs`.
-- **`The_likely_cause_section_states_the_confidence`** (AC-2) – Arrange: a diagnosis at `medium`. Act: render. Assert: the Likely cause section contains the cause and the word `medium`.
-- **`With_both_tools_unavailable_the_report_says_so_and_lists_nothing`** (AC-3) – Arrange: handoffs with both statuses `unavailable` and empty rows and hits. Act: render. Assert: Evidence says KQL was unavailable, Similar incidents says search was unavailable, and neither section contains a row value or a hit title.
-- **`Confidence_is_low_when_both_tools_were_unavailable`** (AC-6) – Arrange: both statuses `unavailable`. Act: apply the contract confidence rule to a `high` diagnosis. Assert: `low`.
-- **`A_citation_to_a_kql_entry_that_does_not_exist_is_invalid`** (AC-7) – Arrange: a handoff with two KQL entries and a diagnosis citing entry 5. Act: validate. Assert: invalid, and the reason names the citation.
-- **`A_citation_to_a_row_that_does_not_exist_is_invalid`** (AC-7) – as above for the row index.
-- **`A_similar_incident_that_was_not_a_hit_is_invalid`** (AC-7) – Arrange: grounding with hits `h1`, `h2` and a diagnosis listing `h9`. Act: validate. Assert: invalid.
-- **`A_diagnosis_citing_only_returned_evidence_is_valid`** (AC-7) – Arrange: citations inside both lists and similar incidents drawn from the hits. Act: validate. Assert: valid.
-- **`Impact_for_one_event_is_one_event_its_category_and_no_resources`** (AC-9) – Arrange: a handoff for one event with category `Orders.Api`. Act: build the deterministic diagnosis. Assert: event count 1, services `["Orders.Api"]`, resources empty, window equal to the event's timestamp.
-- **`The_deterministic_diagnosis_is_byte_identical_for_the_same_handoffs`** (NFR) – Arrange: the same handoffs twice. Act: render both. Assert: the two documents are equal.
+- **`Create_WithAValueOutsideTheThreeLevels_ThrowsArgumentException`** (AC-1) – Arrange: the strings `low`, `medium`, `high` and `certain`. Act: create a `Confidence` from each. Assert: the first three succeed and are case-insensitive; `certain` throws.
+- **`Deterministic_WithOkHandoffs_CarriesTheContractFields`** (AC-1) – Arrange: handoffs with one finding and one hit. Act: build the deterministic diagnosis. Assert: every field in [pipeline.md § 6](../../pipeline.md#6-diagnose-diagnosis-agent) is populated or empty, never null.
+- **`Render_WithACompleteDiagnosis_WritesTheSevenContractSectionsInOrder`** (AC-2) – Arrange: a diagnosis with every field filled. Act: render. Assert: the seven section headings appear exactly once each and their indexes in the document ascend in contract order.
+- **`Render_ForAnyDiagnosis_NamesTheEventTheTraceAndTheHubInTheHeader`** (AC-2) – Arrange: a diagnosis for an event with a trace id. Act: render. Assert: the header contains the title, the status, the event id, the trace id and `logs`.
+- **`Render_WithAMediumConfidenceDiagnosis_StatesTheConfidenceInTheLikelyCauseSection`** (AC-2) – Arrange: a diagnosis at `medium`. Act: render. Assert: the Likely cause section contains the cause and the word `medium`.
+- **`Render_WhenBothToolsWereUnavailable_SaysSoAndListsNoEvidence`** (AC-3) – Arrange: handoffs with both statuses `unavailable` and empty rows and hits. Act: render. Assert: Evidence says KQL was unavailable, Similar incidents says search was unavailable, and neither section contains a row value or a hit title.
+- **`ApplyConfidenceRule_WhenBothToolsWereUnavailable_LowersTheConfidenceToLow`** (AC-6) – Arrange: both statuses `unavailable`. Act: apply the contract confidence rule to a `high` diagnosis. Assert: `low`.
+- **`Validate_WithACitationToAMissingKqlEntry_ReturnsInvalid`** (AC-7) – Arrange: a handoff with two KQL entries and a diagnosis citing entry 5. Act: validate. Assert: invalid, and the reason names the citation.
+- **`Validate_WithACitationToAMissingRow_ReturnsInvalid`** (AC-7) – as above for the row index.
+- **`Validate_WithASimilarIncidentThatWasNotAHit_ReturnsInvalid`** (AC-7) – Arrange: grounding with hits `h1`, `h2` and a diagnosis listing `h9`. Act: validate. Assert: invalid.
+- **`Validate_WhenOnlyReturnedEvidenceIsCited_ReturnsValid`** (AC-7) – Arrange: citations inside both lists and similar incidents drawn from the hits. Act: validate. Assert: valid.
+- **`Deterministic_ForASingleEvent_SetsImpactToOneEventItsServiceAndNoResources`** (AC-9) – Arrange: a handoff for one event with category `Orders.Api`. Act: build the deterministic diagnosis. Assert: event count 1, services `["Orders.Api"]`, resources empty, window equal to the event's timestamp.
+- **`Deterministic_WithTheSameHandoffs_RendersByteIdenticalReports`** (NFR) – Arrange: the same handoffs twice. Act: render both. Assert: the two documents are equal.
 
 `tests/DevOpsCopilot.Application.Tests` — the stage, with a fake `IDiagnosisModel`:
 
-- **`Without_a_configured_model_the_deterministic_diagnosis_is_used`** (AC-4) – Arrange: a fake model reporting not configured. Act: run the diagnose stage. Assert: the diagnosis matches the deterministic one field by field (record equality compares its lists by reference, so the fields are compared instead) and the model was never called.
-- **`The_deterministic_diagnosis_records_the_model_as_unavailable`** (AC-4) – Act: as above. Assert: an open question states the diagnosis model was unavailable.
-- **`Without_a_model_the_pipeline_still_writes_a_report`** (AC-4) – Arrange: the full pipeline with fake tools, all unavailable. Act: run one error event. Assert: one report path is returned and the report has the seven sections.
-- **`A_well_formed_model_diagnosis_is_used_in_the_report`** (AC-5) – Arrange: a fake model returning a valid, fully cited diagnosis. Act: run. Assert: the report's title, likely cause and suggested steps are the model's, and no open question claims the model was unavailable.
-- **`A_high_confidence_from_the_model_is_lowered_when_both_tools_were_unavailable`** (AC-6) – Arrange: a model returning `high` with both statuses `unavailable`. Act: run. Assert: the resulting confidence is `low`.
-- **`A_rejected_model_diagnosis_falls_back_with_an_open_question`** (AC-7) – Arrange: a model returning a diagnosis citing row 99. Act: run. Assert: the deterministic diagnosis is used, confidence `low`, and an open question says the model's diagnosis was rejected for citing evidence that was not returned.
-- **`A_throwing_model_falls_back_and_does_not_propagate`** (AC-8) – Arrange: a model that throws. Act: run. Assert: no exception escapes, the deterministic diagnosis is used and an open question names the failure.
-- **`A_model_that_returns_nothing_falls_back`** (AC-8) – Arrange: a model returning `null` (an unbindable response at the boundary). Act: run. Assert: as above.
-- **`A_timed_out_model_falls_back`** (AC-8) – Arrange: a model that waits on the cancellation token, and a stage built with a zero timeout. Act: run. Assert: as above, and the open question names the timeout. (The timeout is a `TimeSpan` on the stage rather than a fake `TimeProvider`: the repo has no `FakeTimeProvider` package and a zero timeout is deterministic without one.)
-- **`A_shutdown_while_the_model_is_running_still_stops_the_worker`** (AC-8) – Arrange: a model that waits on the cancellation token and an already-cancelled caller token. Act: run. Assert: an `OperationCanceledException` propagates. Added during implementation: a cancelled *caller* must not be swallowed as a model failure, which is the one case where falling back would be wrong.
-- **`An_event_whose_model_fails_is_still_checkpointed`** (AC-8) – Arrange: `ProcessLogEvents` with a throwing model. Act: run one event. Assert: the checkpoint delegate ran once and the observer saw no error.
+- **`DiagnoseAsync_WithoutAConfiguredModel_UsesTheDeterministicDiagnosis`** (AC-4) – Arrange: a fake model reporting not configured. Act: run the diagnose stage. Assert: the diagnosis matches the deterministic one field by field (record equality compares its lists by reference, so the fields are compared instead) and the model was never called.
+- **`DiagnoseAsync_WithoutAConfiguredModel_RecordsTheModelAsUnavailableInTheOpenQuestions`** (AC-4) – Act: as above. Assert: an open question states the diagnosis model was unavailable.
+- **`RunAsync_WithoutAConfiguredModel_StillWritesAFullReport`** (AC-4) – Arrange: the full pipeline with fake tools, all unavailable. Act: run one error event. Assert: one report path is returned and the report has the seven sections.
+- **`RunAsync_WithAWellFormedModelDiagnosis_UsesItInTheReport`** (AC-5) – Arrange: a fake model returning a valid, fully cited diagnosis. Act: run. Assert: the report's title, likely cause and suggested steps are the model's, and no open question claims the model was unavailable.
+- **`DiagnoseAsync_WhenBothToolsWereUnavailable_LowersAHighModelConfidenceToLow`** (AC-6) – Arrange: a model returning `high` with both statuses `unavailable`. Act: run. Assert: the resulting confidence is `low`.
+- **`DiagnoseAsync_WhenTheModelDiagnosisIsRejected_FallsBackWithAnOpenQuestion`** (AC-7) – Arrange: a model returning a diagnosis citing row 99. Act: run. Assert: the deterministic diagnosis is used, confidence `low`, and an open question says the model's diagnosis was rejected for citing evidence that was not returned.
+- **`DiagnoseAsync_WhenTheModelThrows_FallsBackWithoutPropagatingTheException`** (AC-8) – Arrange: a model that throws. Act: run. Assert: no exception escapes, the deterministic diagnosis is used and an open question names the failure.
+- **`DiagnoseAsync_WhenTheModelReturnsNothing_FallsBackToTheDeterministicDiagnosis`** (AC-8) – Arrange: a model returning `null` (an unbindable response at the boundary). Act: run. Assert: as above.
+- **`DiagnoseAsync_WhenTheModelTimesOut_FallsBackToTheDeterministicDiagnosis`** (AC-8) – Arrange: a model that waits on the cancellation token, and a stage built with a zero timeout. Act: run. Assert: as above, and the open question names the timeout. (The timeout is a `TimeSpan` on the stage rather than a fake `TimeProvider`: the repo has no `FakeTimeProvider` package and a zero timeout is deterministic without one.)
+- **`DiagnoseAsync_WhenShutdownIsRequestedWhileTheModelRuns_PropagatesTheCancellation`** (AC-8) – Arrange: a model that waits on the cancellation token and an already-cancelled caller token. Act: run. Assert: an `OperationCanceledException` propagates. Added during implementation: a cancelled *caller* must not be swallowed as a model failure, which is the one case where falling back would be wrong.
+- **`RunAsync_WhenTheModelFails_StillCheckpointsTheEvent`** (AC-8) – Arrange: `ProcessLogEvents` with a throwing model. Act: run one event. Assert: the checkpoint delegate ran once and the observer saw no error.
 
 Existing Application and Domain tests keep passing unchanged, in particular the `Warning`-does-not-start-the-team test and the five-hit cap.
 
 ## Integration tests
 
-- **`AzureOpenAI_ReturnsABindableAndCitedDiagnosis`** (AC-11) – Arrange: handoffs with two KQL entries, two rows and two hits, and an endpoint, deployment and credential from user secrets. Act: call the Azure OpenAI diagnosis model once. Assert: the response binds to the diagnosis shape and passes the citation guard. Marked `Category=RequiresAzureOpenAI` and skipped by `AzureOpenAIRequiredFactAttribute` when the configuration is absent, in the same way the AppHost tests skip without Docker. Never run in CI.
+- **`ProposeAsync_AgainstARealAzureOpenAIDeployment_ReturnsABindableAndCitedDiagnosis`** (AC-11) – Arrange: handoffs with two KQL entries, two rows and two hits, and an endpoint, deployment and credential from user secrets. Act: call the Azure OpenAI diagnosis model once. Assert: the response binds to the diagnosis shape and passes the citation guard. Marked `Category=RequiresAzureOpenAI` and skipped by `AzureOpenAIRequiredFactAttribute` when the configuration is absent, in the same way the AppHost tests skip without Docker. Never run in CI.
 
 ### Infrastructure unit tests for the model (no network)
 
 Driven by `FakeChatClient`, which answers with whatever text the test gives it, so the whole mapping, prompt and failure surface is covered without Azure:
 
-- **`Without_a_chat_client_the_model_is_not_configured`**, **`With_a_chat_client_the_model_is_configured`**, **`An_unconfigured_model_proposes_nothing_without_calling_anything`** (AC-4).
-- **`A_well_formed_answer_is_mapped_to_the_domain_diagnosis`** (AC-5) – every field of the contract shape is mapped.
-- **`The_incident_id_always_comes_from_the_handoff_not_the_model`** (AC-5) – the model cannot rename the incident it was asked about.
-- **`An_answer_that_is_not_json_proposes_nothing`**, **`An_answer_with_a_confidence_outside_the_contract_proposes_nothing`**, **`An_answer_without_a_likely_cause_proposes_nothing`** (AC-8) – an answer that cannot be trusted becomes `null`, which the stage turns into the deterministic fallback.
-- **`Missing_lists_are_mapped_to_empty_lists_never_null`** (AC-1).
-- **`The_prompt_lists_the_evidence_by_index_and_forbids_infrastructure_code`** (AC-7, [mission principle 1](../mission.md#principles)) – the prompt carries the KQL, rows and hit ids by index and forbids Bicep, ARM and Terraform.
-- **`The_prompt_says_a_tool_was_unavailable_rather_than_inventing_evidence`** (AC-3).
-- **`The_model_is_asked_exactly_once_per_event`** (NFR, cost).
-- **`A_cancelled_call_propagates_so_the_stage_can_decide`**, **`A_failing_transport_propagates_so_the_stage_can_decide`** (AC-8, decision D2) – Infrastructure never swallows a failure.
+- **`IsConfigured_WithoutAChatClient_ReturnsFalse`**, **`IsConfigured_WithAChatClient_ReturnsTrue`**, **`ProposeAsync_WhenTheModelIsUnconfigured_ReturnsNullWithoutCallingTheClient`** (AC-4).
+- **`ProposeAsync_WithAWellFormedAnswer_MapsItToTheDomainDiagnosis`** (AC-5) – every field of the contract shape is mapped.
+- **`ProposeAsync_WhenTheAnswerCarriesAnIncidentId_UsesTheHandoffIdInstead`** (AC-5) – the model cannot rename the incident it was asked about.
+- **`ProposeAsync_WithAnAnswerThatIsNotJson_ReturnsNull`**, **`ProposeAsync_WithAConfidenceOutsideTheContract_ReturnsNull`**, **`ProposeAsync_WithAnAnswerWithoutALikelyCause_ReturnsNull`** (AC-8) – an answer that cannot be trusted becomes `null`, which the stage turns into the deterministic fallback.
+- **`ProposeAsync_WithMissingLists_MapsThemToEmptyListsNeverNull`** (AC-1).
+- **`ProposeAsync_WithOkHandoffs_PromptsWithIndexedEvidenceAndForbidsInfrastructureCode`** (AC-7, [mission principle 1](../mission.md#principles)) – the prompt carries the KQL, rows and hit ids by index and forbids Bicep, ARM and Terraform.
+- **`ProposeAsync_WhenAToolWasUnavailable_SaysSoInThePromptRatherThanInventingEvidence`** (AC-3).
+- **`ProposeAsync_ForOneEvent_AsksTheModelExactlyOnce`** (NFR, cost).
+- **`ProposeAsync_WhenTheCallIsCancelled_PropagatesTheCancellation`**, **`ProposeAsync_WhenTheTransportFails_PropagatesTheException`** (AC-8, decision D2) – Infrastructure never swallows a failure.
 
 ### Configuration and wiring tests
 
-- **`Without_an_endpoint_and_a_deployment_no_client_is_built`** (theory over blank endpoint and deployment), **`An_endpoint_that_is_not_a_url_builds_no_client_rather_than_throwing`**, **`An_endpoint_and_a_deployment_with_a_key_build_a_client`**, **`Without_a_key_a_client_is_still_built_for_managed_identity`** (AC-4, AC-11).
-- **`The_settings_never_carry_a_default_endpoint_deployment_or_key`** – nothing is hardcoded; `Unconfigured` is empty throughout.
-- **`The_settings_do_not_print_the_api_key`** (NFR, secrets) – `ToString` redacts the key, so it cannot reach a log line.
-- **`A_non_positive_timeout_falls_back_to_the_default`**, **`A_configured_timeout_is_used`** (AC-8).
-- **`Without_azure_openai_the_registered_model_is_unconfigured`**, **`With_azure_openai_the_registered_model_is_configured`**, **`The_diagnose_stage_is_registered_with_the_configured_timeout`**, **`Omitting_the_azure_openai_settings_keeps_the_deterministic_path`** (AC-4, AC-10) – what the host actually resolves from `AddInfrastructure`.
+- **`TryCreate_WithoutAnEndpointOrADeployment_ReturnsNull`** (theory over blank endpoint and deployment), **`TryCreate_WithAnEndpointThatIsNotAUrl_ReturnsNullRatherThanThrowing`**, **`TryCreate_WithAnEndpointADeploymentAndAKey_BuildsAClient`**, **`TryCreate_WithoutAKey_StillBuildsAClientForManagedIdentity`** (AC-4, AC-11).
+- **`TryCreate_WithTheUnconfiguredSettings_ReturnsNullAndTheSettingsCarryNoDefaults`** – nothing is hardcoded; `Unconfigured` is empty throughout.
+- **`ToString_WithAnApiKey_DoesNotPrintTheKey`** (NFR, secrets) – `ToString` redacts the key, so it cannot reach a log line.
+- **`Timeout_WithANonPositiveConfiguredValue_FallsBackToTheDefault`**, **`Timeout_WithAPositiveConfiguredValue_ReturnsTheConfiguredValue`** (AC-8).
+- **`AddInfrastructure_WithoutAzureOpenAI_RegistersAnUnconfiguredModel`**, **`AddInfrastructure_WithAzureOpenAI_RegistersAConfiguredModel`**, **`AddInfrastructure_WithAConfiguredTimeout_RegistersTheDiagnoseStageWithThatTimeout`**, **`AddInfrastructure_WhenTheAzureOpenAISettingsAreOmitted_KeepsTheDeterministicPath`** (AC-4, AC-10) – what the host actually resolves from `AddInfrastructure`.
 - **`EndToEnd_AnErrorEvent_WritesASevenSectionReport`** (AC-2, AC-4) – Arrange: the AppHost with the emulators and no Azure OpenAI configuration. Act: produce one error event to hub `logs`. Assert: a report file appears under the configured drafts directory with the seven section headings, confidence `low`, and an open question naming the unavailable model. Extends the existing emulator end-to-end test; marked `Category=RequiresDocker`.
 
 ## Architecture tests

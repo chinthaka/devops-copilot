@@ -1,7 +1,18 @@
-using DevOpsCopilot.Application;
-using DevOpsCopilot.Domain;
+using DevOpsCopilot.Application.Events;
+using DevOpsCopilot.Application.Grounding;
+using DevOpsCopilot.Application.Interfaces;
+using DevOpsCopilot.Application.Kql;
+using DevOpsCopilot.Application.Pipeline;
+using DevOpsCopilot.Domain.Kql;
 using DevOpsCopilot.Infrastructure;
+using DevOpsCopilot.Infrastructure.Diagnoses;
+using DevOpsCopilot.Infrastructure.Events;
+using DevOpsCopilot.Infrastructure.Grounding;
+using DevOpsCopilot.Infrastructure.Kql;
+using DevOpsCopilot.Infrastructure.Reporting;
 using DevOpsCopilot.Worker;
+using DevOpsCopilot.Worker.Options;
+using DevOpsCopilot.Worker.Status;
 
 var builder = WebApplication.CreateBuilder(args);
 

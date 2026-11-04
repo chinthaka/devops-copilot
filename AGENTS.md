@@ -37,7 +37,12 @@ This project follows Spec-Driven Development and uses Test-Driven Development wh
 
 - Write each test as Arrange, Act, then Assert, in that order.
 - Add test projects under the solution folder `tests`.
-- Name tests after the behaviour in the acceptance criterion they cover.
+- Name every test in three underscore-separated parts, `Method_Scenario_ExpectedBehavior`:
+  1. the name of the method being tested (for an endpoint, the route; for an architecture rule, the subject under inspection),
+  2. the scenario under which it is tested,
+  3. the expected behaviour when the scenario is invoked.
+
+  For example `DiagnoseAsync_WhenTheModelTimesOut_FallsBackToTheDeterministicDiagnosis`. The scenario and expected behaviour come from the acceptance criterion the test covers. Frontend (Vitest) test names follow the same three-part shape.
 - Domain and Application tests are plain unit tests with no Azure SDKs, network or emulator. Infrastructure is tested with integration tests.
 
 ## Architecture
@@ -113,6 +118,8 @@ Leftover projects: the samples `src/DevOpsCopilot.ApiService`, `src/DevOpsCopilo
 
 - Target `net10.0` for every .NET project.
 - Nullable reference types on. Match the style of the project you edit.
+- One top-level type (class, record, interface or enum) per file, with the file named after the type. Private types nested inside a test class may stay nested.
+- Group files into folders by domain, using the same folder names across the layers so a domain can be followed vertically: `Events`, `Kql`, `Grounding`, `Diagnoses`, `Reporting`, `Pipeline`, plus host-specific `Options` and `Status`. Put cross-domain items in `Common`, and all of a project's interfaces in a flat `Interfaces/` folder at the project root. Namespaces follow folders (`src/DevOpsCopilot.Domain/Kql/` → `DevOpsCopilot.Domain.Kql`), and test projects mirror the folders and namespaces of the code they test, with shared test helpers in `Common/`. (`Diagnoses` is plural to avoid clashing with the `Diagnosis` type.)
 - Run the stack from the AppHost. Event Hubs uses the emulator locally.
 - Keep secrets out of the repo. Read Event Hubs, Log Analytics, Azure AI Search, Azure OpenAI, Teams, Slack and Azure DevOps settings from Aspire references or user secrets.
 

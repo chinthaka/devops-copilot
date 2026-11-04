@@ -23,13 +23,13 @@ Tests first within every group, per [AGENTS.md](../../AGENTS.md). Each group lea
 2. Create `tests/DevOpsCopilot.Worker.Tests` and write the `WorkerStatistics` unit tests, then the thread-safe `WorkerStatistics` (interlocked counters, `TimeProvider` for last-processed time and uptime) implementing the observer.
 3. Move the worker to the ASP.NET Core minimal host with `ServiceDefaults`; map `/health` and the status endpoint serving the statistics plus the health-check results for its `eventhubs` and `storage` connections. The health checks are `IHealthCheck` implementations in Infrastructure (it owns the Azure SDKs); the worker only registers them.
 4. Wire the `HostTelemetry:Enabled` flag (default `true`): enabled registers `WorkerStatistics` as the observer, disabled registers the no-op observer and the status endpoint reports `telemetryEnabled: false` with `statistics: null`.
-5. Give the worker an HTTP endpoint in the AppHost. Integration tests `The_status_endpoint_returns_statistics_and_dependency_health` and `With_telemetry_disabled_the_endpoint_reports_disabled_without_statistics`.
+5. Give the worker an HTTP endpoint in the AppHost. Integration tests `GetStatus_WithTelemetryEnabled_ReturnsStatisticsAndDependencyHealth` and `GetStatus_WithTelemetryDisabled_ReportsDisabledWithoutStatistics`.
 
 ### 3. M1.2 – Status API (S)
 
 1. Create `tests/DevOpsCopilot.Server.Tests` and write the mapping unit tests (running, unreachable, unhealthy dependency) against a stubbed HTTP handler.
 2. In the server: a typed `HttpClient` for `http://worker` via service discovery, the status-document record types, the mapping (unreachable worker → `not-running`, zeros, `unknown` dependencies), and the status API endpoint. Remove the weather endpoint and the `WeatherForecast` record.
-3. Reference the worker from the server in the AppHost. Create `tests/DevOpsCopilot.AppHost.Tests` on `Aspire.Hosting.Testing` with `StatusApi_AgainstAppHost_ReturnsOneDocument`.
+3. Reference the worker from the server in the AppHost. Create `tests/DevOpsCopilot.AppHost.Tests` on `Aspire.Hosting.Testing` with `GetApiStatus_AgainstTheRealAppHost_ReturnsOneStatusDocument`.
 
 ### 4. M1.3 – Dashboard UI (S)
 
@@ -39,7 +39,7 @@ Tests first within every group, per [AGENTS.md](../../AGENTS.md). Each group lea
 
 ### 5. End-to-end test through the emulator
 
-1. In `tests/DevOpsCopilot.AppHost.Tests`, add `EndToEnd_EventsThroughEmulator_StatusShowsLiveCounts`: start the AppHost, produce one incident-starting event and one `Warning`-only event to hub `logs`, poll the status API until the counts are live, assert read, skipped, checkpointed and last-processed time.
+1. In `tests/DevOpsCopilot.AppHost.Tests`, add `GetApiStatus_AfterEventsFlowThroughTheEmulator_ReportsLiveCounts`: start the AppHost, produce one incident-starting event and one `Warning`-only event to hub `logs`, poll the status API until the counts are live, assert read, skipped, checkpointed and last-processed time.
 2. Mark the AppHost tests as requiring Docker so CI and local runs without the emulators skip, not fail, them.
 
 ### 6. Documentation

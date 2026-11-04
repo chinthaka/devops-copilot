@@ -71,7 +71,7 @@ describe('StatusDashboard', () => {
     vi.useRealTimers();
   });
 
-  it('renders not running and zeros', async () => {
+  it('render_WhenTheWorkerIsNotRunning_ShowsNotRunningAndZeroedStatistics', async () => {
     // Arrange
     answerWith(notRunning);
 
@@ -88,7 +88,7 @@ describe('StatusDashboard', () => {
     expect(screen.getByTestId('stat-uptime')).toHaveTextContent('0s');
   });
 
-  it('renders live statistics', async () => {
+  it('render_WhenTheWorkerIsRunning_ShowsLiveStatisticsAndServiceHealth', async () => {
     // Arrange
     answerWith(running);
 
@@ -108,7 +108,7 @@ describe('StatusDashboard', () => {
     expect(screen.getByTestId('service-storage')).toHaveTextContent(/degraded/i);
   });
 
-  it('polls the status endpoint', async () => {
+  it('render_WhenThePollIntervalElapses_FetchesTheStatusAgain', async () => {
     // Arrange: fake timers, so the clock is driven explicitly rather than waited on.
     vi.useFakeTimers();
     const fetchMock = answerWith(notRunning, running);

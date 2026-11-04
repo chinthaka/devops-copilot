@@ -1,3 +1,4 @@
+using DevOpsCopilot.Architecture.Tests.Common;
 using System.Reflection;
 
 namespace DevOpsCopilot.Architecture.Tests;
@@ -24,7 +25,7 @@ public class LayerDependencyTests
     ];
 
     [Fact]
-    public void Every_layer_project_targets_net10_and_references_only_inwards()
+    public void LayerProjects_WhenInspected_TargetNet10AndReferenceOnlyInwards()
     {
         // Arrange
         (string Project, string[] Allowed)[] layers =
@@ -50,7 +51,7 @@ public class LayerDependencyTests
     }
 
     [Fact]
-    public void Domain_references_no_external_framework()
+    public void Domain_WhenBuilt_ReferencesNoExternalFramework()
     {
         // Arrange
         var project = Repository.Project($"src/{Domain}/{Domain}.csproj");
@@ -66,7 +67,7 @@ public class LayerDependencyTests
     }
 
     [Fact]
-    public void Application_references_no_azure_sdk_or_agent_framework()
+    public void Application_WhenBuilt_ReferencesNoAzureSdkOrAgentFramework()
     {
         // Arrange
         var project = Repository.Project($"src/{Application}/{Application}.csproj");
@@ -81,7 +82,7 @@ public class LayerDependencyTests
     }
 
     [Fact]
-    public void The_azure_openai_client_lives_only_in_infrastructure()
+    public void OpenAIPackages_AcrossTheSolution_LiveOnlyInInfrastructure()
     {
         // Arrange
         string[] openAIPackages = ["Azure.AI.OpenAI", "Azure.Identity", "Microsoft.Extensions.AI.OpenAI"];
@@ -108,7 +109,7 @@ public class LayerDependencyTests
     }
 
     [Fact]
-    public void Domain_does_not_reference_application_or_infrastructure()
+    public void Domain_WhenBuilt_DoesNotReferenceApplicationOrInfrastructure()
     {
         // Arrange
         var project = Repository.Project($"src/{Domain}/{Domain}.csproj");
@@ -125,7 +126,7 @@ public class LayerDependencyTests
     }
 
     [Fact]
-    public void Infrastructure_does_not_reference_the_host()
+    public void Infrastructure_WhenBuilt_DoesNotReferenceTheHost()
     {
         // Arrange
         var project = Repository.Project($"src/{Infrastructure}/{Infrastructure}.csproj");
@@ -139,7 +140,7 @@ public class LayerDependencyTests
     }
 
     [Fact]
-    public void Application_tests_reference_no_infrastructure_project()
+    public void InwardTestProjects_WhenInspected_ReferenceNoInfrastructureOrAzurePackages()
     {
         // Arrange
         string[] inwardTestProjects =

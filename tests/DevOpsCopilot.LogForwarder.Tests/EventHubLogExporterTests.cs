@@ -1,5 +1,7 @@
 using Azure.Messaging.EventHubs;
 using DevOpsCopilot.LogForwarder;
+using DevOpsCopilot.LogForwarder.Interfaces;
+using DevOpsCopilot.LogForwarder.Tests.Common;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
@@ -11,7 +13,7 @@ namespace DevOpsCopilot.LogForwarder.Tests;
 public class EventHubLogExporterTests
 {
 	[Fact]
-	public void Export_returns_success_when_the_sender_accepts_the_batch()
+	public void Export_WhenTheSenderAcceptsTheBatch_ReturnsSuccess()
 	{
 		// Arrange
 		var sender = new FakeSender();
@@ -29,7 +31,7 @@ public class EventHubLogExporterTests
 	}
 
 	[Fact]
-	public void Export_returns_failure_when_the_sender_throws()
+	public void Export_WhenTheSenderThrows_ReturnsFailure()
 	{
 		// Arrange
 		var sender = new FakeSender { Error = new InvalidOperationException("hub down") };
@@ -47,7 +49,7 @@ public class EventHubLogExporterTests
 	}
 
 	[Fact]
-	public void Export_preserves_w3c_trace_context_in_the_event_body()
+	public void Export_WithAnActiveW3CActivity_PreservesTheTraceContextInTheEventBody()
 	{
 		// Arrange
 		var sender = new FakeSender();
