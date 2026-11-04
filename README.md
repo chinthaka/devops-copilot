@@ -183,7 +183,7 @@ dotnet test
 
 ## Roadmap
 
-**Phase 1 – Straight-through path:** receive events, gather live evidence, find similar past incidents, write a remediation report, notify Teams, deploy to Azure, and evaluate diagnosis quality.
+**Phase 1 – Straight-through path:** receive events, gather live evidence, find similar past incidents, write a diagnosis report, notify Teams, deploy to Azure, and evaluate diagnosis quality.
 
 **Phase 2 – Full incident workflow:** triage, correlation into incidents, incident-based diagnosis, work items, the learning loop, and production readiness.
 

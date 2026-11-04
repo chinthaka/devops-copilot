@@ -66,28 +66,26 @@ listed above.
   roadmap's history, and mission.md's and README's out-of-scope statements ("automated
   remediation"), which name what the product refuses to do (AC-6).
 - `grep -ri "bicep" .` (excluding `.git`) matches only: statements of the prohibition (mission.md,
-  AGENTS.md, `DiagnosisPrompt`, `AzureOpenAIDiagnosisModelTests` asserting the prompt forbids it)
-  and historical spec folders (AC-6).
-- `rg -i "remediation|bicep" src tests --glob '!**/DiagnosisPrompt.cs' --glob '!**/AzureOpenAIDiagnosisModelTests.cs'`
+  AGENTS.md, `DiagnosisPrompt`, `DiagnosisAgent.Instructions`, and the tests asserting the prompt
+  and the instructions forbid it) and historical spec folders (AC-6).
+- `rg -i "remediation|bicep" src tests --glob '!**/DiagnosisPrompt.cs' --glob '!**/AzureOpenAIDiagnosisModelTests.cs' --glob '!**/DiagnosisAgent.cs' --glob '!**/DiagnosisAgentTests.cs'`
   returns nothing (AC-1, AC-5, AC-6).
 
 ---
 
 ## Results
 
-<!-- Fill in after implementation. Include this section in the pull request. -->
-
 | AC | Test or check | Result | Notes |
 |---|---|---|---|
-| AC-1 | | | |
-| AC-2 | | | |
-| AC-3 | | | |
-| AC-4 | | | |
-| AC-5 | | | |
-| AC-6 | | | |
-| AC-7 | | | |
+| AC-1 | `AddInfrastructure_WithDefaults_RegistersTheDiagnosisAgent`; solution-wide search for `RemediationAgent` | Pass | No type, file or registration named `RemediationAgent` remains. |
+| AC-2 | `WriteAsync_ForAnErrorEventsHandoffs_WritesTheSevenSectionReportWithoutDraftSections` | Pass | Seven headings once each, in order; no Slack, Teams or Bicep section. |
+| AC-3 | `WriteAsync_WithTheSameHandoffs_WritesExactlyWhatThePipelineWrites` | Pass | Agent and pipeline output byte-identical on the deterministic path. |
+| AC-4 | `DiagnosisAgent_WithAChatClient_ForbidsInfrastructureCodeInItsInstructions` | Pass | Instructions name Bicep, ARM, Terraform and resource-changing scripts as forbidden; description mentions none of Slack, Teams or Bicep. |
+| AC-5 | Build after deleting `IncidentDraft` and `IncidentDraftTests`; `WriteAsync_ForAReport_NamesTheFileFromTheEventDayAndId` | Pass | `IncidentReport` is the only renderer; the writer test renders through it. |
+| AC-6 | Sweep greps below | Pass | Remaining matches state the prohibition (mission.md, AGENTS.md, `DiagnosisPrompt`, `DiagnosisAgent.Instructions` and their tests) or sit in spec folders; `.gitignore` and the README no longer say "remediation" for the report. |
+| AC-7 | `tests/DevOpsCopilot.Architecture.Tests` | Pass | All 9 architecture tests pass unchanged. |
 
-- **`dotnet build`:**
-- **`dotnet test`:** <passed> / <total>
-- **Sweep greps:**
-- **Date:** YYYY-MM-DD
+- **`dotnet build`:** clean, 0 errors; only pre-existing NuGet advisory warnings in the leftover sample projects.
+- **`dotnet test`:** 101 / 104 passed, 0 failed, 3 skipped (the `RequiresAzureOpenAI` integration test and the two `RequiresDocker` AppHost tests, both environment-gated as designed).
+- **Sweep greps:** the `rg` check over `src` and `tests` returns nothing; the repo-wide greps match only prohibitions and spec folders, as listed under Manual checks.
+- **Date:** 2026-11-04

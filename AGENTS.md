@@ -99,7 +99,7 @@ Solution: `src/DevOpsCopilot.sln`. Orchestration: `src/DevOpsCopilot.AppHost/App
 | Path | Role |
 |---|---|
 | `src/DevOpsCopilot.AppHost` | Aspire composition root. Local Event Hubs emulator, hub `logs`. |
-| `src/DevOpsCopilot.Domain` | Entities, value objects and domain rules: the event, the handoffs, the fixed KQL questions, the overlap rules and the draft renderer. No packages. |
+| `src/DevOpsCopilot.Domain` | Entities, value objects and domain rules: the event, the handoffs, the fixed KQL questions, the overlap rules and the report renderer. No packages. |
 | `src/DevOpsCopilot.Application` | Use cases and the interfaces for everything external: `IEventSource`, `ILogQuery`, `IKnowledgeSearch`, `IReportWriter`, and the stage order in `RunIncidentPipeline`. |
 | `src/DevOpsCopilot.Infrastructure` | Implementations: Event Hubs consumer and parser, Kusto, Azure AI Search, the file report writer, and the three Microsoft Agent Framework agents. |
 | `src/DevOpsCopilot.Worker` | .NET 10 worker and composition root. Consumes `logs` with consumer group `devops-copilot`, checkpoints in Blob Storage, and runs the incident pipeline. |

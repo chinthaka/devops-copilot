@@ -27,7 +27,7 @@ Known gaps between the code and the contract, closed by the milestones below:
 
 | Gap | Where | Closed by |
 |---|---|---|
-| The draft has Slack, Teams and **Bicep** sections, and the agent is named "remediation". The contract forbids infrastructure code and defines seven report sections with a diagnosis in the middle. | `RemediationAgent.cs` | M4 |
+| ~~The draft has Slack, Teams and **Bicep** sections, and the agent is named "remediation".~~ Closed: M4 renamed the agent to `DiagnosisAgent` and deleted the superseded draft | `Agents/DiagnosisAgent.cs` | M4 (done) |
 | Handoffs are keyed by `eventId`; the contract keys them by `incidentId` | `DiagnosticHandoff`, `GroundingHandoff` | M12, M13 |
 | No LLM is wired; agents are deterministic | `InfrastructureServiceCollectionExtensions.cs` | M5 |
 | Only the `LogForwarder` JSON shape is parsed, not diagnostic-settings `records` arrays | `LogEventParser.cs` | M10 |
@@ -79,11 +79,11 @@ Split into:
 
 **Done when:** `dotnet build` and `dotnet test` are clean, the architecture tests pass, Application has no Azure SDK or Agent Framework package reference, and the AppHost runs the Worker.
 
-### M4 – Report matches the contract (S)
+### M4 – Report matches the contract (S, done)
 
 Scope reduced by M5's decision [D1](2026-10-25-m5-diagnosis-agent/requirement.md#decisions): M5 delivered the seven-section report of [pipeline.md § 7](../pipeline.md#7-report-and-notify) and the pipeline writes through it, so M4 removes what that superseded. Rename `RemediationAgent` to `DiagnosisAgent`, put the diagnose-and-render path behind it, and give it instructions that forbid infrastructure code. Delete the unused `IncidentDraft` renderer with its Slack, Teams and Bicep sections and its tests, and sweep the repository for "remediation" and "Bicep".
 
-Specified in [2026-11-04-m4-report-contract](2026-11-04-m4-report-contract/requirement.md).
+Delivered by [2026-11-04-m4-report-contract](2026-11-04-m4-report-contract/requirement.md).
 
 **Done when:** the only report renderer is `IncidentReport`, no type or file named `RemediationAgent` or `IncidentDraft` remains, the agent's instructions forbid infrastructure code, and the only remaining "Bicep" and "remediation" mentions state the prohibition or sit in historical specs.
 

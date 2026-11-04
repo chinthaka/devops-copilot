@@ -4,7 +4,7 @@
 |---|---|
 | **Branch** | `features/2026-11-04-m4-report-contract` |
 | **Milestone** | M4 – Report matches the contract ([roadmap](../roadmap.md#m4--report-matches-the-contract-s)) |
-| **Status** | Draft |
+| **Status** | Done |
 | **Author** | Chinthaka Kumarasiri |
 | **Date** | 2026-11-04 |
 

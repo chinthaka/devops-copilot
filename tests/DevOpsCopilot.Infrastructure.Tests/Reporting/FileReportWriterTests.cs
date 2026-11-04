@@ -1,3 +1,4 @@
+using DevOpsCopilot.Domain.Diagnoses;
 using DevOpsCopilot.Domain.Events;
 using DevOpsCopilot.Domain.Grounding;
 using DevOpsCopilot.Domain.Kql;
@@ -10,22 +11,23 @@ namespace DevOpsCopilot.Infrastructure.Tests.Reporting;
 public class FileReportWriterTests
 {
     [Fact]
-    public async Task WriteAsync_ForADraft_NamesTheFileFromTheEventDayAndId()
+    public async Task WriteAsync_ForAReport_NamesTheFileFromTheEventDayAndId()
     {
         // Arrange
         using var drafts = new DraftDirectory();
         var writer = new FileReportWriter(new ReportSettings(drafts.Path));
         var diagnostic = UnavailableDiagnostic();
         var grounding = new GroundingHandoff(diagnostic.EventId, "unavailable", PostmortemOverlap.IndexName, [""], []);
-        var draft = IncidentDraft.Render(diagnostic, grounding);
+        var diagnosis = Diagnosis.Deterministic(diagnostic, grounding, "The diagnosis model was unavailable.");
+        var report = IncidentReport.Render(diagnosis, diagnostic, grounding);
 
         // Act
-        var path = await writer.WriteAsync(diagnostic, grounding, draft, CancellationToken.None);
+        var path = await writer.WriteAsync(diagnostic, grounding, report, CancellationToken.None);
 
         // Assert
         Assert.Equal(Path.Combine(drafts.Path, "2026-10-20-evt-20261020100000000.md"), path);
         Assert.True(File.Exists(path));
-        Assert.Equal(draft, await File.ReadAllTextAsync(path));
+        Assert.Equal(report, await File.ReadAllTextAsync(path));
     }
 
     private static DiagnosticHandoff UnavailableDiagnostic()

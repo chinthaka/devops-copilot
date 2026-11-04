@@ -1,5 +1,6 @@
 using DevOpsCopilot.Application.Diagnoses;
 using DevOpsCopilot.Application.Interfaces;
+using DevOpsCopilot.Infrastructure.Agents;
 using DevOpsCopilot.Infrastructure.Diagnoses;
 using DevOpsCopilot.Infrastructure.Events;
 using DevOpsCopilot.Infrastructure.Grounding;
@@ -59,6 +60,21 @@ public class DiagnosisModelRegistrationTests
         // Assert
         Assert.NotNull(stage);
         Assert.Equal(TimeSpan.FromSeconds(45), provider.GetRequiredService<AzureOpenAISettings>().Timeout);
+    }
+
+    [Fact]
+    public void AddInfrastructure_WithDefaults_RegistersTheDiagnosisAgent()
+    {
+        // Arrange
+        var services = Services(AzureOpenAISettings.Unconfigured);
+
+        // Act
+        using var provider = services.BuildServiceProvider();
+        var agent = provider.GetRequiredService<DiagnosisAgent>();
+
+        // Assert
+        Assert.NotNull(agent);
+        Assert.Same(agent, provider.GetRequiredService<DiagnosisAgent>());
     }
 
     [Fact]

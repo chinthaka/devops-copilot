@@ -61,7 +61,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton(serviceProvider => new RagGroundingAgent(
             serviceProvider.GetRequiredService<GroundInHistory>(),
             serviceProvider.GetService<IChatClient>()));
-        services.AddSingleton(serviceProvider => new RemediationAgent(
+        services.AddSingleton(serviceProvider => new DiagnosisAgent(
+            serviceProvider.GetRequiredService<Diagnose>(),
             serviceProvider.GetRequiredService<IReportWriter>(),
             serviceProvider.GetService<IChatClient>()));
 
