@@ -1,11 +1,8 @@
 using Aspire.Hosting;
 using Aspire.Hosting.ApplicationModel;
 using Aspire.Hosting.Testing;
-using Azure.Messaging.EventHubs;
-using Azure.Messaging.EventHubs.Producer;
 using DevOpsCopilot.AppHost.Tests.Common;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 
 namespace DevOpsCopilot.AppHost.Tests;
@@ -15,10 +12,9 @@ namespace DevOpsCopilot.AppHost.Tests;
 /// as <c>aspire run</c> composes them. Needs Docker.
 /// </summary>
 [Trait("Category", "RequiresDocker")]
-public class StatusApiTests(AppHostFixture fixture) : IClassFixture<AppHostFixture>
+[Collection(AppHostCollection.Name)]
+public class StatusApiTests(AppHostFixture fixture)
 {
-    private const string EventHubName = "logs";
-
     private static readonly string[] HealthStates = ["healthy", "degraded", "unhealthy", "unknown"];
 
     [DockerRequiredFact]
@@ -71,21 +67,13 @@ public class StatusApiTests(AppHostFixture fixture) : IClassFixture<AppHostFixtu
     /// <summary>Sends the two events to hub <c>logs</c> through the Event Hubs emulator.</summary>
     private static async Task ProduceAsync(DistributedApplication app, CancellationToken cancellationToken)
     {
-        var connectionString = await app.GetConnectionStringAsync("eventhubs", cancellationToken)
-            ?? throw new InvalidOperationException("The AppHost did not supply an 'eventhubs' connection string.");
-
-        // The Aspire connection string names the hub only sometimes; supply it when it does not.
-        var properties = EventHubsConnectionStringProperties.Parse(connectionString);
-        await using var producer = string.IsNullOrWhiteSpace(properties.EventHubName)
-            ? new EventHubProducerClient(connectionString, EventHubName)
-            : new EventHubProducerClient(connectionString);
-
+        await using var producer = await LogsHub.CreateProducerAsync(app, cancellationToken);
         using var batch = await producer.CreateBatchAsync(cancellationToken);
-        Assert.True(batch.TryAdd(LogEvent(
+        Assert.True(batch.TryAdd(LogsHub.LogEvent(
             level: "Error",
             message: "Checkout failed while charging the card.",
             exception: "System.InvalidOperationException: The payment gateway refused the call.")));
-        Assert.True(batch.TryAdd(LogEvent(
+        Assert.True(batch.TryAdd(LogsHub.LogEvent(
             level: "Warning",
             message: "Retrying the payment gateway call.",
             exception: null)));
@@ -119,21 +107,4 @@ public class StatusApiTests(AppHostFixture fixture) : IClassFixture<AppHostFixtu
         Assert.Fail(
             $"The status document never reported {atLeast} events read. Last seen: {statistics}");
         return statistics;
-    }
-
-    private static EventData LogEvent(string level, string message, string? exception)
-    {
-        var body = JsonSerializer.Serialize(new
-        {
-            timestamp = DateTimeOffset.UtcNow,
-            level,
-            category = "DevOpsCopilot.EndToEnd",
-            message,
-            exception,
-            traceId = Guid.NewGuid().ToString("n"),
-            spanId = Guid.NewGuid().ToString("n")[..16],
-        });
-
-        return new EventData(Encoding.UTF8.GetBytes(body));
-    }
-}
+    }}

@@ -16,7 +16,7 @@ Built and merged on `main`:
 - `DevOpsCopilot.LogForwarder`, an OpenTelemetry exporter that JSON-encodes application logs to hub `logs`. Wired through `ServiceDefaults` when Aspire supplies the `eventhubs` connection. Local test producer only.
 - Four projects in strict Clean Architecture: `DevOpsCopilot.Domain`, `DevOpsCopilot.Application`, `DevOpsCopilot.Infrastructure` and the `net10.0` worker `DevOpsCopilot.Worker`. Architecture tests fail the build when a layer references something it must not.
 - The worker consumes hub `logs`, reads `TraceId` and `SpanId`, runs the pipeline for each event, and checkpoints to Blob Storage after handling. On restart it resumes from the checkpoint.
-- `RunIncidentPipeline` in Application runs the evidence stage, the grounding stage and the report stage in sequence for **one log event**. `Warning` without an exception does not start it. The three agents are Agent Framework types in Infrastructure, behind the Application interfaces.
+- `RunIncidentPipeline` in Application runs the evidence, grounding, diagnosis and report stages in sequence for **one log event**. `Warning` without an exception does not start it. The three agents are Agent Framework types in Infrastructure, behind the Application interfaces. The diagnosis comes from Azure OpenAI when a deployment is configured, guarded against uncited claims, and from the deterministic fallback otherwise.
 - Read-only Kusto queries (three fixed questions, `.` commands rejected) and Azure AI Search over `historical-postmortems` (five-hit cap, overlap filter). Without configuration both report `unavailable` and return nothing.
 - A draft written to `incidents/YYYY-MM-DD-<event-id>.md`, which is gitignored.
 - Tests: hub event parsing, checkpoint resume, warning does not start the team, both tools unavailable, five-hit cap, draft sections, and a KQL string containing `.drop` is not executed.
@@ -29,7 +29,7 @@ Known gaps between the code and the contract, closed by the milestones below:
 |---|---|---|
 | ~~The draft has Slack, Teams and **Bicep** sections, and the agent is named "remediation".~~ Closed: M4 renamed the agent to `DiagnosisAgent` and deleted the superseded draft | `Agents/DiagnosisAgent.cs` | M4 (done) |
 | Handoffs are keyed by `eventId`; the contract keys them by `incidentId` | `DiagnosticHandoff`, `GroundingHandoff` | M12, M13 |
-| No LLM is wired; agents are deterministic | `InfrastructureServiceCollectionExtensions.cs` | M5 |
+| ~~No LLM is wired; agents are deterministic~~ Closed: M5 wired Azure OpenAI behind `IDiagnosisModel`, with the citation guard and the deterministic fallback | `InfrastructureServiceCollectionExtensions.cs` | M5 (done) |
 | Only the `LogForwarder` JSON shape is parsed, not diagnostic-settings `records` arrays | `LogEventParser.cs` | M10 |
 | No triage, correlation, notification, work item or learn stage | — | M6, M11 to M16 |
 | Nothing deploys to Azure | `.github/workflows/` | M7 |
@@ -87,15 +87,17 @@ Delivered by [2026-11-04-m4-report-contract](2026-11-04-m4-report-contract/requi
 
 **Done when:** the only report renderer is `IncidentReport`, no type or file named `RemediationAgent` or `IncidentDraft` remains, the agent's instructions forbid changing resources, and infrastructure as code is named only in [Out of scope](#out-of-scope) and historical specs.
 
-### M5 – Azure OpenAI diagnosis (M)
+### M5 – Azure OpenAI diagnosis (M, done)
 
 Wire an `IChatClient` for Azure OpenAI into the diagnosis agent so it produces the structured `Diagnosis` object from [pipeline.md § 6](../pipeline.md#6-diagnose-diagnosis-agent): title, likely cause, confidence, evidence citations, suggested steps and open questions. Confidence is `low` when both KQL and search are `unavailable`. Without an Azure OpenAI configuration the agent falls back to the deterministic report and says so.
 
+Delivered by [2026-10-25-m5-diagnosis-agent](2026-10-25-m5-diagnosis-agent/requirement.md).
+
 Split into:
 
-1. **M5.1 – Diagnosis type and renderer (S).** The `Diagnosis` value type in Domain and a renderer that turns it into the seven-section report. Unit tests, no LLM.
-2. **M5.2 – Chat client wiring and prompt (S).** `IDiagnosisModel` in Application, the Azure OpenAI implementation in Infrastructure, configuration from Aspire or user secrets. Integration test behind a configuration flag.
-3. **M5.3 – Citation check (S).** A guard rejects a diagnosis whose claims cite a finding, row or hit that does not exist, and falls back to `low` confidence with an open question. Unit tests.
+1. **M5.1 – Diagnosis type and renderer (S, done).** The `Diagnosis` value type in Domain and a renderer that turns it into the seven-section report. Unit tests, no LLM.
+2. **M5.2 – Chat client wiring and prompt (S, done).** `IDiagnosisModel` in Application, the Azure OpenAI implementation in Infrastructure, configuration from Aspire or user secrets. Integration test behind a configuration flag.
+3. **M5.3 – Citation check (S, done).** A guard rejects a diagnosis whose claims cite a finding, row or hit that does not exist, and falls back to `low` confidence with an open question. Unit tests.
 
 **Done when:** with Azure OpenAI configured, a staged error event produces a report whose every claim cites real evidence; without it, the report says the model was unavailable.
 

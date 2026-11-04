@@ -101,23 +101,30 @@ Not applicable. Diagnosis quality is scored by the staged-incident set in M8. Th
 
 ## Results
 
+Completed on the `features/2026-11-04-m4-report-contract` branch, which finished M5's task
+group 6. Two tests were renamed after implementation by later work on that branch: M4 renamed the
+agent (no M5 test names changed), and the IaC removal renamed
+`ProposeAsync_WithOkHandoffs_PromptsWithIndexedEvidenceAndForbidsInfrastructureCode` to
+`…AndForbidsResourceChanges`, which now asserts the prompt's generic no-resource-changes rule
+instead of naming IaC technologies.
+
 | AC | Test or check | Result | Notes |
 |---|---|---|---|
-| AC-1 | | | |
-| AC-2 | | | |
-| AC-3 | | | |
-| AC-4 | | | |
-| AC-5 | | | |
-| AC-6 | | | |
-| AC-7 | | | |
-| AC-8 | | | |
-| AC-9 | | | |
-| AC-10 | | | |
-| AC-11 | | | |
+| AC-1 | `Create_WithAValueOutsideTheThreeLevels_ThrowsArgumentException`, `Deterministic_WithOkHandoffs_CarriesTheContractFields`, `ProposeAsync_WithMissingLists_MapsThemToEmptyListsNeverNull` | Pass | |
+| AC-2 | `Render_WithACompleteDiagnosis_WritesTheSevenContractSectionsInOrder`, `Render_ForAnyDiagnosis_NamesTheEventTheTraceAndTheHubInTheHeader`, `Render_WithAMediumConfidenceDiagnosis_StatesTheConfidenceInTheLikelyCauseSection` | Pass | |
+| AC-3 | `Render_WhenBothToolsWereUnavailable_SaysSoAndListsNoEvidence`, `ProposeAsync_WhenAToolWasUnavailable_SaysSoInThePromptRatherThanInventingEvidence` | Pass | |
+| AC-4 | The three `DiagnoseAsync`/`RunAsync` without-a-configured-model tests and the `TryCreate`/`AddInfrastructure` configuration tests | Pass | |
+| AC-5 | `RunAsync_WithAWellFormedModelDiagnosis_UsesItInTheReport`, `ProposeAsync_WithAWellFormedAnswer_MapsItToTheDomainDiagnosis` | Pass | |
+| AC-6 | `ApplyConfidenceRule_WhenBothToolsWereUnavailable_LowersTheConfidenceToLow`, `DiagnoseAsync_WhenBothToolsWereUnavailable_LowersAHighModelConfidenceToLow` | Pass | |
+| AC-7 | The four `Validate_…` guard tests, `DiagnoseAsync_WhenTheModelDiagnosisIsRejected_FallsBackWithAnOpenQuestion` | Pass | |
+| AC-8 | The throw/timeout/nothing/cancellation fallback tests, `RunAsync_WhenTheModelFails_StillCheckpointsTheEvent` | Pass | |
+| AC-9 | `Deterministic_ForASingleEvent_SetsImpactToOneEventItsServiceAndNoResources` | Pass | |
+| AC-10 | Architecture tests, including `OpenAIPackages_AcrossTheSolution_LiveOnlyInInfrastructure` | Pass | All 9 pass. |
+| AC-11 | `ProposeAsync_AgainstARealAzureOpenAIDeployment_ReturnsABindableAndCitedDiagnosis` | Skipped | No Azure OpenAI configuration in the verification environment; gated by `AzureOpenAIRequiredFact`, as designed. Run it once against a real deployment before relying on the configured path. |
 
-- **`dotnet build`:** 
-- **`dotnet test`:** <passed> / <total>
-- **Azure OpenAI integration test:** <ran / skipped>
-- **End-to-end emulator test:** <ran / skipped>
-- **Manual checks:** 
-- **Date:** 
+- **`dotnet build`:** clean, 0 errors; only pre-existing NuGet advisory warnings in the leftover sample projects.
+- **`dotnet test`:** 101 / 105 passed, 0 failed, 4 skipped (all environment-gated).
+- **Azure OpenAI integration test:** skipped — no deployment configured in the verification environment.
+- **End-to-end emulator test:** `EndToEnd_AnErrorEvent_WritesASevenSectionReport` added in `tests/DevOpsCopilot.AppHost.Tests`; skipped in the verification environment for want of Docker. Run it with Docker available to see it pass.
+- **Manual checks:** not run — the verification environment has no Docker and no Azure OpenAI deployment. The unconfigured path is covered by the unit tests and the new end-to-end test; the configured path's manual check remains open until a deployment is available.
+- **Date:** 2026-11-04

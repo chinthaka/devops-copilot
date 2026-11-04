@@ -4,7 +4,7 @@
 |---|---|
 | **Branch** | `features/2026-10-25-m5-diagnosis-agent` |
 | **Milestone** | M5 – Azure OpenAI diagnosis, covering M5.1, M5.2 and M5.3 ([roadmap](../roadmap.md#m5--azure-openai-diagnosis-m)) |
-| **Status** | Draft |
+| **Status** | Done |
 | **Author** | Chinthaka Kumarasiri |
 | **Date** | 2026-10-25 |
 
@@ -157,6 +157,10 @@ No contract change is required. The contract already describes this stage; the c
 ## Open questions
 
 1. **D1 shrinks M4's scope and changes the roadmap text for it.** Confirm that M4 keeps only the rename, the agent instructions, the deletion of the superseded `IncidentDraft`, and the sweep — and that leaving `IncidentDraft` unused between the two merges is acceptable.
+   **Answered: confirmed.** [2026-11-04-m4-report-contract](../2026-11-04-m4-report-contract/requirement.md) delivered exactly that reduced scope and updated the roadmap.
 2. **Credential.** API key from user secrets, or `DefaultAzureCredential` / managed identity? The plan assumes **both, with the key used only when present**, since M7 deploys to Container Apps where managed identity is the right answer.
+   **Answered: as assumed.** `AzureOpenAIChatClient.TryCreate` uses the key when present and `DefaultAzureCredential` otherwise, proven by `TryCreate_WithoutAKey_StillBuildsAClientForManagedIdentity`.
 3. **Model and deployment name.** No Azure OpenAI deployment is named anywhere in the repo. The plan assumes the deployment name is configuration with no default, and that the `tech-stack.md` entry records the model family actually used once chosen.
+   **Answered: as assumed.** The deployment is configuration with no default; [tech-stack.md](../tech-stack.md) records that the model family is chosen per environment and not pinned in the repo.
 4. **Timeout.** The plan assumes 30 seconds for the model call. Confirm or set another value.
+   **Answered: 30 seconds**, overridable with `Incident:AzureOpenAI:TimeoutSeconds`; a non-positive value falls back to the default.
