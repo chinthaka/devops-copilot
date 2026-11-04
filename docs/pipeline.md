@@ -4,7 +4,7 @@ Single source for the worker, stage handoffs, tool rules and report shape. `AGEN
 
 ## Scope
 
-DevOpsCopilot diagnoses and reports. It never changes production resources, never generates deployable infrastructure code, and never declares an incident resolved on its own.
+DevOpsCopilot diagnoses and reports. It never changes production resources and never declares an incident resolved on its own.
 
 ## Flow
 
@@ -182,7 +182,7 @@ The diagnosis agent combines the incident, the diagnostic handoff and the ground
 
 - Every claim cites a finding, a row or a hit.
 - `confidence` is `low` when both `kqlStatus` and `searchStatus` are `unavailable`.
-- `suggestedSteps` are written for an engineer to carry out. No infrastructure-as-code, deployable templates or scripts that change resources.
+- `suggestedSteps` are written for an engineer to carry out. No commands, scripts or templates that change resources.
 
 ### Diagnosis
 

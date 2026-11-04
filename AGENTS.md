@@ -1,6 +1,6 @@
 # DevOps Copilot
 
-This repo is the DevOpsCopilot worker service: an AI assistant that investigates Azure production incidents and reports the likely cause and suggested fixes to on-call engineers. It diagnoses and reports only. It never changes production resources, never generates deployable infrastructure code, and never declares an incident resolved by itself.
+This repo is the DevOpsCopilot worker service: an AI assistant that investigates Azure production incidents and reports the likely cause and suggested fixes to on-call engineers. It diagnoses and reports only. It never changes production resources and never declares an incident resolved by itself.
 
 The worker consumes error events from Azure Event Hubs and runs eight stages in order: receive, triage, correlate, gather evidence (KQL), ground (Azure AI Search), diagnose, report and notify (Teams, Slack, work item), and learn.
 
@@ -90,7 +90,7 @@ Apply DDD where it makes the model clearer, not as ceremony.
 
 - Use only the evidence listed in `docs/pipeline.md`. Never invent KQL rows, search hits, log lines or causes.
 - Deliver reports only to channels configured for the environment. In local runs with no channel configured, the report is written to `incidents/`.
-- Never generate Bicep, ARM, Terraform or scripts that change resources. Suggested fix steps are written for an engineer to carry out.
+- Never generate commands, scripts or templates that change resources. Suggested fix steps are written for an engineer to carry out by hand. See [roadmap.md § Out of scope](docs/specs/roadmap.md#out-of-scope).
 
 ## Layout
 

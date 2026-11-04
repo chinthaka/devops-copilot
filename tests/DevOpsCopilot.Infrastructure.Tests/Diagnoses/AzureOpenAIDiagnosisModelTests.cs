@@ -168,7 +168,7 @@ public class AzureOpenAIDiagnosisModelTests
     }
 
     [Fact]
-    public async Task ProposeAsync_WithOkHandoffs_PromptsWithIndexedEvidenceAndForbidsInfrastructureCode()
+    public async Task ProposeAsync_WithOkHandoffs_PromptsWithIndexedEvidenceAndForbidsResourceChanges()
     {
         // Arrange
         var client = new FakeChatClient(WellFormed);
@@ -183,8 +183,8 @@ public class AzureOpenAIDiagnosisModelTests
         Assert.Contains("query-one", client.Prompt, StringComparison.Ordinal);
         Assert.Contains("ServiceName=Checkout.Api", client.Prompt, StringComparison.Ordinal);
         Assert.Contains("h1", client.Prompt, StringComparison.Ordinal);
-        Assert.Contains("Bicep", client.Prompt, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Terraform", client.Prompt, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("by hand", client.Prompt, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("change a resource", client.Prompt, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("cite", client.Prompt, StringComparison.OrdinalIgnoreCase);
     }
 

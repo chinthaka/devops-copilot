@@ -35,7 +35,7 @@ Azure resources and applications stream errors and logs to Azure Event Hubs thro
 
 These are the rules every feature is checked against. A feature that breaks one of them is out of scope until the principle itself is changed here.
 
-1. **Diagnose, don't act.** Read-only by design. KQL cannot change data. No production resource is changed, and no deployable infrastructure code, template or script is produced. Suggested steps are written for an engineer to carry out.
+1. **Diagnose, don't act.** Read-only by design. KQL cannot change data. No production resource is changed, and no command, script or template that would change one is produced. Suggested steps are written for an engineer to carry out.
 2. **Never invent evidence.** Every claim cites an event, a KQL row, a search hit or a fact an engineer supplied. If a data source is unavailable, the report says so and leaves the result empty.
 3. **Fixed, bounded investigation.** The agents follow a fixed stage order with limits on follow-up queries, rows and hits. This keeps behaviour predictable, testable and cost-controlled.
 4. **Learn only from confirmed causes.** A report enters the knowledge base only after an engineer confirms or corrects it. DevOpsCopilot never marks an incident resolved by itself.
@@ -53,7 +53,7 @@ These are the rules every feature is checked against. A feature that breaks one 
 
 **Out of scope, for now**
 
-- Automated remediation of any kind, including generating Bicep, ARM, Terraform or scripts.
+- Automated remediation of any kind, including generating commands, scripts or templates that change resources. See [roadmap.md § Out of scope](roadmap.md#out-of-scope).
 - AWS and GCP support. The core is designed to allow it later; nothing is built for it.
 - A direct OpenTelemetry exporter for applications that do not use Application Insights. The in-repo `LogForwarder` exists only as a local test producer.
 - Collecting historical data in advance. The knowledge base starts empty and grows from confirmed incidents.

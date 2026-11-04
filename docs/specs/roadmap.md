@@ -81,11 +81,11 @@ Split into:
 
 ### M4 – Report matches the contract (S, done)
 
-Scope reduced by M5's decision [D1](2026-10-25-m5-diagnosis-agent/requirement.md#decisions): M5 delivered the seven-section report of [pipeline.md § 7](../pipeline.md#7-report-and-notify) and the pipeline writes through it, so M4 removes what that superseded. Rename `RemediationAgent` to `DiagnosisAgent`, put the diagnose-and-render path behind it, and give it instructions that forbid infrastructure code. Delete the unused `IncidentDraft` renderer with its Slack, Teams and Bicep sections and its tests, and sweep the repository for "remediation" and "Bicep".
+Scope reduced by M5's decision [D1](2026-10-25-m5-diagnosis-agent/requirement.md#decisions): M5 delivered the seven-section report of [pipeline.md § 7](../pipeline.md#7-report-and-notify) and the pipeline writes through it, so M4 removes what that superseded. Rename `RemediationAgent` to `DiagnosisAgent`, put the diagnose-and-render path behind it, and give it instructions that forbid changing resources. Delete the unused `IncidentDraft` renderer with its Slack, Teams and Bicep sections and its tests, and sweep the repository for "remediation" and "Bicep".
 
 Delivered by [2026-11-04-m4-report-contract](2026-11-04-m4-report-contract/requirement.md).
 
-**Done when:** the only report renderer is `IncidentReport`, no type or file named `RemediationAgent` or `IncidentDraft` remains, the agent's instructions forbid infrastructure code, and the only remaining "Bicep" and "remediation" mentions state the prohibition or sit in historical specs.
+**Done when:** the only report renderer is `IncidentReport`, no type or file named `RemediationAgent` or `IncidentDraft` remains, the agent's instructions forbid changing resources, and infrastructure as code is named only in [Out of scope](#out-of-scope) and historical specs.
 
 ### M5 – Azure OpenAI diagnosis (M)
 
@@ -243,7 +243,14 @@ Delete `DevOpsCopilot.ApiService`, `DevOpsCopilot.Functions` and `DevOpsCopilot.
 
 ## Out of scope
 
-See [mission.md](mission.md#boundaries). In short: automated remediation or any generated infrastructure code, a fourth agent, KQL that changes data, `Warning` alone as an incident, and committing `incidents/`.
+See [mission.md](mission.md#boundaries). In short:
+
+- **Infrastructure as code.** DevOpsCopilot never generates, suggests or renders Bicep, ARM templates, Terraform, Kubernetes manifests or any other infrastructure-as-code, in reports, notifications, prompts or code. Suggested steps are written for an engineer to carry out by hand. In the code and the other living docs the rule is stated generically, as "no commands, scripts or templates that change resources"; the technologies are named only here and in historical records.
+- Automated remediation of any kind, and any other change to a resource.
+- A fourth agent.
+- KQL that changes data.
+- `Warning` alone as an incident.
+- Committing `incidents/`.
 
 ## Risks
 

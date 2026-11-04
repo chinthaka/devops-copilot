@@ -48,8 +48,6 @@ public class DiagnosisAgentTests
 
         Assert.DoesNotContain("## Slack", report, StringComparison.Ordinal);
         Assert.DoesNotContain("## Teams", report, StringComparison.Ordinal);
-        Assert.DoesNotContain("## Bicep", report, StringComparison.Ordinal);
-        Assert.DoesNotContain("```bicep", report, StringComparison.Ordinal);
         Assert.Equal("written://report.md", result.DraftPath);
     }
 
@@ -76,7 +74,7 @@ public class DiagnosisAgentTests
     }
 
     [Fact]
-    public void DiagnosisAgent_WithAChatClient_ForbidsInfrastructureCodeInItsInstructions()
+    public void DiagnosisAgent_WithAChatClient_ForbidsResourceChangesInItsInstructions()
     {
         // Arrange
         using var chatClient = new FakeChatClient("");
@@ -91,13 +89,11 @@ public class DiagnosisAgentTests
         Assert.NotNull(agent.ChatAgent);
         Assert.Equal("DiagnosisAgent", DiagnosisAgent.AgentName);
         Assert.Contains("handoffs", DiagnosisAgent.Instructions, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Bicep", DiagnosisAgent.Instructions, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("ARM", DiagnosisAgent.Instructions, StringComparison.Ordinal);
-        Assert.Contains("Terraform", DiagnosisAgent.Instructions, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("changes a resource", DiagnosisAgent.Instructions, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("script", DiagnosisAgent.Instructions, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("engineer", DiagnosisAgent.Instructions, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Slack", DiagnosisAgent.Description, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Teams", DiagnosisAgent.Description, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("Bicep", DiagnosisAgent.Description, StringComparison.OrdinalIgnoreCase);
     }
 
     private static LogEvent ErrorEvent()

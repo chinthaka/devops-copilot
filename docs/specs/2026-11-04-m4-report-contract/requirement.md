@@ -43,12 +43,16 @@ entry to match D1, which M5 left undone.
   writes it through `IReportWriter` — the same path, and the same bytes on the deterministic path,
   as `RunIncidentPipeline`.
 - The agent's chat instructions and description name diagnosis, restrict it to the handoffs'
-  evidence, and forbid Bicep, ARM, Terraform and any script or template that changes resources.
+  evidence, and forbid any command, script or template that changes a resource.
 - Delete `IncidentDraft` and `IncidentDraftTests`. The only report renderer left is
   `IncidentReport`. `FileReportWriterTests` stops rendering through the deleted type.
 - Sweep the repository for "remediation" and "Bicep": the `.gitignore` comment, the README's
-  Phase 1 description, and the roadmap's gap table. Mentions that *state the prohibition*
-  (mission.md, AGENTS.md, the diagnosis prompt and its test) and historical spec folders stay.
+  Phase 1 description, and the roadmap's gap table. Historical spec folders stay.
+- Remove all infrastructure-as-code naming (Bicep, ARM, Terraform, "infrastructure-as-code",
+  "deployable infrastructure code") from the code, the tests and the living docs (AGENTS.md,
+  mission.md, pipeline.md, tech-stack.md). The safety rule stays, stated generically as "no
+  commands, scripts or templates that change resources". Infrastructure as code is named once, as
+  an explicit entry in [roadmap.md § Out of scope](../roadmap.md#out-of-scope).
 - Update the roadmap when the milestone's check passes, per its own working rules.
 
 **Out of scope**
@@ -110,12 +114,12 @@ No contract change. The contract already forbids what this feature deletes.
 - **When** the agent writes and the pipeline runs the same event
 - **Then** the two documents are byte-identical, so the rename changed no behaviour
 
-**AC-4** – The agent's instructions forbid infrastructure code
+**AC-4** – The agent's instructions forbid changing resources
 - **Given** a chat client
 - **When** the agent is constructed
-- **Then** its instructions tell the model to use only the handoffs' evidence and to never produce
-  Bicep, ARM, Terraform or any script or template that changes resources, and its description no
-  longer mentions Slack, Teams or Bicep
+- **Then** its instructions tell the model to use only the handoffs' evidence, to never produce a
+  command, script or template that changes a resource, and to write suggested steps for an
+  engineer; its description no longer mentions Slack or Teams
 
 **AC-5** – The superseded draft is gone
 - **Given** the solution
@@ -123,13 +127,16 @@ No contract change. The contract already forbids what this feature deletes.
 - **Then** `IncidentDraft` and `IncidentDraftTests` no longer exist, and the only type that
   renders a report is `IncidentReport`
 
-**AC-6** – The sweep leaves only prohibitions and history
+**AC-6** – Infrastructure as code is named only as out of scope
 - **Given** the repository
-- **When** it is searched case-insensitively for `remediation` and `bicep`
-- **Then** every remaining match either states the prohibition (mission.md, AGENTS.md, the
-  diagnosis prompt and the test that asserts the prompt forbids it) or sits in a spec folder as a
-  historical record; in particular the `.gitignore` comment and the README no longer use
-  "remediation" for the product's report
+- **When** it is searched case-insensitively for `bicep`, `terraform`, `infrastructure-as-code`,
+  `infrastructure code` and ARM templates, and for `remediation`
+- **Then** `src` and `tests` contain no match; outside them, IaC is named only in
+  [roadmap.md § Out of scope](../roadmap.md#out-of-scope) and in spec folders as historical
+  record; "remediation" survives only in out-of-scope statements ("automated remediation") and
+  historical record; the `.gitignore` comment and the README no longer use "remediation" for the
+  product's report; and the diagnosis prompt and agent instructions still forbid producing
+  anything that changes a resource
 
 **AC-7** – The layers stay clean
 - **Given** the solution

@@ -24,9 +24,9 @@ internal static class DiagnosisPrompt
           given below ("kql N", "row N"). Cite a past incident by the hit id given below.
         - Confidence is exactly one of "low", "medium" or "high". Use "low" when the evidence is
           thin or a tool was unavailable.
-        - Suggested steps are written for a human engineer to carry out by hand. Never produce
-          Bicep, ARM, Terraform, Kubernetes manifests, CLI commands or any script or template that
-          would change a resource. Never suggest that the assistant itself change anything.
+        - Suggested steps are written for a human engineer to carry out by hand. Never produce a
+          command, script, manifest or template that would change a resource. Never suggest that
+          the assistant itself change anything.
         - Answer with the JSON object only.
         """;
 

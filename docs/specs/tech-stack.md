@@ -129,4 +129,4 @@ The polling interval is a constant in the frontend, not configuration.
 
 ## Not used
 
-Listed so nobody adds them by habit: event sourcing, CQRS, separate bounded-context projects, MediatR, AutoMapper, Semantic Kernel (superseded by Agent Framework), any infrastructure-as-code generator in the product.
+Listed so nobody adds them by habit: event sourcing, CQRS, separate bounded-context projects, MediatR, AutoMapper, Semantic Kernel (superseded by Agent Framework).

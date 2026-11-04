@@ -62,9 +62,9 @@ None. No package moves; `tech-stack.md`'s description of the three agents alread
    then rename `RemediationAgent.cs` to `DiagnosisAgent.cs`, rename the class and `AgentName`, add
    the `Diagnose` dependency, and make `WriteAsync` diagnose, render through
    `IncidentReport.Render` and write.
-2. **Instructions** – write `DiagnosisAgent_WithAChatClient_ForbidsInfrastructureCodeInItsInstructions`
+2. **Instructions** – write `DiagnosisAgent_WithAChatClient_ForbidsResourceChangesInItsInstructions`
    (AC-4), then move the instructions and description to public constants with the diagnosis
-   wording and the Bicep/ARM/Terraform/script prohibition.
+   wording and the rule against any command, script or template that changes a resource.
 3. **Registration** – write `AddInfrastructure_WithDefaults_RegistersTheDiagnosisAgent` (AC-1),
    then update the registration in `InfrastructureServiceCollectionExtensions` to construct the
    agent with the registered `Diagnose`.

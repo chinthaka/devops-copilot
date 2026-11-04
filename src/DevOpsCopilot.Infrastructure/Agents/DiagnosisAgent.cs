@@ -22,9 +22,9 @@ public sealed class DiagnosisAgent
 
     public const string Instructions =
         "Diagnose from the handoffs only: cite only their findings, rows and hits, and say when a " +
-        "tool was unavailable instead of inventing evidence. Never produce Bicep, ARM, Terraform " +
-        "or any script or template that changes resources; write suggested steps for an engineer " +
-        "to carry out.";
+        "tool was unavailable instead of inventing evidence. Never produce a command, script or " +
+        "template that changes a resource; write suggested steps for an engineer to carry out by " +
+        "hand.";
 
     private readonly Diagnose _diagnose;
     private readonly IReportWriter _reportWriter;
