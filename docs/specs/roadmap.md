@@ -6,7 +6,7 @@ This file sets the order. It does not change the rules in [docs/pipeline.md](../
 
 Sizes are relative: **S** fits in one short feature branch, **M** is a few days of focused work, **L** is a week or more and should be split further when its spec is written.
 
-Last updated: 2026-11-04.
+Last updated: 2026-11-05.
 
 ## Where the code is now
 
@@ -31,7 +31,8 @@ Known gaps between the code and the contract, closed by the milestones below:
 | Handoffs are keyed by `eventId`; the contract keys them by `incidentId` | `DiagnosticHandoff`, `GroundingHandoff` | M12, M13 |
 | ~~No LLM is wired; agents are deterministic~~ Closed: M5 wired Azure OpenAI behind `IDiagnosisModel`, with the citation guard and the deterministic fallback | `InfrastructureServiceCollectionExtensions.cs` | M5 (done) |
 | Only the `LogForwarder` JSON shape is parsed, not diagnostic-settings `records` arrays | `LogEventParser.cs` | M10 |
-| No triage, correlation, notification, work item or learn stage | — | M6, M11 to M16 |
+| No triage, correlation, notification, work item or learn stage | — | M6, M11 to M14, M16 |
+| A report is written to a file and delivered to nobody | `RunIncidentPipeline`, `FileReportWriter` | M6 |
 | Nothing deploys to Azure | `.github/workflows/` | M7 |
 | ~~The dashboard is still the weather sample~~ Closed: the status dashboard replaced it | `src/DevOpsCopilot.Frontend`, `src/DevOpsCopilot.Server` | M1 (done) |
 
@@ -45,7 +46,7 @@ Known gaps between the code and the contract, closed by the milestones below:
 
 ## Phase 1 – Straight-through path
 
-Goal: one error event in production produces one trustworthy report in Teams, from a deployed Azure environment, with diagnosis quality measured in CI. No triage or correlation yet; one event is one report.
+Goal: one error event in production produces one trustworthy report in every configured channel, from a deployed Azure environment, with diagnosis quality measured in CI. No triage or correlation yet; one event is one report.
 
 ### M1 – Status dashboard (M, done)
 
@@ -101,16 +102,26 @@ Split into:
 
 **Done when:** with Azure OpenAI configured, a staged error event produces a report whose every claim cites real evidence; without it, the report says the model was unavailable.
 
-### M6 – Teams notification (M)
+### M6 – Notification channels (L)
 
-`INotifier` in Application with a Microsoft Teams implementation that posts one Adaptive Card per report. An unconfigured channel is recorded as `unavailable` and does not fail the run. When no channel is configured the report is still written to `incidents/`.
+Deliver the report to people. `INotifier` in Application and a `NotifyChannels` stage that calls every registered channel in a fixed order, with four implementations in Infrastructure: Microsoft Teams, Slack, Discord and email. Every channel is optional: an unconfigured one is recorded as `unavailable`, a failing one as `failed`, and neither stops the others or fails the run. The report is always written to `incidents/` before any channel is called, and is the only delivery when nothing is configured.
+
+Scope extended on 2026-11-05 beyond the original Teams-only milestone: **Slack moves here from M15**, and Discord and email are added. Email is sent to every configured address for every report, so an engineer outside the chat workspace still gets the report. The four channels are one milestone because they share the notification, the interface, the fan-out, the failure rules and the truncation rules; only the payload and the transport differ.
+
+Specified by [2026-11-05-m6-notification-channels](2026-11-05-m6-notification-channels/requirement.md).
 
 Split into:
 
-1. **M6.1 – Notifier interface and card renderer (S).** Card JSON built from the `Diagnosis`; unit tests check the text matches the diagnosis.
-2. **M6.2 – Teams delivery (S).** Webhook or Graph delivery, configuration, `unavailable` handling, one message per report. Integration test against a test channel behind a flag.
+1. **M6.1 – Notification, interface and fan-out (S).** `IncidentNotification` in Domain built from the `Diagnosis` and the handoffs, `INotifier` in Application, and the `NotifyChannels` stage with its ordering, timeout and failure rules. No network, no channel, no package; unit tests only.
+2. **M6.2 – Teams (S).** Adaptive Card posted with Microsoft Graph `POST /teams/{id}/channels/{id}/messages`, app-only through resource-specific consent (`ChannelMessage.Send.Group`). Unit tests against a stub handler; integration test behind `Category=RequiresTeams`.
+3. **M6.3 – Slack (S).** Block Kit message posted with `chat.postMessage` and a bot token, chosen over an incoming webhook because only it can later update the message. A `200` carrying `"ok": false` is a failure.
+4. **M6.4 – Discord (S).** Embed posted to a channel webhook with `?wait=true` so the message id comes back. One `Retry-After` retry on `429`.
+5. **M6.5 – Email (S).** One message per report to every configured address through Azure Communication Services, HTML plus plain text.
+6. **M6.6 – Wiring, contract and docs (S).** Configuration for all four channels read only in the Host, the `pipeline.md` § 7 channel table updated, `tech-stack.md` and `mission.md` updated, end-to-end test with no channel configured.
 
-**Done when:** a staged error event in a configured environment produces one Teams card whose text matches the report file.
+**Known limitation, closed by M9 and M12:** delivery is at-least-once and messages are not updated in place. There is no incident id and nowhere to store a message id until the state store (M9) and the `Incident` aggregate (M12) exist, so a replayed event posts a second message. Recorded in decision D7 of the spec.
+
+**Done when:** a staged error event in a configured environment produces one Teams card, one Slack message, one Discord embed and one email, all carrying the same text as the report file; with nothing configured it produces the report file and four `unavailable` deliveries.
 
 ### M7 – Deploy to Azure (M)
 
@@ -135,7 +146,7 @@ Split into:
 
 **Done when:** CI reports an evaluation score on every pull request that touches the agents or their prompts, and a deliberately broken prompt fails it.
 
-**Phase 1 is complete** when M1 to M8 are done. The product then delivers a Teams report per error event from a deployed environment, with measured quality.
+**Phase 1 is complete** when M1 to M8 are done. The product then delivers a report per error event to every configured channel from a deployed environment, with measured quality.
 
 ---
 
@@ -203,11 +214,13 @@ Split into:
 
 **Done when:** a reported incident has exactly one work item whose description matches the report, and the Teams card links to it.
 
-### M15 – Slack channel (S)
+### M15 – Update messages in place (S)
 
-A Slack `INotifier` implementation posting one mrkdwn message per incident, updated in place when the report changes. Text matches the diagnosis and hits.
+Was "Slack channel". Slack moved into [M6](#m6--notification-channels-l) on 2026-11-05, so what is left here is the part of [pipeline.md § 7](../pipeline.md#7-report-and-notify) that M6 could not deliver: one message per incident per channel, updated in place when the report changes, instead of one message per report. Needs the message id to be stored against the incident, so it depends on M9 and M12.
 
-**Done when:** a reported incident produces one Slack message that matches the Teams card and the report.
+Applies to every channel that supports it: Slack `chat.update`, Graph `PATCH` on the chat message, and Discord `PATCH /webhooks/{id}/{token}/messages/{id}`. Email cannot be updated, so a changed report sends a follow-up message that references the first.
+
+**Done when:** a late candidate joining a reported incident updates the existing Teams, Slack and Discord messages rather than posting new ones, and a replayed event posts nothing at all.
 
 ### M16 – Learn loop (M)
 
@@ -222,7 +235,7 @@ Split into:
 
 ### M17 – Production readiness (M)
 
-Two worker replicas behave identically. Message updates go to the existing Teams and Slack messages. Health checks cover the state store, Event Hubs and the configured channels. Alerts on consumer lag and on `unavailable` rates.
+Two worker replicas behave identically. Message updates go to the existing channel messages, as M15 delivered. Health checks cover the state store, Event Hubs and the configured channels. Alerts on consumer lag and on `unavailable` rates.
 
 **Done when:** a load test with two replicas produces no duplicate incidents, reports or messages, and the dashboard shows replica-wide statistics.
 
@@ -264,6 +277,9 @@ See [mission.md](mission.md#boundaries). In short:
 | Correlation rules produce too many or too few incidents | Noise or missed context | Rules are pure functions with table tests (M12); thresholds live in configuration. |
 | State store choice made late | Rework of triage and correlation | Decide in M9 before M11. |
 | Azure cost of KQL and LLM calls | Budget overrun | Query and round limits enforced in code (M13.2), evaluation runs only when secrets are present. |
+| Teams app-only posting needs a resource-specific-consent app installed in the team | No Teams delivery | The channel degrades to `failed` and the other three still deliver (M6); an app-based incoming webhook is the fallback and is a new `INotifier`, not a rewrite. |
+| Four channels in one milestone grow the branch | Slow review | M6.1 merges first; M6.2 to M6.5 are independent and can be separate pull requests. |
+| Replayed events post duplicate messages | Noise in the channels | Accepted and documented in M6 (decision D7); removed by the stable `incidentId` in M12 and the message ids stored in M15. |
 | Leftover sample projects confuse contributors | Wasted effort | Marked do-not-extend now; removed in M18. |
 
 ## Working on a milestone
