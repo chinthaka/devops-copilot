@@ -6,4 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Reporting\Templates\report.md" LogicalName="DevOpsCopilot.Domain.Reporting.Templates.report.md" />
+  </ItemGroup>
+
 </Project>

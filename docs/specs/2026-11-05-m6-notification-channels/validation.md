@@ -14,7 +14,7 @@ tests driven by a stub `HttpMessageHandler`, in the way M5's `FakeChatClient` co
 | AC-2 | `NotifyAsync_WithFourConfiguredChannels_CallsEachOnceInTheContractOrder`, `RunAsync_WithAConfiguredChannel_NotifiesItAfterWritingTheReport` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
 | AC-3 | `NotifyAsync_WithNoConfiguredChannel_RecordsEveryChannelUnavailableWithoutCallingIt`, `RunAsync_WithNoConfiguredChannel_StillWritesTheReportAndReturnsNormally` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
 | AC-4 | `NotifyAsync_WhenAChannelThrows_RecordsItFailedAndStillCallsTheRest`, `NotifyAsync_WhenAChannelTimesOut_RecordsItFailedWithTheTimeoutAsTheReason`, `RunAsync_WhenEveryChannelFails_StillCheckpointsTheEvent` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
-| AC-5 | `Build_WithACompleteNotification_ProducesAnAdaptiveCardAttachmentReferencedFromTheBody`, `SendAsync_WithAConfiguredTeam_PostsTheCardToTheChannelMessagesEndpointWithAnAppOnlyToken`, `SendAsync_WhenGraphReturnsTheMessage_ReportsItsIdBack` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
+| AC-5 | `Build_WithACompleteNotification_ProducesAMessageWithOneAdaptiveCardAttachment`, `SendAsync_WithAConfiguredWebhook_PostsTheCardToTheTriggerUrl`, `SendAsync_WhenTheWorkflowAccepts_RecordsItSentWithoutAMessageId`, `SendAsync_WhenTheWorkflowRejects_RecordsItFailedWithTheStatusAndNotTheUrl` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-5 | `SendAsync_AgainstARealTeamsChannel_PostsOneAdaptiveCard` | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-6 | `Build_WithACompleteNotification_ProducesBlocksWhoseTextComesFromTheNotification`, `SendAsync_WithAConfiguredBotToken_CallsChatPostMessageWithTheBlocks`, `SendAsync_WhenSlackAnswersOkFalse_RecordsItFailedWithSlacksErrorCode`, `SendAsync_WhenSlackAnswersOk_ReportsTheTimestampAsTheMessageId` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-6 | `SendAsync_AgainstARealSlackChannel_PostsOneBlockKitMessage` | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
@@ -24,9 +24,11 @@ tests driven by a stub `HttpMessageHandler`, in the way M5's `FakeChatClient` co
 | AC-8 | `SendAsync_AgainstARealCommunicationServicesResource_QueuesOneEmail` | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-9 | `Build_WithAnOversizedDiagnosis_KeepsEveryBlockWithinSlacksLimits`, `Build_WithAnOversizedDiagnosis_KeepsTheEmbedWithinDiscordsLimits`, `Build_WithAnOversizedDiagnosis_TruncatesTheCardVisibly`, `Build_WithAnOversizedDiagnosis_StillNamesTheIncidentAndTheReportLocation` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-10 | `ToString_WithASecret_DoesNotPrintIt` (theory over the four settings records), `NotifyAsync_WhenAChannelFails_LogsTheReasonWithoutTheCredential`, `Build_ForEveryChannel_PutsNoCredentialInThePayload` | Unit | Infrastructure, Application | `tests/DevOpsCopilot.Infrastructure.Tests`, `tests/DevOpsCopilot.Application.Tests` |
-| AC-11 | `RunAsync_WithNotificationAdded_WritesTheSameReportBytesAsBefore`, `RunAsync_WhenAChannelIsConfigured_WritesTheReportBeforeCallingAnyChannel` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
+| AC-11 | `RunAsync_WithNotificationAdded_WritesTheSameReportBytesAsBefore`, `RunAsync_WhenAChannelIsConfigured_WritesTheReportBeforeCallingAnyChannel`, `Render_WithTheDefaultTemplate_MatchesTheHardCodedLayoutByteForByte` | Unit | Domain, Application | `tests/DevOpsCopilot.Domain.Tests`, `tests/DevOpsCopilot.Application.Tests` |
 | AC-12 | `NotifyAsync_WithAnAdditionalNotifierRegistered_CallsItWithoutAnyChangeToTheStage`, `Application_WhenInspectedForChannelNames_MentionsNoChannelType` | Unit, Architecture | Application | `tests/DevOpsCopilot.Application.Tests`, `tests/DevOpsCopilot.Architecture.Tests` |
 | AC-13 | `NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure`, `Application_WhenInspected_ReferencesNoHttpClientOrAzureSdk`, existing layer rules | Architecture | — | `tests/DevOpsCopilot.Architecture.Tests` |
+| AC-14 | `Render_WithACustomTemplate_FollowsItsLayout`, `RunAsync_WithACustomReportTemplate_RendersTheReportThroughIt`, `Build_WithCustomEmailTemplates_FillsTheirPlaceholders`, `GetAsync_WithAConfiguredPath_RereadsTheFileOnEveryCall`, manual template-edit check | Unit, Manual | Domain, Application, Infrastructure | `tests/DevOpsCopilot.Domain.Tests`, `tests/DevOpsCopilot.Application.Tests`, `tests/DevOpsCopilot.Infrastructure.Tests` |
+| AC-15 | `Render_WithAnUnknownPlaceholder_LeavesTheTokenVisible`, `RunAsync_WhenTheTemplateSourceReturnsNothing_RendersTheDefaultReport`, `GetAsync_WithAMissingFile_WarnsOnceAndReturnsNull` | Unit | Domain, Application, Infrastructure | `tests/DevOpsCopilot.Domain.Tests`, `tests/DevOpsCopilot.Application.Tests`, `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-2, AC-3 | `EndToEnd_AnErrorEventWithNoChannelConfigured_WritesTheReportAndRecordsEveryChannelUnavailable` | Integration | Host | `tests/DevOpsCopilot.AppHost.Tests` |
 | AC-2, AC-10 | `AddInfrastructure_WithEachChannelConfigured_RegistersThatNotifier` (theory), `AddInfrastructure_WithNoChannelConfigured_RegistersFourUnconfiguredNotifiers` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 
@@ -48,6 +50,20 @@ tests driven by a stub `HttpMessageHandler`, in the way M5's `FakeChatClient` co
   sections state the tool was unavailable and list nothing, mirroring `IncidentReport`.
 - **`From_WithTheSameInputs_ProducesAnEqualNotification`** (NFR, determinism) – Arrange: the same
   inputs twice. Act: build both. Assert: the two are equal field by field.
+
+The template renderer (D12, D13; AC-11, AC-14, AC-15):
+
+- **`Render_WithEveryPlaceholderNamed_ReplacesEachTokenWithItsValue`** – scalar tokens, filled from
+  the values map.
+- **`Render_WithAListValue_ExpandsItToOneBulletLinePerEntry`** – and to the section's
+  "unavailable" sentence when the list is empty because the tool returned nothing.
+- **`Render_WithAnUnknownPlaceholder_LeavesTheTokenVisible`** – a typo in a custom template is
+  seen in the output, never silently swallowed.
+- **`Render_WithTheDefaultTemplate_MatchesTheHardCodedLayoutByteForByte`** – the embedded default
+  report template reproduces M5's report exactly, which is what keeps AC-11 and the M5 end-to-end
+  test honest.
+- **`Render_WithACustomTemplate_FollowsItsLayout`** – a short template that reorders and relabels
+  sections; the output follows it and carries only facts from the values map.
 
 ### `tests/DevOpsCopilot.Application.Tests` — the stage, with fake notifiers
 
@@ -91,6 +107,13 @@ unconfigured.
   handoffs from M5's existing pipeline test and no configured channel. Act: run. Assert: the
   written document equals the expected seven-section report byte for byte.
 
+- **`RunAsync_WithACustomReportTemplate_RendersTheReportThroughIt`** (AC-14) – Arrange: a fake
+  `ITemplateSource` answering the `report` name with a short custom template. Act: run one error
+  event. Assert: the written draft follows the custom layout.
+- **`RunAsync_WhenTheTemplateSourceReturnsNothing_RendersTheDefaultReport`** (AC-15) – Arrange: a
+  fake source answering null. Act: run. Assert: the draft is byte-identical to the no-source
+  default.
+
 Existing Application tests must keep passing unchanged, in particular
 `RunAsync_WithoutAConfiguredModel_StillWritesAFullReport` and the `Warning`-does-not-start-the-team
 test.
@@ -102,24 +125,23 @@ and records the request it received. The payload builders are pure and tested di
 
 **Teams** (AC-5, AC-9, AC-10)
 
-- **`Build_WithACompleteNotification_ProducesAnAdaptiveCardAttachmentReferencedFromTheBody`** –
-  Assert: one attachment with `contentType` `application/vnd.microsoft.card.adaptive`, a GUID id,
-  the serialised card in `content`, and `body.content` carrying the matching
-  `<attachment id="…"></attachment>` placeholder.
+- **`Build_WithACompleteNotification_ProducesAMessageWithOneAdaptiveCardAttachment`** – Assert: a
+  `message` with exactly one attachment whose `contentType` is
+  `application/vnd.microsoft.card.adaptive`, `contentUrl` null, and an Adaptive Card 1.5 in
+  `content`.
 - **`Build_WithACompleteNotification_PutsTheNotificationsTextInTheCard`** – Assert: title, likely
   cause, confidence, impact, evidence, similar incidents, suggested steps and open questions all
   appear, and the incident id and report location are present.
-- **`SendAsync_WithAConfiguredTeam_PostsTheCardToTheChannelMessagesEndpointWithAnAppOnlyToken`** –
-  Assert: one `POST` to `/v1.0/teams/{teamId}/channels/{channelId}/messages` with an
-  `Authorization: Bearer` header from the token provider and the built body.
-- **`SendAsync_WhenGraphReturnsTheMessage_ReportsItsIdBack`** – Assert: the delivery is `sent` and
-  carries the `id` and `webUrl` from the response.
-- **`SendAsync_WhenGraphRejectsTheToken_RecordsItFailedWithTheGraphErrorCode`** – Arrange: a `403`
-  with a Graph error body (the shape returned when RSC is missing). Assert: `failed`, the reason
-  names the Graph error code, nothing throws.
-- **`SendAsync_WithoutATeamOrChannel_ReportsItselfUnconfigured`** – theory over blank tenant,
-  client, team and channel.
-- **`Build_WithAnOversizedDiagnosis_TruncatesTheCardVisibly`** (AC-9).
+- **`SendAsync_WithAConfiguredWebhook_PostsTheCardToTheTriggerUrl`** – Assert: one `POST` to the
+  configured URL with the built body as JSON.
+- **`SendAsync_WhenTheWorkflowAccepts_RecordsItSentWithoutAMessageId`** – Arrange: `202 Accepted`,
+  empty body. Assert: `sent`, message id and url null (D3).
+- **`SendAsync_WhenTheWorkflowRejects_RecordsItFailedWithTheStatusAndNotTheUrl`** – Arrange: a
+  `401` or `404`. Assert: `failed`, the reason names the status, and the trigger URL appears
+  nowhere in the reason.
+- **`SendAsync_WithoutAWebhookUrl_ReportsItselfUnconfigured`**.
+- **`Build_WithAnOversizedDiagnosis_TruncatesTheCardVisibly`** (AC-9) – the serialised body stays
+  within 28 KB.
 
 **Slack** (AC-6, AC-9)
 
@@ -148,11 +170,15 @@ and records the request it received. The payload builders are pure and tested di
   of description, 6 000 across the embed, at most 10 embeds.
 - **`SendAsync_WithoutAWebhookUrl_ReportsItselfUnconfigured`**.
 
-**Email** (AC-8, AC-9, AC-10)
+**Email** (AC-8, AC-9, AC-10, AC-14)
 
-- **`Build_WithACompleteNotification_ProducesAnHtmlBodyAndAPlainTextAlternative`** – Assert: both
-  bodies carry the same facts and the plain text is readable without HTML.
-- **`Build_WithANotification_SubjectNamesTheIncidentAndTheConfidence`**.
+- **`Build_WithACompleteNotification_ProducesAnHtmlBodyAndAPlainTextAlternative`** – with the
+  embedded default templates. Assert: both bodies carry the same facts and the plain text is
+  readable without HTML.
+- **`Build_WithANotification_SubjectNamesTheIncidentAndTheConfidence`** – the default subject
+  template.
+- **`Build_WithCustomEmailTemplates_FillsTheirPlaceholders`** (AC-14) – custom subject, HTML and
+  text templates: every token is filled from the notification and the custom wording is kept.
 - **`SendAsync_WithThreeConfiguredRecipients_SendsOneMessageAddressedToAllOfThem`** – Arrange: a
   fake email transport behind the thin interface the notifier depends on. Assert: one send, three
   `To` addresses, the sender from configuration.
@@ -160,11 +186,20 @@ and records the request it received. The payload builders are pure and tested di
 - **`SendAsync_WithoutASenderOrRecipients_ReportsItselfUnconfigured`** – theory over a blank
   connection, a blank sender and an empty recipient list.
 
+**Templates — `FileTemplateSource`** (AC-14, AC-15, D13)
+
+- **`GetAsync_WithAConfiguredPath_RereadsTheFileOnEveryCall`** – Arrange: a template file on disk.
+  Act: read, edit the file, read again. Assert: the second read returns the edit — the
+  no-deployment guarantee.
+- **`GetAsync_WithNoConfiguredPath_ReturnsNull`** – unset means the embedded default, silently.
+- **`GetAsync_WithAMissingFile_WarnsOnceAndReturnsNull`** – the warning names the path, nothing
+  throws, and the caller falls back to the default.
+
 **Settings and wiring** (AC-2, AC-10, AC-13)
 
 - **`ToString_WithASecret_DoesNotPrintIt`** – theory over `TeamsSettings`, `SlackSettings`,
-  `DiscordSettings` and `EmailSettings`: each prints `(set)` or `(none)` in place of the client
-  secret, bot token, webhook URL and connection string.
+  `DiscordSettings` and `EmailSettings`: each prints `(set)` or `(none)` in place of the Teams
+  webhook URL, bot token, both webhook URLs and connection string.
 - **`AddInfrastructure_WithEachChannelConfigured_RegistersThatNotifier`** – theory over the four
   channels: the registered `INotifier` set contains that channel and it reports itself configured.
 - **`AddInfrastructure_WithNoChannelConfigured_RegistersFourUnconfiguredNotifiers`** – the worker
@@ -177,9 +212,9 @@ and records the request it received. The payload builders are pure and tested di
 Each is gated on its own configuration being present in user secrets or the environment, in the
 way M5's `AzureOpenAIRequiredFact` gates the Azure OpenAI test, and none runs in CI.
 
-- **`SendAsync_AgainstARealTeamsChannel_PostsOneAdaptiveCard`** (AC-5) – needs a tenant, an app
-  registration whose Teams app is installed in the target team with `ChannelMessage.Send.Group`,
-  and a team and channel id. Marked `Category=RequiresTeams`.
+- **`SendAsync_AgainstARealTeamsChannel_PostsOneAdaptiveCard`** (AC-5) – needs the trigger URL of
+  a Workflows flow posting to a test channel; asserts `202` and a `sent` delivery. Marked
+  `Category=RequiresTeams`.
 - **`SendAsync_AgainstARealSlackChannel_PostsOneBlockKitMessage`** (AC-6) – needs a bot token with
   `chat:write` and a channel the bot has joined. Marked `Category=RequiresSlack`.
 - **`SendAsync_AgainstARealDiscordWebhook_PostsOneEmbed`** (AC-7) – needs a webhook URL for a test
@@ -194,13 +229,13 @@ way M5's `AzureOpenAIRequiredFact` gates the Azure OpenAI test, and none runs in
 
 ## Architecture tests
 
-- **`NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure`** (AC-13) – the Communication
-  Services package and any HTTP client registration appear only in
-  `src/DevOpsCopilot.Infrastructure`.
+- **`NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure`** (AC-13) – the
+  Communication Services package and any HTTP client registration appear
+  only in `src/DevOpsCopilot.Infrastructure`.
 - **`Application_WhenInspected_ReferencesNoHttpClientOrAzureSdk`** (AC-13) – extends the existing
   Application rule so a future channel cannot be written in the wrong layer.
 - **`Application_WhenInspectedForChannelNames_MentionsNoChannelType`** (AC-12) – no type or member
-  in `DevOpsCopilot.Application` names Teams, Slack, Discord, Graph or Communication Services.
+  in `DevOpsCopilot.Application` names Teams, Workflows, Slack, Discord or Communication Services.
 - The existing layer rules keep passing unchanged.
 
 ## Evaluation
@@ -214,7 +249,7 @@ These need credentials and a human eye, and are run once before the pull request
 
 - `aspire run` with no channel configured: one error event produces the report file and four
   `unavailable` deliveries in the log; nothing fails.
-- Teams, with the RSC Teams app installed: the Adaptive Card renders correctly in the channel on
+- Teams, through the Workflows flow: the card actually appears (a `202` alone does not prove it), renders correctly in the channel on
   the desktop and mobile clients, the text matches the report file, and no section is cut off
   mid-word.
 - Slack: the Block Kit message renders correctly, long steps are readable and the truncation marker
@@ -225,6 +260,10 @@ These need credentials and a human eye, and are run once before the pull request
   client, and the subject is useful in a notification preview.
 - Across all four: no token, secret, webhook URL or connection string appears in the console output,
   in any payload or in any delivered message.
+- Templates: with `aspire run` live and custom report and email templates configured, edit both
+  template files and produce another error event; the next report and email follow the edit with
+  no restart (AC-14). Then point a template path at a missing file: the embedded defaults are used
+  and one warning names the path (AC-15).
 - Deliberate failure: revoke the Slack token and run again; Slack is `failed`, the other three
   still deliver and the worker keeps consuming.
 
@@ -249,6 +288,8 @@ These need credentials and a human eye, and are run once before the pull request
 | AC-11 | | | |
 | AC-12 | | | |
 | AC-13 | | | |
+| AC-14 | | | |
+| AC-15 | | | |
 
 - **`dotnet build`:** 
 - **`dotnet test`:** <passed> / <total>

@@ -7,15 +7,18 @@
 | **Status** | Draft |
 | **Author** | Chinthaka Kumarasiri |
 | **Date** | 2026-11-05 |
+| **Revised** | 2026-11-06 – Teams through a Workflows webhook (**D3**, replacing Graph; **D11** withdrawn); report and email templates (**D12**, **D13**) |
 
 ## Summary
 
 Deliver stage 7's second half. The pipeline already renders the seven-section report and writes it
 to a file; this feature sends that same report to the people who need it. One channel-neutral
 notification is built from the `Diagnosis` and the two handoffs, and four delivery channels render
-it: a Microsoft Teams Adaptive Card through Microsoft Graph, a Slack Block Kit message through
-`chat.postMessage`, a Discord embed through a channel webhook, and an email to every configured
-address through Azure Communication Services.
+it: a Microsoft Teams Adaptive Card through a Teams Workflows webhook, a Slack Block Kit message
+through `chat.postMessage`, a Discord embed through a channel webhook, and an email to every
+configured address through Azure Communication Services. The report and the email are rendered
+from templates with embedded defaults, so a customer can change their wording by editing a file,
+without a new deployment (decisions **D12** and **D13**).
 
 Every channel is optional and independent. A channel that is not configured is recorded as
 `unavailable`; a channel that fails is recorded as `failed`. Neither stops the other channels,
@@ -54,21 +57,25 @@ is not in the chat workspace still receives the report.
 - `NotifyChannels` in Application: the stage-7 fan-out. It takes every registered `INotifier`,
   calls each one in a fixed order, and returns one `NotificationDelivery` per channel. It never
   throws and never knows which channels exist.
-- **Microsoft Teams** (M6.2): an Adaptive Card posted to a configured team and channel with
-  Microsoft Graph `POST /teams/{team-id}/channels/{channel-id}/messages`, authenticated app-only
-  with resource-specific consent. See decision **D3**.
+- **Microsoft Teams** (M6.2): an Adaptive Card posted to the trigger URL of a Teams Workflows
+  "Post to a channel when a webhook request is received" flow, which posts it to its configured
+  channel. See decision **D3**.
 - **Slack** (M6.3): a Block Kit message posted with `chat.postMessage` and a bot token. See
   decision **D4**.
 - **Discord** (M6.4): an embed posted to a channel webhook with `?wait=true` so the message id
   comes back. See decision **D5**.
-- **Email** (M6.5): one message per report, sent to every configured address, with an HTML body and
-  a plain-text alternative, through Azure Communication Services Email. See decision **D6**.
+- **Email** (M6.5): one message per report, sent to every configured address, with a subject, an
+  HTML body and a plain-text alternative rendered from the email templates, through Azure
+  Communication Services Email. See decisions **D6**, **D12** and **D13**.
+- Templates for the report and the email: one placeholder renderer in Domain, embedded defaults
+  that reproduce today's wording, and optional configured template files re-read on every render,
+  so a customer changes the text without a deployment. See decisions **D12** and **D13**.
 - Per-channel truncation: every channel has a hard payload limit, so each renderer truncates
   visibly and always carries the incident id and the location of the full report.
 - Configuration for all four channels, read only in the Host, with redacting settings records so no
   token, secret or webhook URL can reach a log line.
-- The report file keeps being written exactly as it is today, before any channel is called. See
-  decision **D2**.
+- The report file keeps being written before any channel is called, byte-identical to today
+  unless a custom report template is configured. See decisions **D2** and **D13**.
 
 **Out of scope**
 
@@ -82,13 +89,18 @@ is not in the chat workspace still receives the report.
   Every channel here is one-way, which is why three of the four need no bot runtime.
 - Per-channel routing rules, severity filters, quiet hours, digests or rate limiting beyond what
   the channel itself enforces. Every configured channel gets every report.
+- Templating the chat payloads. The Teams card, the Slack blocks and the Discord embed stay
+  code-built: their limits and truncation rules are vendor-specific and asserted by tests. If a
+  customer later needs a custom card, templating it reuses the same renderer (**D12**).
+- A template editor, template validation tooling or per-customer template storage. A template is
+  one file on the worker's disk (in Azure, a mounted share); managing that file is operations.
 - Dashboard counters for notifications. The dashboard gains counters with M11.3.
 - Azure DevOps work items (M14), the learn loop (M16) and anything keyed by `incidentId`
   (M12, M13).
 - The leftover sample project `src/DevOpsCopilot.EmailNotifier`. It is not extended, not reused and
   not deleted here; M18 removes it. The new email channel lives in
   `src/DevOpsCopilot.Infrastructure/Reporting/`.
-- Provisioning: creating the Teams app registration and its resource-specific consent, the Slack
+- Provisioning: creating the Teams Workflows flow and its trigger URL, the Slack
   app, the Discord webhook and the Communication Services resource are operations tasks, listed as
   manual checks and carried out alongside M7.3.
 
@@ -109,18 +121,20 @@ channel is configured … write the report to `incidents/`" is widened to say th
 written and is the only delivery when no channel is configured. This is a contract change, written
 out in [plan.md § Contract changes](plan.md#contract-changes).
 
-**D3 – Teams uses Microsoft Graph with resource-specific consent, not an incoming webhook.**
-The product owner chose Graph. The consequence has to be stated plainly, because it is the largest
-operational cost in this milestone: `POST /teams/{team-id}/channels/{channel-id}/messages` has no
-ordinary application permission. The delegated permission `ChannelMessage.Send` needs a signed-in
-user, which an unattended worker does not have, and the application permission
-`Teamwork.Migrate.All` is for migration only and must not be used. App-only posting is supported
-through **resource-specific consent**: a Teams app manifest declaring
-`ChannelMessage.Send.Group` as an `Application` permission, installed into the target team, with
-the worker authenticating as that app registration with client credentials. RSC is granted at team
-level, so restricting delivery to one channel is this code's responsibility, not Graph's.
-*Consequence:* without the Teams app installed, the Teams channel reports `unavailable`, exactly
-like an unconfigured one, and the other three channels still deliver.
+**D3 – Teams uses a Workflows webhook, not Microsoft Graph.**
+The product owner chose the Teams **Workflows** app's "Post to a channel when a webhook request is
+received" flow. Its trigger URL accepts an HTTP POST whose body carries one Adaptive Card as an
+`application/vnd.microsoft.card.adaptive` attachment, and the flow posts that card to the channel
+chosen when the flow was created. It needs no app registration, no client secret, no Teams app
+manifest and no resource-specific consent, which removes the largest operational cost of the
+earlier Graph design; the retired Office 365 connector incoming webhooks are not used. Two
+consequences are stated plainly. First, the trigger URL carries a shared-access signature, so it
+is a credential exactly like Discord's webhook URL (**D5**) and is redacted wherever it could be
+printed. Second, the trigger answers `202 Accepted` with no body: the flow runs asynchronously, so
+there is **no message id or permalink** to return, and a `202` means "accepted by the flow", not
+"rendered in the channel". The Teams delivery is therefore `sent` with no message id, and editing
+the message in place (**D7**, Phase 2) is not possible on this channel; a later move to Graph is a
+new `INotifier` and no change anywhere else.
 
 **D4 – Slack uses `chat.postMessage` with a bot token, not an incoming webhook.**
 App-based incoming webhooks are still supported, but they are pinned to one channel and cannot
@@ -172,6 +186,30 @@ mapped at the Infrastructure boundary like every other external shape. The notif
 the product's own content and stays in Domain next to `IncidentReport`, with no packages. All of it
 is unit-testable without a network: the builders are pure functions over `IncidentNotification`.
 
+**D11 – Withdrawn.** The 2026-11-06 revision chose the `Microsoft.Graph` SDK for Teams; the same
+day the product owner replaced Graph with a Workflows webhook (**D3**). No Graph package or Teams
+app-only identity is added. The number is kept so later references stay stable.
+
+**D12 – One placeholder renderer in Domain, and no templating package.**
+The report and the email render through one pure Domain function: `{{Placeholder}}` tokens are
+replaced from a map of named values, a list value expands to one `- ` line per entry (or to the
+section's "unavailable" sentence when the tool returned nothing), and a token that names nothing
+is left visible in the output, so a typo in a custom template is seen rather than silently
+swallowed. A template can reorder, relabel, drop or translate content, but it cannot add a claim,
+which keeps **D1** and the evidence rule intact. Scriban, Handlebars.Net and Razor were rejected:
+Domain references no package, and substitution plus lists is everything these two documents need.
+
+**D13 – Templates are files read at render time; the embedded default is the fallback.**
+Each template — the report, the email subject, the email HTML body and the email plain-text body —
+has an embedded default and an optional configured path. The path is re-read on every render:
+reports are rare, so the cost is nothing, and an edited file takes effect on the next event with
+no restart and no deployment. A path that is configured but missing or unreadable falls back to
+the embedded default and logs one warning naming the path; a template problem never costs the
+report or the email. The default report template reproduces today's report byte for byte, so M5's
+end-to-end test and AC-11 hold wherever no custom template is configured. In Azure the template
+files come from a mounted Azure Files share, so an edit needs no image rebuild; locally they are
+any path on disk.
+
 ## Inputs and outputs
 
 | | Description | Shape |
@@ -186,8 +224,9 @@ is unit-testable without a network: the builders are pure functions over `Incide
 
 - [pipeline.md § 7 – Report and notify](../../pipeline.md#7-report-and-notify) – implemented by this
   feature. **Changed:** the channel table gains Discord and email rows, the email rule is stated,
-  the file-report sentence is widened per **D2**, and the update-in-place rule is marked as
-  arriving with M12. The wording is in [plan.md § Contract changes](plan.md#contract-changes).
+  the file-report sentence is widened per **D2**, the update-in-place rule is marked as arriving
+  with M12, and the report-template sentence is added per **D13**. The wording is in
+  [plan.md § Contract changes](plan.md#contract-changes).
 - [pipeline.md § Evidence rule](../../pipeline.md#evidence-rule) – a channel that is not configured
   or not reachable is recorded as `unavailable` or `failed`; no renderer invents content to fill a
   gap.
@@ -204,10 +243,11 @@ is unit-testable without a network: the builders are pure functions over `Incide
 | **Notification** | The channel-neutral content of one message about one report. Built from the diagnosis; holds no channel vocabulary. |
 | **Channel** | One delivery destination: Teams, Slack, Discord or email. Each is an `INotifier`. |
 | **Delivery** | The outcome of one channel for one report: `sent`, `unavailable` or `failed`, with a message id where there is one. |
-| **Report** | Unchanged: the seven-section document of [pipeline.md § 7](../../pipeline.md#report-sections-in-this-order). A notification summarises it; it does not replace it. |
+| **Report** | Unchanged in substance: the seven-section document of [pipeline.md § 7](../../pipeline.md#report-sections-in-this-order). A notification summarises it; it does not replace it. |
+| **Template** | The text shape of the report or of the email: fixed wording plus `{{placeholder}}` tokens filled from the diagnosis and the handoffs. An embedded default ships with the worker; a configured file replaces it without a deployment. |
 
-`notification`, `channel` and `delivery` are added to the contract's vocabulary in the same pull
-request.
+`notification`, `channel`, `delivery` and `template` are added to the contract's vocabulary in the
+same pull request.
 
 ## Acceptance criteria
 
@@ -237,13 +277,13 @@ request.
 - **Then** the two are recorded as `failed` with the reason, the remaining two are still called and
   recorded as `sent`, no exception escapes the stage, and the event is still checkpointed
 
-**AC-5** – Teams receives an Adaptive Card through Graph
-- **Given** a configured tenant, app registration, team and channel
+**AC-5** – Teams receives an Adaptive Card through a Workflows webhook
+- **Given** a configured Workflows trigger URL
 - **When** a report is notified
-- **Then** one `POST /teams/{team-id}/channels/{channel-id}/messages` is made with an app-only
-  bearer token, the body carries one `application/vnd.microsoft.card.adaptive` attachment
-  referenced by an `<attachment id="…"></attachment>` placeholder, the card's text comes from the
-  notification, and the returned message id is reported back
+- **Then** one POST is made to that URL whose body is a `message` carrying exactly one
+  `application/vnd.microsoft.card.adaptive` attachment, the card's text comes from the
+  notification, a `202 Accepted` is recorded as `sent` with no message id, and any other status is
+  recorded as `failed` with the status code and never with the URL
 
 **AC-6** – Slack receives a Block Kit message, and `ok:false` is a failure
 - **Given** a configured bot token and channel id
@@ -263,7 +303,7 @@ request.
 - **When** a report is notified
 - **Then** exactly one email is sent, with all three addresses in `To`, a subject naming the
   incident and its confidence, an HTML body and a plain-text alternative both rendered from the
-  notification, and the operation id reported back — and this happens for every report, whatever
+  email templates and carrying the notification's facts, and the operation id reported back — and this happens for every report, whatever
   the other channels did
 
 **AC-9** – Oversized content is truncated, never dropped silently
@@ -281,7 +321,7 @@ request.
   in place of the value, as `AzureOpenAISettings` already does
 
 **AC-11** – The report file behaviour is unchanged
-- **Given** the pipeline with no channel configured
+- **Given** the pipeline with no channel configured and no custom report template
 - **When** one error event is processed
 - **Then** the report written to `incidents/YYYY-MM-DD-<event-id>.md` is byte-identical to what M5
   produces today, and it is written before any channel is called
@@ -296,9 +336,23 @@ request.
 **AC-13** – The layers stay clean
 - **Given** the solution
 - **When** the architecture tests run
-- **Then** Graph, Slack, Discord and Communication Services packages and HTTP clients are
+- **Then** the Communication Services package and every HTTP client are
   referenced only by Infrastructure, Application still references no Azure SDK or HTTP client,
   Domain still references no package, and all dependencies point inwards
+
+**AC-14** – The report and the email render from templates, and an edit needs no deployment
+- **Given** a running worker with a custom report template and custom email templates configured
+- **When** one error event is processed, the template files are edited, and a second error event
+  is processed
+- **Then** the first report and email follow the first wording, the second follow the edited
+  wording, every placeholder is filled from the notification or the handoffs, and the worker was
+  neither restarted nor redeployed
+
+**AC-15** – A missing or broken template never costs the report
+- **Given** a configured template path whose file does not exist
+- **When** an error event is processed
+- **Then** the report and the email are produced from the embedded defaults, one warning names the
+  missing path, and the run completes normally
 
 ## Non-functional requirements
 
@@ -320,5 +374,5 @@ request.
 
 - None blocking. Two choices are recorded as decisions rather than questions and can be revisited
   in review: the email recipients are in `To` rather than `Bcc` (**D6**), and Teams delivery
-  depends on an RSC-enabled Teams app being installed in the target team (**D3**). If review
+  returns no message id, so it cannot be updated in place later (**D3**). If review
   prefers `Bcc`, it is a one-line change in the email renderer and one test name.
