@@ -2,6 +2,7 @@ using DevOpsCopilot.Application.Diagnoses;
 using DevOpsCopilot.Application.Grounding;
 using DevOpsCopilot.Application.Interfaces;
 using DevOpsCopilot.Application.Kql;
+using DevOpsCopilot.Application.Reporting;
 using DevOpsCopilot.Domain.Diagnoses;
 using DevOpsCopilot.Domain.Events;
 using DevOpsCopilot.Domain.Pipeline;
@@ -11,7 +12,8 @@ namespace DevOpsCopilot.Application.Pipeline;
 
 /// <summary>
 /// The stage order for one log event: gather evidence, ground it in history, diagnose, then write
-/// the report. An event that does not start an incident runs no stage at all.
+/// the report, then notify every registered channel. The report is always written before any
+/// channel is called, so a channel outage never costs the report. An event that does not start an incident runs no stage at all.
 /// </summary>
 public sealed class RunIncidentPipeline
 {
@@ -19,17 +21,20 @@ public sealed class RunIncidentPipeline
     private readonly GroundInHistory _grounding;
     private readonly IReportWriter _reportWriter;
     private readonly Diagnose _diagnose;
+    private readonly NotifyChannels _notify;
 
     public RunIncidentPipeline(
         GatherEvidence evidence,
         GroundInHistory grounding,
         IReportWriter reportWriter,
-        Diagnose? diagnose = null)
+        Diagnose? diagnose = null,
+        NotifyChannels? notify = null)
     {
         _evidence = evidence;
         _grounding = grounding;
         _reportWriter = reportWriter;
         _diagnose = diagnose ?? new Diagnose(UnconfiguredDiagnosisModel.Instance);
+        _notify = notify ?? new NotifyChannels([]);
     }
 
     public async Task<IncidentWorkflowResult?> RunAsync(LogEvent logEvent, CancellationToken cancellationToken = default)
@@ -45,6 +50,8 @@ public sealed class RunIncidentPipeline
         var handoff = new AgentHandoff(diagnostic, grounding, diagnosis);
         var draft = IncidentReport.Render(handoff.Diagnosis, handoff.Diagnostic, handoff.Grounding);
         var path = await _reportWriter.WriteAsync(handoff.Diagnostic, handoff.Grounding, draft, cancellationToken);
-        return new IncidentWorkflowResult(handoff.Diagnostic, handoff.Grounding, path);
+        var notification = IncidentNotification.From(handoff.Diagnosis, handoff.Diagnostic, handoff.Grounding, path);
+        var deliveries = await _notify.NotifyAsync(notification, cancellationToken);
+        return new IncidentWorkflowResult(handoff.Diagnostic, handoff.Grounding, path) { Deliveries = deliveries };
     }
 }

@@ -12,6 +12,12 @@ namespace DevOpsCopilot.Domain.Reporting;
 /// </summary>
 public static class IncidentReport
 {
+    /// <summary>What the evidence section says when KQL returned nothing usable.</summary>
+    public const string KqlUnavailable = "KQL was unavailable. No rows were returned.";
+
+    /// <summary>What the similar-incidents section says when search returned nothing usable.</summary>
+    public const string SearchUnavailable = "Azure AI Search was unavailable. No historical post-mortems were returned.";
+
     public static string Render(Diagnosis diagnosis, DiagnosticHandoff diagnostic, GroundingHandoff grounding)
     {
         var builder = new StringBuilder();
@@ -47,7 +53,7 @@ public static class IncidentReport
         }
         else
         {
-            builder.AppendLine("KQL was unavailable. No rows were returned.");
+            builder.AppendLine(KqlUnavailable);
         }
 
         builder.AppendLine();
@@ -62,7 +68,7 @@ public static class IncidentReport
         }
         else
         {
-            builder.AppendLine("Azure AI Search was unavailable. No historical post-mortems were returned.");
+            builder.AppendLine(SearchUnavailable);
         }
 
         builder.AppendLine();
