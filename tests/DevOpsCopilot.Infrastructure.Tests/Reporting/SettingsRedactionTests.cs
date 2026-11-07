@@ -15,6 +15,10 @@ public class SettingsRedactionTests
                 new TeamsSettings("https://prod-27.westus.logic.azure.com/workflows/abc/triggers/manual/paths/invoke?sig=sig-secret-value"),
                 "sig-secret-value"
             },
+            {
+                new SlackSettings("xoxb-secret-token", "C0123456789"),
+                "xoxb-secret-token"
+            },
         };
 
     [Theory]
