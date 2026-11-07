@@ -157,18 +157,35 @@ and records the request it received. The payload builders are pure and tested di
   per text block, at most 50 blocks.
 - **`SendAsync_WithoutABotTokenOrChannel_ReportsItselfUnconfigured`** – theory.
 
-**Discord** (AC-7, AC-9)
+**Discord** (AC-7, AC-9, AC-10)
 
-- **`Build_WithACompleteNotification_ProducesOneEmbedWithTheReportFields`**.
+- **`Build_WithACompleteNotification_ProducesOneEmbedWithTheReportFields`** – one embed, the
+  title, the cause in the description, and the six fields in order.
+- **`Build_WithEachConfidence_ChoosesItsColour`** – theory over low, medium and high.
+- **`Build_WithMentionsInTheDiagnosis_AllowsNoMentions`** – `allowed_mentions.parse` is empty, so
+  an `@everyone` in log text pings nobody.
+- **`Build_WhenAToolWasUnavailable_SaysSoInsteadOfListingEvidence`**.
+- **`Build_WithAnOversizedDiagnosis_KeepsTheEmbedWithinDiscordsLimits`** (AC-9) – 256 characters of
+  title, 4 096 of description, 25 fields of 1 024, 6 000 across the embed, at most 10 embeds, a
+  visible marker, and the incident id and report location kept.
+- **`Build_WithTheSameNotification_ProducesTheSameBody`** (NFR, determinism).
 - **`SendAsync_WithAConfiguredWebhook_PostsWithWaitTrueAndReportsTheMessageId`** – Assert: the
   query string contains `wait=true` and the delivery carries the returned message id.
+- **`SendAsync_WithAWebhookUrlThatHasAQuery_KeepsItAndAddsWaitTrue`** – a `thread_id` survives.
 - **`SendAsync_WhenDiscordRateLimits_RetriesOnceAfterRetryAfterThenSucceeds`** (AC-4, D8) – Arrange:
-  a `429` carrying `Retry-After`, then a `200`. Assert: exactly two requests and a `sent` delivery.
+  a `429` carrying `Retry-After`, then a `200`. Assert: exactly two requests, one wait of the
+  header's delay, and a `sent` delivery.
 - **`SendAsync_WhenDiscordRateLimitsTwice_RecordsItFailedWithoutRetryingAgain`** (D8) – Assert:
   exactly two requests and a `failed` delivery. The retry budget is one.
-- **`Build_WithAnOversizedDiagnosis_KeepsTheEmbedWithinDiscordsLimits`** (AC-9) – 4 096 characters
-  of description, 6 000 across the embed, at most 10 embeds.
+- **`SendAsync_WhenDiscordRateLimitsWithoutRetryAfter_RecordsItFailedWithoutRetrying`** (D8) – only
+  the header earns a retry.
+- **`SendAsync_WhenRetryAfterExceedsTheCap_RecordsItFailedWithoutWaiting`** (D8) – a delay that
+  could never finish within the channel's timeout is not waited for.
+- **`SendAsync_WhenDiscordRejects_RecordsItFailedWithTheStatusAndNotTheUrl`** (AC-10) – theory over
+  `400`, `401` and `404`.
+- **`SendAsync_WhenTheRequestThrows_RecordsItFailedWithTheTypeAndNotTheUrl`** (AC-10).
 - **`SendAsync_WithoutAWebhookUrl_ReportsItselfUnconfigured`**.
+- **`SendAsync_WhenTheCallerIsCancelled_PropagatesTheCancellation`** – shutdown is not a failure.
 
 **Email** (AC-8, AC-9, AC-10, AC-14)
 

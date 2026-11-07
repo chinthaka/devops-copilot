@@ -119,18 +119,24 @@ for a custom template.
 
 ### 4. Discord (M6.4, Infrastructure)
 
-1. Write the Discord builder and notifier tests from validation.md, including the two rate-limit
-   tests.
+1. Write the Discord builder and notifier tests from validation.md, including the four rate-limit
+   tests: one retry then success, a second `429` fails, a `429` without `Retry-After` is not
+   retried, and a `Retry-After` beyond the budget is not waited for.
 2. Add `DiscordSettings(WebhookUrl)`, redacting — the URL is a credential — blank means
    unconfigured.
-3. Add `DiscordEmbed.Build(notification)`: one embed with a title, a description, fields for
-   impact, evidence, similar incidents, suggested steps and open questions, and a colour chosen
-   from the confidence. Within 4 096 characters of description, 6 000 across the embed and at most
-   10 embeds.
-4. Add `DiscordNotifier : INotifier`: `POST {webhookUrl}?wait=true` so Discord returns the created
-   message, and map its `id` into the delivery. Implement the single `Retry-After` retry of
-   [D8](requirement.md#decisions) here, where the rate limit is tightest; a second `429` is a
-   `failed` delivery.
+3. Add `DiscordEmbed.Build(notification)`: one embed with a title, a description (incident line
+   and likely cause), fields for impact, evidence, similar incidents, suggested steps, open
+   questions and the report location, and a colour chosen from the confidence. Within 256
+   characters of title, 4 096 of description, 25 fields of 1 024, 6 000 across the embed and at
+   most 10 embeds; tighter budgets (`DiscordEmbedBudget`) are tried until the total fits. The
+   payload sets `allowed_mentions.parse` to empty, because diagnosis text comes from logs and an
+   `@everyone` in it must never ping the channel.
+4. Add `DiscordNotifier : INotifier`: `POST {webhookUrl}?wait=true` — appended to any existing
+   query, such as `thread_id` — so Discord returns the created message, and map its `id` into the
+   delivery. Implement the single `Retry-After` retry of [D8](requirement.md#decisions) here,
+   where the rate limit is tightest: only when the header is present and its delay is within
+   `MaxRetryDelay` (10 seconds, the default per-channel timeout); a second `429` is a `failed`
+   delivery. The wait is an injected delay so the tests do not sleep. No reason carries the URL.
 5. Write `SendAsync_AgainstARealDiscordWebhook_PostsOneEmbed`, gated on `Category=RequiresDiscord`.
 
 ### 5. Email (M6.5, Infrastructure)
@@ -190,9 +196,9 @@ for a custom template.
 |---|---|---|---|
 | Domain | `src/DevOpsCopilot.Domain` | `Reporting/IncidentNotification`, `Reporting/NotificationDelivery`, `Reporting/NotificationStatus`, `Reporting/TemplateRenderer`, the embedded default report template, `Pipeline/IncidentWorkflowResult` (carries the deliveries) | No packages. `IncidentReport` keeps its signature and its default output byte for byte; it renders through the default template. |
 | Application | `src/DevOpsCopilot.Application` | `Interfaces/INotifier`, `Interfaces/ITemplateSource`, `Reporting/NotifyChannels`, `Pipeline/RunIncidentPipeline` (notifies after writing; fetches the report template) | No Azure SDK, no HTTP client, no channel named. |
-| Infrastructure | `src/DevOpsCopilot.Infrastructure` | `Reporting/TeamsNotifier`, `TeamsAdaptiveCard`, `TeamsSettings`, `SlackNotifier`, `SlackBlocks`, `SlackSettings`, `DiscordNotifier`, `DiscordEmbed`, `DiscordSettings`, `EmailNotifier`, `EmailBody`, `EmailSettings`, `IEmailTransport` and its ACS implementation, `FileTemplateSource`, the embedded default email templates, `InfrastructureServiceCollectionExtensions` | Adds `Azure.Communication.Email`; uses the existing `Azure.Identity` only for the email channel's managed identity. One top-level type per file. |
+| Infrastructure | `src/DevOpsCopilot.Infrastructure` | `Reporting/TeamsNotifier`, `TeamsAdaptiveCard`, `TeamsSettings`, `SlackNotifier`, `SlackBlocks`, `SlackSettings`, `DiscordNotifier`, `DiscordEmbed`, `DiscordSettings`, `EmailNotifier`, `EmailBody`, `EmailSettings`, `IEmailTransport` and its ACS implementation, `FileTemplateSource`, the truncation budgets `TeamsCardBudget` and `DiscordEmbedBudget`, the embedded default email templates, `InfrastructureServiceCollectionExtensions` | Adds `Azure.Communication.Email`; uses the existing `Azure.Identity` only for the email channel's managed identity. One top-level type per file. |
 | Host | `src/DevOpsCopilot.Worker` | `Options/NotificationOptions` and four per-channel option classes (the email one carrying its template paths), the report template path, `Options/IncidentOptions`, `Program.cs`, `appsettings.json` | Wiring and configuration only. |
-| Tests | `tests/DevOpsCopilot.Domain.Tests`, `.Application.Tests`, `.Infrastructure.Tests`, `.Architecture.Tests`, `.AppHost.Tests` | New tests in existing projects, plus `Common/StubHttpMessageHandler` and `Common/FakeNotifier` | No new test project. |
+| Tests | `tests/DevOpsCopilot.Domain.Tests`, `.Application.Tests`, `.Infrastructure.Tests`, `.Architecture.Tests`, `.AppHost.Tests` | New tests in existing projects, plus `Common/StubHttpMessageHandler`, `Common/RecordedRequest`, `Common/Notifications` and `Common/FakeNotifier` | No new test project. |
 
 Dependencies still point inwards only.
 

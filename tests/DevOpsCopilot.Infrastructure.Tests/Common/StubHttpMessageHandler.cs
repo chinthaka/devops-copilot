@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 
 namespace DevOpsCopilot.Infrastructure.Tests.Common;
@@ -10,11 +11,12 @@ namespace DevOpsCopilot.Infrastructure.Tests.Common;
 /// </summary>
 internal sealed class StubHttpMessageHandler : HttpMessageHandler
 {
-    private readonly Queue<(HttpStatusCode Status, string Body)> _responses = new();
+    private readonly Queue<(HttpStatusCode Status, string Body, int? RetryAfterSeconds)> _responses = new();
 
     public List<RecordedRequest> Requests { get; } = [];
 
-    public void Respond(HttpStatusCode status, string body = "") => _responses.Enqueue((status, body));
+    public void Respond(HttpStatusCode status, string body = "", int? retryAfterSeconds = null) =>
+        _responses.Enqueue((status, body, retryAfterSeconds));
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -32,18 +34,19 @@ internal sealed class StubHttpMessageHandler : HttpMessageHandler
             request.Content?.Headers.ContentType?.MediaType,
             request.Headers.Authorization?.ToString()));
 
-        var (status, responseBody) = _responses.Count > 0 ? _responses.Dequeue() : (HttpStatusCode.Accepted, "");
-        return new HttpResponseMessage(status)
+        var (status, responseBody, retryAfter) = _responses.Count > 0
+            ? _responses.Dequeue()
+            : (HttpStatusCode.Accepted, "", null);
+        var response = new HttpResponseMessage(status)
         {
             Content = new StringContent(responseBody, Encoding.UTF8, "application/json"),
             RequestMessage = request,
         };
-    }
+        if (retryAfter is not null)
+        {
+            response.Headers.RetryAfter = new RetryConditionHeaderValue(TimeSpan.FromSeconds(retryAfter.Value));
+        }
 
-    internal sealed record RecordedRequest(
-        HttpMethod Method,
-        Uri? Uri,
-        string Body,
-        string? ContentType,
-        string? Authorization);
+        return response;
+    }
 }

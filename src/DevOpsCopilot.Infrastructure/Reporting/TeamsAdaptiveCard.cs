@@ -21,7 +21,7 @@ public static class TeamsAdaptiveCard
     private const string TruncatedList = "… (truncated; see the full report)";
 
     /// <summary>Tried in order until the serialised body fits <see cref="MaxBodyBytes"/>.</summary>
-    private static readonly Budget[] Budgets =
+    private static readonly TeamsCardBudget[] Budgets =
     [
         new(int.MaxValue, 700),
         new(10, 400),
@@ -45,7 +45,7 @@ public static class TeamsAdaptiveCard
         return body;
     }
 
-    private static JsonObject Message(IncidentNotification notification, Budget budget) =>
+    private static JsonObject Message(IncidentNotification notification, TeamsCardBudget budget) =>
         new()
         {
             ["type"] = "message",
@@ -57,7 +57,7 @@ public static class TeamsAdaptiveCard
             }),
         };
 
-    private static JsonObject Card(IncidentNotification notification, Budget budget)
+    private static JsonObject Card(IncidentNotification notification, TeamsCardBudget budget)
     {
         var blocks = new List<JsonNode?>
         {
@@ -92,7 +92,7 @@ public static class TeamsAdaptiveCard
         List<JsonNode?> blocks,
         IReadOnlyList<string> lines,
         string? whenEmpty,
-        Budget budget)
+        TeamsCardBudget budget)
     {
         if (lines.Count == 0)
         {
@@ -111,7 +111,7 @@ public static class TeamsAdaptiveCard
         }
     }
 
-    private static string Clamp(string text, Budget budget) =>
+    private static string Clamp(string text, TeamsCardBudget budget) =>
         text.Length <= budget.Characters ? text : text[..budget.Characters] + TruncationMarker;
 
     private static JsonObject TextBlock(string text, string? size = null, string? weight = null, bool subtle = false)
@@ -141,6 +141,4 @@ public static class TeamsAdaptiveCard
     }
 
     private static JsonObject Header(string text) => TextBlock(text, weight: "Bolder");
-
-    private readonly record struct Budget(int Items, int Characters);
 }

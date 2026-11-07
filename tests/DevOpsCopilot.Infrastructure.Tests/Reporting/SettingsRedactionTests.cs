@@ -19,6 +19,10 @@ public class SettingsRedactionTests
                 new SlackSettings("xoxb-secret-token", "C0123456789"),
                 "xoxb-secret-token"
             },
+            {
+                new DiscordSettings("https://discord.com/api/webhooks/123456/webhook-secret-token"),
+                "webhook-secret-token"
+            },
         };
 
     [Theory]
