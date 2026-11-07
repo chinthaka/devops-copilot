@@ -4,7 +4,7 @@
 |---|---|
 | **Branch** | `features/2026-11-05-m6-notification-channels` |
 | **Milestone** | M6 – Notification channels, covering M6.1 to M6.6 and absorbing the former M15 ([roadmap](../roadmap.md#m6--notification-channels-l)) |
-| **Status** | Draft |
+| **Status** | Done |
 | **Author** | Chinthaka Kumarasiri |
 | **Date** | 2026-11-05 |
 | **Revised** | 2026-11-06 – Teams through a Workflows webhook (**D3**, replacing Graph; **D11** withdrawn); report and email templates (**D12**, **D13**) |

@@ -71,7 +71,7 @@ Rules:
 
 Apply DDD where it makes the model clearer, not as ceremony.
 
-- **Ubiquitous language:** use the terms from `docs/pipeline.md` (event, candidate, fingerprint, incident, evidence, finding, hit, diagnosis, report, confirmed report) in class, method and test names.
+- **Ubiquitous language:** use the terms from `docs/pipeline.md` (event, candidate, fingerprint, incident, evidence, finding, hit, diagnosis, report, confirmed report, notification, channel, delivery, template) in class, method and test names.
 - **Aggregate:** `Incident` is the aggregate root. It owns its candidates and lifecycle, and only its own methods may change its status, following the lifecycle in `docs/pipeline.md`.
 - **Value objects:** immutable types for identifiers and small concepts, such as `IncidentId`, `TraceId`, `ResourceId`, `Fingerprint` and `Confidence`. Validate on creation; no raw strings for these in Domain or Application.
 - **Domain events:** raise events for lifecycle changes, such as `IncidentOpened`, `IncidentReady`, `IncidentReported` and `IncidentResolved`.

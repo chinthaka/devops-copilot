@@ -68,12 +68,18 @@ When a workspace or search service is not configured, the stage reports `unavail
 
 | Channel | Content | Status |
 |---|---|---|
-| Microsoft Teams | Adaptive Card summarising the report, posted to a Teams Workflows webhook ("Post to a channel when a webhook request is received") | Planned (roadmap M6.2) |
-| Slack | Block Kit message summarising the report, posted with `chat.postMessage` and a bot token | Planned (roadmap M6.3, moved forward from Phase 2) |
-| Discord | Embed summarising the report, posted to a channel webhook with `?wait=true` | Planned (roadmap M6.4) |
-| Email | The report summary, rendered from a customisable email template and sent as one message to every configured address through Azure Communication Services Email (`Azure.Communication.Email` 1.1.0, in Infrastructure only; managed identity through `Azure.Identity` when only an endpoint is set) | In progress (roadmap M6.5): channel implemented, wired in M6.6 |
+| Microsoft Teams | Adaptive Card summarising the report, posted to a Teams Workflows webhook ("Post to a channel when a webhook request is received"). The trigger URL is a credential. | Built (roadmap M6.2) |
+| Slack | Block Kit message summarising the report, posted with `chat.postMessage` and a bot token. A `200` carrying `"ok": false` is a failure. | Built (roadmap M6.3, moved forward from Phase 2) |
+| Discord | Embed summarising the report, posted to a channel webhook with `?wait=true`. One `Retry-After` retry on `429`. | Built (roadmap M6.4) |
+| Email | The report summary, rendered from a customisable email template and sent as one message to every configured address through Azure Communication Services Email (`Azure.Communication.Email` 1.1.0, in Infrastructure only; managed identity through `Azure.Identity` when only an endpoint is set) | Built (roadmap M6.5) |
 | Azure DevOps work item | Full report | Planned (Phase 2) |
-| Local file | `incidents/YYYY-MM-DD-<id>.md` when no channel is configured | Built. `incidents/` is gitignored. |
+| Local file | `incidents/YYYY-MM-DD-<id>.md`, always written before any channel is called; the only delivery when no channel is configured | Built. `incidents/` is gitignored. |
+
+Slack and Discord have no first-party .NET SDK, and Teams needs none for a webhook POST, so all
+three are plain HTTP over `IHttpClientFactory` (`Microsoft.Extensions.Http` 10.0.13, Infrastructure
+only). The report and the email render from templates with embedded defaults; a custom template is
+a file named in configuration and re-read on every render, with no templating package. Channel
+secrets live in `Incident:Notifications:*` configuration, read only by the Worker.
 
 ## State
 
@@ -108,7 +114,7 @@ The polling interval is a constant in the frontend, not configuration.
 |---|---|
 | Framework | xUnit, projects under `tests/` in the solution folder `tests` |
 | Unit tests | Domain and Application: plain tests, no Azure SDK, network or emulator |
-| Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources. The Azure OpenAI test is marked `Category=RequiresAzureOpenAI` and skipped unless `Incident:AzureOpenAI` is in user secrets or the environment; it never runs in CI. |
+| Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources. The Azure OpenAI test is marked `Category=RequiresAzureOpenAI` and skipped unless `Incident:AzureOpenAI` is in user secrets or the environment; it never runs in CI. The four channel tests are gated the same way: `RequiresTeams`, `RequiresSlack`, `RequiresDiscord` and `RequiresEmail`, each skipped unless its `Incident:Notifications:<channel>` secrets are set. |
 | Host tests | `tests/DevOpsCopilot.Worker.Tests`: the worker's statistics and status endpoint on an in-process test server (`Microsoft.AspNetCore.TestHost` 10.0.12). `tests/DevOpsCopilot.Server.Tests`: the status-document mapping against a stubbed worker HTTP handler. |
 | AppHost and end-to-end tests | `tests/DevOpsCopilot.AppHost.Tests` on `Aspire.Hosting.Testing` 13.6.1, producing events with `Azure.Messaging.EventHubs` 5.12.2. Needs Docker for the emulators; marked `Category=RequiresDocker` and skipped when no daemon answers. |
 | Architecture tests | `tests/DevOpsCopilot.Architecture.Tests`. Reflection over the built assemblies and the project files, so no extra package. Fail the build when a layer references something it must not. |
@@ -131,4 +137,4 @@ The polling interval is a constant in the frontend, not configuration.
 
 ## Not used
 
-Listed so nobody adds them by habit: event sourcing, CQRS, separate bounded-context projects, MediatR, AutoMapper, Semantic Kernel (superseded by Agent Framework).
+Listed so nobody adds them by habit: event sourcing, CQRS, separate bounded-context projects, MediatR, AutoMapper, Semantic Kernel (superseded by Agent Framework), `Microsoft.Graph` (Teams posts through a Workflows webhook, decision D3 of the M6 spec), Slack and Discord SDKs (plain HTTP), and templating packages such as Scriban, Handlebars.Net or Razor (the placeholder renderer lives in Domain).

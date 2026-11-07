@@ -3,6 +3,7 @@ using DevOpsCopilot.Application.Grounding;
 using DevOpsCopilot.Application.Interfaces;
 using DevOpsCopilot.Application.Kql;
 using DevOpsCopilot.Application.Pipeline;
+using DevOpsCopilot.Application.Reporting;
 using DevOpsCopilot.Domain.Kql;
 using DevOpsCopilot.Infrastructure;
 using DevOpsCopilot.Infrastructure.Diagnoses;
@@ -39,13 +40,32 @@ builder.Services.AddInfrastructure(
         incident.AzureOpenAI.Endpoint,
         incident.AzureOpenAI.Deployment,
         incident.AzureOpenAI.ApiKey,
-        incident.AzureOpenAI.TimeoutSeconds));
+        incident.AzureOpenAI.TimeoutSeconds),
+    new TeamsSettings(incident.Notifications.Teams.WebhookUrl),
+    new SlackSettings(incident.Notifications.Slack.BotToken, incident.Notifications.Slack.ChannelId),
+    new DiscordSettings(incident.Notifications.Discord.WebhookUrl),
+    new EmailSettings(
+        incident.Notifications.Email.ConnectionString,
+        incident.Notifications.Email.Endpoint,
+        incident.Notifications.Email.SenderAddress,
+        incident.Notifications.Email.Recipients.ToArray()),
+    new TemplateSettings(
+        incident.Report.TemplatePath,
+        incident.Notifications.Email.SubjectTemplatePath,
+        incident.Notifications.Email.HtmlTemplatePath,
+        incident.Notifications.Email.TextTemplatePath));
 
 builder.Services.AddSingleton(new LogQueryTargets(
     incident.Kusto.ExceptionsTable,
     incident.Kusto.DependenciesTable));
 builder.Services.AddSingleton<GatherEvidence>();
 builder.Services.AddSingleton<GroundInHistory>();
+
+// Stage 7's fan-out: the notifiers come from AddInfrastructure, the timeout from configuration.
+builder.Services.AddSingleton(provider => new NotifyChannels(
+    provider.GetServices<INotifier>(),
+    provider.GetRequiredService<ILogger<NotifyChannels>>(),
+    TimeSpan.FromSeconds(incident.Notifications.TimeoutSeconds)));
 
 // Stage 6 is registered by AddInfrastructure: the Azure OpenAI model when the deployment is
 // configured, and the deterministic path when it is not.

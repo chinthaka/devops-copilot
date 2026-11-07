@@ -26,7 +26,12 @@ public static class InfrastructureServiceCollectionExtensions
         KustoSettings kusto,
         SearchSettings search,
         ReportSettings report,
-        AzureOpenAISettings? azureOpenAI = null)
+        AzureOpenAISettings? azureOpenAI = null,
+        TeamsSettings? teams = null,
+        SlackSettings? slack = null,
+        DiscordSettings? discord = null,
+        EmailSettings? email = null,
+        TemplateSettings? templates = null)
     {
         azureOpenAI ??= AzureOpenAISettings.Unconfigured;
         services.AddSingleton(eventHub);
@@ -34,6 +39,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton(search);
         services.AddSingleton(report);
         services.AddSingleton(azureOpenAI);
+        services.AddSingleton(teams ?? TeamsSettings.Unconfigured);
+        services.AddSingleton(slack ?? SlackSettings.Unconfigured);
+        services.AddSingleton(discord ?? DiscordSettings.Unconfigured);
+        services.AddSingleton(email ?? EmailSettings.Unconfigured);
+        services.AddSingleton(templates ?? TemplateSettings.Unconfigured);
 
         services.TryAddSingleton<IEventSource, EventHubLogConsumer>();
         services.TryAddSingleton<ILogQuery, KustoLogQuery>();
@@ -61,6 +71,22 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton(serviceProvider => new RagGroundingAgent(
             serviceProvider.GetRequiredService<GroundInHistory>(),
             serviceProvider.GetService<IChatClient>()));
+        // Stage 7. Every notifier is always registered, in the contract order Teams, Slack,
+        // Discord, email; its settings decide only whether it sends (AC-2, AC-3). The HTTP
+        // notifiers are typed clients so IHttpClientFactory owns the handlers.
+        services.AddHttpClient<TeamsNotifier>();
+        services.AddHttpClient<SlackNotifier>();
+        services.AddHttpClient<DiscordNotifier>();
+        services.TryAddSingleton<IEmailTransport>(serviceProvider =>
+            serviceProvider.GetRequiredService<EmailSettings>().IsConfigured
+                ? CommunicationServicesEmailTransport.Create(serviceProvider.GetRequiredService<EmailSettings>())
+                : new UnconfiguredEmailTransport());
+        services.AddSingleton<INotifier>(serviceProvider => serviceProvider.GetRequiredService<TeamsNotifier>());
+        services.AddSingleton<INotifier>(serviceProvider => serviceProvider.GetRequiredService<SlackNotifier>());
+        services.AddSingleton<INotifier>(serviceProvider => serviceProvider.GetRequiredService<DiscordNotifier>());
+        services.AddSingleton<INotifier, EmailNotifier>();
+        services.TryAddSingleton<ITemplateSource, FileTemplateSource>();
+
         services.AddSingleton(serviceProvider => new DiagnosisAgent(
             serviceProvider.GetRequiredService<Diagnose>(),
             serviceProvider.GetRequiredService<IReportWriter>(),

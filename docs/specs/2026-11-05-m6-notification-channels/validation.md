@@ -225,6 +225,8 @@ and records the request it received. The payload builders are pure and tested di
 - **`GetAsync_WithNoConfiguredPath_ReturnsNull`** – unset means the embedded default, silently.
 - **`GetAsync_WithAMissingFile_WarnsOnceAndReturnsNull`** – the warning names the path, nothing
   throws, and the caller falls back to the default.
+- **`GetAsync_WithAnUnknownName_ReturnsNull`**.
+- **`GetAsync_WithEachEmailName_ReadsItsOwnFile`** – the three email names map to their own paths.
 
 **Settings and wiring** (AC-2, AC-10, AC-13)
 
@@ -234,7 +236,9 @@ and records the request it received. The payload builders are pure and tested di
 - **`AddInfrastructure_WithEachChannelConfigured_RegistersThatNotifier`** – theory over the four
   channels: the registered `INotifier` set contains that channel and it reports itself configured.
 - **`AddInfrastructure_WithNoChannelConfigured_RegistersFourUnconfiguredNotifiers`** – the worker
-  always resolves four notifiers; configuration decides only whether they send.
+  always resolves four notifiers, in the contract order Teams, Slack, Discord, email;
+  configuration decides only whether they send.
+- **`AddInfrastructure_WithTemplatePaths_RegistersTheFileTemplateSource`**.
 - **`Build_ForEveryChannel_PutsNoCredentialInThePayload`** (AC-10) – theory over the four builders
   with credential-bearing settings: no payload contains the credential.
 
@@ -302,28 +306,40 @@ These need credentials and a human eye, and are run once before the pull request
 
 ## Results
 
-<!-- Fill in after implementation. Include this section in the pull request. -->
+Completed 2026-11-07.
 
 | AC | Test or check | Result | Notes |
 |---|---|---|---|
-| AC-1 | | Pass / Fail | |
-| AC-2 | | | |
-| AC-3 | | | |
-| AC-4 | | | |
-| AC-5 | | | |
-| AC-6 | | | |
-| AC-7 | | | |
-| AC-8 | | | |
-| AC-9 | | | |
-| AC-10 | | | |
-| AC-11 | | | |
-| AC-12 | | | |
-| AC-13 | | | |
-| AC-14 | | | |
-| AC-15 | | | |
+| AC-1 | The three `From_…` Domain tests plus determinism | Pass | |
+| AC-2 | `NotifyAsync_WithFourConfiguredChannels_CallsEachOnceInTheContractOrder`, `RunAsync_WithAConfiguredChannel_NotifiesItAfterWritingTheReport`, registration-order test | Pass | |
+| AC-3 | `NotifyAsync_WithNoConfiguredChannel_RecordsEveryChannelUnavailableWithoutCallingIt`, `RunAsync_WithNoConfiguredChannel_StillWritesTheReportAndReturnsNormally` | Pass | End-to-end variant written; see the gated row below. |
+| AC-4 | The throw, timeout, shutdown and checkpoint tests; the Discord rate-limit tests | Pass | |
+| AC-5 | The seven Teams unit tests | Pass | Workflows webhook per D3; `sent` carries no message id. |
+| AC-6 | The Slack unit tests, including `SendAsync_WhenSlackAnswersOkFalse_RecordsItFailedWithSlacksErrorCode` | Pass | |
+| AC-7 | The Discord unit tests | Pass | |
+| AC-8 | The email unit tests against the fake transport | Pass | |
+| AC-9 | The oversized-diagnosis tests for Teams, Slack and Discord | Pass | |
+| AC-10 | `ToString_WithASecret_DoesNotPrintIt` (theory over the four settings records), the no-credential-in-reason tests, `NotifyAsync_WhenAChannelFails_LogsTheReasonWithoutTheCredential` | Pass | |
+| AC-11 | `RunAsync_WithNotificationAdded_WritesTheSameReportBytesAsBefore`, `Render_WithTheDefaultTemplate_MatchesTheHardCodedLayoutByteForByte`, write-before-notify test | Pass | |
+| AC-12 | `NotifyAsync_WithAnAdditionalNotifierRegistered_CallsItWithoutAnyChangeToTheStage`, `Application_WhenInspectedForChannelNames_MentionsNoChannelType` | Pass | |
+| AC-13 | `NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure`, `Application_WhenInspected_ReferencesNoHttpClientOrAzureSdk`, existing layer rules | Pass | |
+| AC-14 | Template renderer, pipeline, email and `FileTemplateSource` re-read tests | Pass | Live `aspire run` template-edit check not yet run; see manual checks. |
+| AC-15 | Unknown-placeholder, missing-file and throwing-source tests | Pass | |
 
-- **`dotnet build`:** 
-- **`dotnet test`:** <passed> / <total>
-- **Gated integration tests:** <which ran, which were skipped and why>
-- **Manual checks:** 
-- **Date:** YYYY-MM-DD
+- **`dotnet build`:** clean, 0 warnings, 0 errors.
+- **`dotnet test`:** 219 passed / 228 total; 9 skipped, 0 failed (2026-11-07).
+- **Gated integration tests:** none has run yet, for want of credentials and environment, not of
+  code. `RequiresDocker` (4, including
+  `EndToEnd_AnErrorEventWithNoChannelConfigured_WritesTheReportAndRecordsEveryChannelUnavailable`):
+  Docker is running on this machine but the build user is not in the `docker` group, so the tests
+  skip; run them once access is granted. `RequiresTeams`, `RequiresSlack`, `RequiresDiscord`,
+  `RequiresEmail`, `RequiresAzureOpenAI`: no user secrets are set on
+  `tests/DevOpsCopilot.Infrastructure.Tests`. Discord is expected first: it needs only a webhook
+  URL from the target channel. Email has no emulator — Azure Communication Services Email is a
+  REST service with no local stand-in (the Azure Service Bus emulator is a message broker and
+  cannot receive it) — so its live run needs a real resource with a verified sender domain,
+  provisioned alongside M7.3.
+- **Manual checks:** not yet run; they need the same credentials and a human eye on the rendered
+  messages, and are planned alongside M7.3 provisioning. The no-channel `aspire run` check is
+  covered mechanically by the end-to-end test above once Docker access exists.
+- **Date:** 2026-11-07
