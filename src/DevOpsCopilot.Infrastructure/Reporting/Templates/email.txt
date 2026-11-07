@@ -1,0 +1,21 @@
+Incident {{IncidentId}}: {{Title}}
+
+Likely cause ({{Confidence}} confidence)
+{{LikelyCause}}
+
+Impact
+{{Impact}}
+
+Evidence
+{{Evidence}}
+
+Similar incidents
+{{SimilarIncidents}}
+
+Suggested steps
+{{SuggestedSteps}}
+
+Open questions
+{{OpenQuestions}}
+
+Full report: {{ReportLocation}}

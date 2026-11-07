@@ -71,7 +71,7 @@ When a workspace or search service is not configured, the stage reports `unavail
 | Microsoft Teams | Adaptive Card summarising the report, posted to a Teams Workflows webhook ("Post to a channel when a webhook request is received") | Planned (roadmap M6.2) |
 | Slack | Block Kit message summarising the report, posted with `chat.postMessage` and a bot token | Planned (roadmap M6.3, moved forward from Phase 2) |
 | Discord | Embed summarising the report, posted to a channel webhook with `?wait=true` | Planned (roadmap M6.4) |
-| Email | The report summary, rendered from a customisable email template and sent as one message to every configured address through Azure Communication Services Email | Planned (roadmap M6.5) |
+| Email | The report summary, rendered from a customisable email template and sent as one message to every configured address through Azure Communication Services Email (`Azure.Communication.Email` 1.1.0, in Infrastructure only; managed identity through `Azure.Identity` when only an endpoint is set) | In progress (roadmap M6.5): channel implemented, wired in M6.6 |
 | Azure DevOps work item | Full report | Planned (Phase 2) |
 | Local file | `incidents/YYYY-MM-DD-<id>.md` when no channel is configured | Built. `incidents/` is gitignored. |
 

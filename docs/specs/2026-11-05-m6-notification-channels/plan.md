@@ -141,21 +141,35 @@ for a custom template.
 
 ### 5. Email (M6.5, Infrastructure)
 
-1. Write the email builder and notifier tests from validation.md, against a fake transport.
-2. Add `EmailSettings(ConnectionString, Endpoint, SenderAddress, Recipients)`, redacting. A blank
-   connection and endpoint, a blank sender, or an empty recipient list means unconfigured. An
+1. Write the email builder and notifier tests from validation.md, against a fake transport and a
+   fake template source.
+2. Add `EmailSettings(ConnectionString, Endpoint, SenderAddress, Recipients)`, redacting the
+   connection string and printing recipients as a count only. Recipients are trimmed, blank ones
+   dropped and duplicates removed without regard to case. A blank connection and endpoint, a blank
+   sender, or no non-blank recipient means unconfigured. An
    endpoint with no connection string means managed identity, as the Azure OpenAI settings already
    do for its key.
 3. Add the three embedded default email templates — subject, HTML body, plain-text body — and
    `EmailBody.Build(notification, templates)`, which fills each template's placeholders from the
-   notification through the Domain renderer ([D12](requirement.md#decisions)). The defaults name
+   notification through the Domain renderer ([D12](requirement.md#decisions)) and returns an
+   `EmailContent`. Values are HTML-encoded in the HTML body (log text is never trusted as markup),
+   lists become `<ul>` there and `- ` lines in plain text, and line breaks are stripped from the
+   subject so no value can inject a mail header. The defaults are embedded resources under
+   `src/DevOpsCopilot.Infrastructure/Reporting/Templates/` (`email-subject.txt`, `email.html`,
+   `email.txt`), held by `EmailTemplates.Default`. The defaults name
    the incident and its confidence in the subject and carry the same facts in both bodies; a
    custom template resolved through `ITemplateSource` replaces any of the three
    ([D13](requirement.md#decisions)).
 4. Add a thin Infrastructure-local `IEmailTransport` over `Azure.Communication.Email`'s
-   `EmailClient` so the notifier is unit-testable, and `EmailNotifier : INotifier` which resolves
-   the three templates, builds the message, sends one message with every configured address in
+   `EmailClient` (`CommunicationServicesEmailTransport`, taking an `OutgoingEmail`; access key from
+   the connection string, otherwise `DefaultAzureCredential` on the endpoint) so the notifier is
+   unit-testable, and `EmailNotifier : INotifier` which resolves the three templates — a source
+   that returns nothing or throws falls back to the default — builds the message, sends one message with every configured address in
    `To` ([D6](requirement.md#decisions)) using `WaitUntil.Started`, and reports the operation id.
+   A `RequestFailedException` is a `failed` delivery naming its status and error code; any other
+   failure names only the exception type, so the connection string cannot reach a reason.
+   `Azure.Communication.Email` 1.1.0 is recorded in tech-stack.md in the same change, as
+   AGENTS.md requires.
    Nothing here touches the leftover sample project `src/DevOpsCopilot.EmailNotifier`.
 5. Write `SendAsync_AgainstARealCommunicationServicesResource_QueuesOneEmail`, gated on
    `Category=RequiresEmail`.
@@ -196,7 +210,7 @@ for a custom template.
 |---|---|---|---|
 | Domain | `src/DevOpsCopilot.Domain` | `Reporting/IncidentNotification`, `Reporting/NotificationDelivery`, `Reporting/NotificationStatus`, `Reporting/TemplateRenderer`, the embedded default report template, `Pipeline/IncidentWorkflowResult` (carries the deliveries) | No packages. `IncidentReport` keeps its signature and its default output byte for byte; it renders through the default template. |
 | Application | `src/DevOpsCopilot.Application` | `Interfaces/INotifier`, `Interfaces/ITemplateSource`, `Reporting/NotifyChannels`, `Pipeline/RunIncidentPipeline` (notifies after writing; fetches the report template) | No Azure SDK, no HTTP client, no channel named. |
-| Infrastructure | `src/DevOpsCopilot.Infrastructure` | `Reporting/TeamsNotifier`, `TeamsAdaptiveCard`, `TeamsSettings`, `SlackNotifier`, `SlackBlocks`, `SlackSettings`, `DiscordNotifier`, `DiscordEmbed`, `DiscordSettings`, `EmailNotifier`, `EmailBody`, `EmailSettings`, `IEmailTransport` and its ACS implementation, `FileTemplateSource`, the truncation budgets `TeamsCardBudget` and `DiscordEmbedBudget`, the embedded default email templates, `InfrastructureServiceCollectionExtensions` | Adds `Azure.Communication.Email`; uses the existing `Azure.Identity` only for the email channel's managed identity. One top-level type per file. |
+| Infrastructure | `src/DevOpsCopilot.Infrastructure` | `Reporting/TeamsNotifier`, `TeamsAdaptiveCard`, `TeamsSettings`, `SlackNotifier`, `SlackBlocks`, `SlackSettings`, `DiscordNotifier`, `DiscordEmbed`, `DiscordSettings`, `EmailNotifier`, `EmailBody`, `EmailSettings`, `IEmailTransport` and its ACS implementation `CommunicationServicesEmailTransport`, `OutgoingEmail`, `EmailContent`, `EmailTemplates` and the three embedded default email templates, `FileTemplateSource`, the truncation budgets `TeamsCardBudget` and `DiscordEmbedBudget`, the embedded default email templates, `InfrastructureServiceCollectionExtensions` | Adds `Azure.Communication.Email`; uses the existing `Azure.Identity` only for the email channel's managed identity. One top-level type per file. |
 | Host | `src/DevOpsCopilot.Worker` | `Options/NotificationOptions` and four per-channel option classes (the email one carrying its template paths), the report template path, `Options/IncidentOptions`, `Program.cs`, `appsettings.json` | Wiring and configuration only. |
 | Tests | `tests/DevOpsCopilot.Domain.Tests`, `.Application.Tests`, `.Infrastructure.Tests`, `.Architecture.Tests`, `.AppHost.Tests` | New tests in existing projects, plus `Common/StubHttpMessageHandler`, `Common/RecordedRequest`, `Common/Notifications` and `Common/FakeNotifier` | No new test project. |
 

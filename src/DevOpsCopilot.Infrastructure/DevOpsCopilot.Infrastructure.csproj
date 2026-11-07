@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0" />
+    <PackageReference Include="Azure.Communication.Email" Version="1.1.0" />
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="Azure.Search.Documents" Version="12.0.0" />
     <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.12.2" />
@@ -19,6 +20,12 @@
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.11.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Reporting\Templates\email-subject.txt" LogicalName="DevOpsCopilot.Infrastructure.Reporting.Templates.email-subject.txt" />
+    <EmbeddedResource Include="Reporting\Templates\email.html" LogicalName="DevOpsCopilot.Infrastructure.Reporting.Templates.email.html" />
+    <EmbeddedResource Include="Reporting\Templates\email.txt" LogicalName="DevOpsCopilot.Infrastructure.Reporting.Templates.email.txt" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,0 +1,23 @@
+using DevOpsCopilot.Infrastructure.Reporting;
+
+namespace DevOpsCopilot.Infrastructure.Tests.Reporting;
+
+/// <summary>Records each outgoing email and answers with an operation id, or throws on request.</summary>
+internal sealed class FakeEmailTransport : IEmailTransport
+{
+    public List<OutgoingEmail> Sent { get; } = [];
+
+    public Exception? Throws { get; init; }
+
+    public Task<string> SendAsync(OutgoingEmail email, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Sent.Add(email);
+        if (Throws is not null)
+        {
+            throw Throws;
+        }
+
+        return Task.FromResult("operation-1");
+    }
+}

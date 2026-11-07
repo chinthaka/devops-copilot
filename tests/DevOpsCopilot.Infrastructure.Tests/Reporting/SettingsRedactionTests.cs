@@ -23,6 +23,14 @@ public class SettingsRedactionTests
                 new DiscordSettings("https://discord.com/api/webhooks/123456/webhook-secret-token"),
                 "webhook-secret-token"
             },
+            {
+                new EmailSettings(
+                    "endpoint=https://acs.communication.azure.com/;accesskey=secret-access-key",
+                    "",
+                    "DoNotReply@incidents.contoso.com",
+                    ["oncall@contoso.com"]),
+                "secret-access-key"
+            },
         };
 
     [Theory]

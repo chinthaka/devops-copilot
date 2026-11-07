@@ -187,21 +187,35 @@ and records the request it received. The payload builders are pure and tested di
 - **`SendAsync_WithoutAWebhookUrl_ReportsItselfUnconfigured`**.
 - **`SendAsync_WhenTheCallerIsCancelled_PropagatesTheCancellation`** – shutdown is not a failure.
 
-**Email** (AC-8, AC-9, AC-10, AC-14)
+**Email** (AC-8, AC-10, AC-14)
 
 - **`Build_WithACompleteNotification_ProducesAnHtmlBodyAndAPlainTextAlternative`** – with the
-  embedded default templates. Assert: both bodies carry the same facts and the plain text is
-  readable without HTML.
+  embedded default templates. Assert: both bodies carry the same facts, the plain text has no
+  markup and no placeholder is left unfilled.
 - **`Build_WithANotification_SubjectNamesTheIncidentAndTheConfidence`** – the default subject
   template.
 - **`Build_WithCustomEmailTemplates_FillsTheirPlaceholders`** (AC-14) – custom subject, HTML and
   text templates: every token is filled from the notification and the custom wording is kept.
+- **`Build_WithMarkupInTheDiagnosis_EncodesItInTheHtmlBody`** – log text is encoded in HTML and
+  left as written in plain text.
+- **`Build_WithALineBreakInTheTitle_KeepsTheSubjectOnOneLine`** – no value can add a mail header.
+- **`Build_WhenAToolWasUnavailable_SaysSoInsteadOfListingEvidence`**.
+- **`Build_WithTheSameNotification_ProducesTheSameContent`** (NFR, determinism).
 - **`SendAsync_WithThreeConfiguredRecipients_SendsOneMessageAddressedToAllOfThem`** – Arrange: a
   fake email transport behind the thin interface the notifier depends on. Assert: one send, three
-  `To` addresses, the sender from configuration.
-- **`SendAsync_WhenTheTransportFails_RecordsItFailedWithTheErrorCode`**.
+  `To` addresses, the sender from configuration, the default-template content, and the operation
+  id as the message id.
+- **`SendAsync_WithBlankAndDuplicateRecipients_AddressesEachOnce`**.
+- **`SendAsync_WhenTheTransportFails_RecordsItFailedWithTheErrorCode`** (AC-10) – a
+  `RequestFailedException`: the reason names status and error code and not the connection string.
+- **`SendAsync_WhenTheTransportThrowsSomethingElse_RecordsItFailedWithTheType`** (AC-10).
 - **`SendAsync_WithoutASenderOrRecipients_ReportsItselfUnconfigured`** – theory over a blank
-  connection, a blank sender and an empty recipient list.
+  connection and endpoint, a blank sender, an empty and an all-blank recipient list.
+- **`IsConfigured_WithAnEndpointAndNoConnectionString_IsTrueForManagedIdentity`**.
+- **`SendAsync_WithCustomTemplatesFromTheSource_RendersThroughThem`** (AC-14) – the notifier asks
+  the source for all three names and falls back per template.
+- **`SendAsync_WhenTheTemplateSourceThrows_StillSendsWithTheDefaults`** (AC-15).
+- **`SendAsync_WhenTheCallerIsCancelled_PropagatesTheCancellation`**.
 
 **Templates — `FileTemplateSource`** (AC-14, AC-15, D13)
 
