@@ -24,7 +24,7 @@ public class NotificationPipelineTests
         // Arrange
         var calls = new List<string>();
         var notifier = new FakeNotifier("teams", calls);
-        var pipeline = Pipeline(new OrderedReportWriter(calls), new NotifyChannels([notifier]));
+        var pipeline = Pipeline(new OrderedReportWriter(calls), new NotifyChannels([notifier], TestTimeouts.Generous));
 
         // Act
         var result = await pipeline.RunAsync(ErrorEvent());
@@ -44,7 +44,7 @@ public class NotificationPipelineTests
         // Arrange
         var calls = new List<string>();
         var notifiers = new[] { new FakeNotifier("teams", calls), new FakeNotifier("slack", calls) };
-        var pipeline = Pipeline(new OrderedReportWriter(calls), new NotifyChannels(notifiers));
+        var pipeline = Pipeline(new OrderedReportWriter(calls), new NotifyChannels(notifiers, TestTimeouts.Generous));
 
         // Act
         await pipeline.RunAsync(ErrorEvent());
@@ -82,7 +82,7 @@ public class NotificationPipelineTests
 
         // Act
         await Pipeline(before, notify: null).RunAsync(ErrorEvent());
-        var result = await Pipeline(after, new NotifyChannels(unconfigured)).RunAsync(ErrorEvent());
+        var result = await Pipeline(after, new NotifyChannels(unconfigured, TestTimeouts.Generous)).RunAsync(ErrorEvent());
 
         // Assert
         Assert.Equal(Assert.Single(before.Drafts), Assert.Single(after.Drafts));
@@ -98,7 +98,7 @@ public class NotificationPipelineTests
         var failed = 0;
         var notifiers = new[] { "teams", "slack", "discord", "email" }
             .Select(name => new FakeNotifier(name) { Throws = new InvalidOperationException("down") });
-        var pipeline = Pipeline(new RecordingReportWriter(), new NotifyChannels(notifiers));
+        var pipeline = Pipeline(new RecordingReportWriter(), new NotifyChannels(notifiers, TestTimeouts.Generous));
         var source = new SingleEventSource(ErrorEvent(), () => checkpoints++);
         var observer = new CountingObserver(() => failed++);
         var processor = new ProcessLogEvents(source, pipeline, NullLogger<ProcessLogEvents>.Instance, observer);

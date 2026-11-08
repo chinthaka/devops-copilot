@@ -16,6 +16,7 @@ internal static class TeamsConfiguration
     private static TeamsSettings? Read()
     {
         var configuration = new ConfigurationBuilder()
+            .AddJsonFile("worker.appsettings.json", optional: false)
             .AddUserSecrets(typeof(TeamsConfiguration).Assembly, optional: true)
             .AddEnvironmentVariables()
             .Build();

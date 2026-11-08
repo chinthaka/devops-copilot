@@ -16,10 +16,14 @@ internal static class DiscordConfiguration
     private static DiscordSettings? Read()
     {
         var configuration = new ConfigurationBuilder()
+            .AddJsonFile("worker.appsettings.json", optional: false)
             .AddUserSecrets(typeof(DiscordConfiguration).Assembly, optional: true)
             .AddEnvironmentVariables()
             .Build();
-        var settings = new DiscordSettings(configuration["Incident:Notifications:Discord:WebhookUrl"] ?? "");
+        var section = configuration.GetSection("Incident:Notifications:Discord");
+        var settings = new DiscordSettings(
+            section["WebhookUrl"] ?? "",
+            int.TryParse(section["MaxRetryDelaySeconds"], out var seconds) ? seconds : 0);
         return settings.IsConfigured ? settings : null;
     }
 }

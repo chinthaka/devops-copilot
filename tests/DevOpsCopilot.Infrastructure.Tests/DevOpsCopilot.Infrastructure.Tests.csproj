@@ -20,6 +20,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The worker's appsettings.json is the one home of non-secret values (URLs, timeouts, retry
+         caps); the gated integration tests layer user secrets over it. -->
+    <None Include="..\..\src\DevOpsCopilot.Worker\appsettings.json" Link="worker.appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 

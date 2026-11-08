@@ -6,8 +6,8 @@ namespace DevOpsCopilot.Worker.Options;
 /// </summary>
 public sealed class NotificationOptions
 {
-    /// <summary>The per-channel send timeout (requirement D8).</summary>
-    public int TimeoutSeconds { get; set; } = 10;
+    /// <summary>The per-channel send timeout (requirement D8); the value lives in appsettings.json.</summary>
+    public int TimeoutSeconds { get; set; }
 
     public TeamsOptions Teams { get; set; } = new();
 

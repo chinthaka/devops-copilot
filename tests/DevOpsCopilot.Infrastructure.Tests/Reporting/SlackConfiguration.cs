@@ -16,11 +16,12 @@ internal static class SlackConfiguration
     private static SlackSettings? Read()
     {
         var configuration = new ConfigurationBuilder()
+            .AddJsonFile("worker.appsettings.json", optional: false)
             .AddUserSecrets(typeof(SlackConfiguration).Assembly, optional: true)
             .AddEnvironmentVariables()
             .Build();
         var section = configuration.GetSection("Incident:Notifications:Slack");
-        var settings = new SlackSettings(section["BotToken"] ?? "", section["ChannelId"] ?? "");
+        var settings = new SlackSettings(section["BotToken"] ?? "", section["ChannelId"] ?? "", section["PostMessageUrl"] ?? "");
         return settings.IsConfigured ? settings : null;
     }
 }

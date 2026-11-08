@@ -16,6 +16,7 @@ internal static class AzureOpenAIConfiguration
     private static AzureOpenAISettings? Read()
     {
         var configuration = new ConfigurationBuilder()
+            .AddJsonFile("worker.appsettings.json", optional: false)
             .AddUserSecrets(typeof(AzureOpenAIConfiguration).Assembly, optional: true)
             .AddEnvironmentVariables()
             .Build();

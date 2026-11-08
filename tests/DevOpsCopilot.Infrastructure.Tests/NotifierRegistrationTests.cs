@@ -40,8 +40,8 @@ public class NotifierRegistrationTests
         // Arrange
         var services = Services(
             teams: channel == "teams" ? new TeamsSettings("https://prod-27.westus.logic.azure.com/workflows/a/paths/invoke?sig=s") : null,
-            slack: channel == "slack" ? new SlackSettings("xoxb-token", "C0123456789") : null,
-            discord: channel == "discord" ? new DiscordSettings("https://discord.com/api/webhooks/1/t") : null,
+            slack: channel == "slack" ? new SlackSettings("xoxb-token", "C0123456789", "https://slack.example.test/api/chat.postMessage") : null,
+            discord: channel == "discord" ? new DiscordSettings("https://discord.com/api/webhooks/1/t", MaxRetryDelaySeconds: 10) : null,
             email: channel == "email" ? new EmailSettings("", "https://acs.communication.azure.com/", "DoNotReply@contoso.com", ["oncall@contoso.com"]) : null);
 
         // Act

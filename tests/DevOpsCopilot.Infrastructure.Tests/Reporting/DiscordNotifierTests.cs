@@ -39,7 +39,7 @@ public class DiscordNotifierTests
         var handler = new StubHttpMessageHandler();
         handler.Respond(HttpStatusCode.OK, """{"id":"1"}""");
         var notifier = new DiscordNotifier(
-            new DiscordSettings(WebhookUrl + "?thread_id=99"),
+            new DiscordSettings(WebhookUrl + "?thread_id=99", MaxRetryDelaySeconds: 10),
             new HttpClient(handler),
             new RecordingDelay().DelayAsync);
 
@@ -155,7 +155,7 @@ public class DiscordNotifierTests
     {
         // Arrange
         var notifier = new DiscordNotifier(
-            new DiscordSettings(WebhookUrl),
+            new DiscordSettings(WebhookUrl, MaxRetryDelaySeconds: 10),
             new HttpClient(new ThrowingHandler()),
             new RecordingDelay().DelayAsync);
 
@@ -175,7 +175,7 @@ public class DiscordNotifierTests
     {
         // Arrange
         var handler = new StubHttpMessageHandler();
-        var notifier = new DiscordNotifier(new DiscordSettings(webhookUrl), new HttpClient(handler));
+        var notifier = new DiscordNotifier(new DiscordSettings(webhookUrl, MaxRetryDelaySeconds: 10), new HttpClient(handler));
 
         // Act
         var delivery = await notifier.SendAsync(Notifications.Complete(), CancellationToken.None);
@@ -200,7 +200,7 @@ public class DiscordNotifierTests
     }
 
     private static DiscordNotifier Notifier(StubHttpMessageHandler handler, RecordingDelay delay) =>
-        new(new DiscordSettings(WebhookUrl), new HttpClient(handler), delay.DelayAsync);
+        new(new DiscordSettings(WebhookUrl, MaxRetryDelaySeconds: 10), new HttpClient(handler), delay.DelayAsync);
 
     /// <summary>Records each requested wait instead of sleeping, so the retry tests run instantly.</summary>
     private sealed class RecordingDelay

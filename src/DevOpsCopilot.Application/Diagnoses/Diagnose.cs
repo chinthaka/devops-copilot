@@ -16,15 +16,13 @@ public sealed class Diagnose
 {
     public const string ModelUnavailable = "The diagnosis model was unavailable.";
 
-    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
-
     private readonly IDiagnosisModel _model;
     private readonly TimeSpan _timeout;
 
-    public Diagnose(IDiagnosisModel model, TimeSpan? timeout = null)
+    public Diagnose(IDiagnosisModel model, TimeSpan timeout)
     {
         _model = model;
-        _timeout = timeout ?? DefaultTimeout;
+        _timeout = timeout;
     }
 
     public async Task<Diagnosis> DiagnoseAsync(

@@ -11,16 +11,13 @@ namespace DevOpsCopilot.Infrastructure.Reporting;
 /// Delivers one notification to Discord by executing the channel webhook with <c>wait=true</c>, so
 /// Discord answers with the created message and its id (requirement D5). A 429 carrying a
 /// Retry-After header is retried exactly once after that delay, if the delay is within
-/// <see cref="MaxRetryDelay"/>; a second 429, a 429 without the header or a longer delay is a
+/// the configured <see cref="DiscordSettings.MaxRetryDelay"/>; a second 429, a 429 without the header or a longer delay is a
 /// failed delivery (requirement D8). No reason ever carries the webhook URL, because it is the
 /// credential.
 /// </summary>
 public sealed class DiscordNotifier : INotifier
 {
     public const string ChannelName = "discord";
-
-    /// <summary>Matches the default per-channel timeout; a longer wait could never finish in time.</summary>
-    public static readonly TimeSpan MaxRetryDelay = TimeSpan.FromSeconds(10);
 
     private readonly DiscordSettings _settings;
     private readonly HttpClient _httpClient;
@@ -65,7 +62,7 @@ public sealed class DiscordNotifier : INotifier
                 return NotificationDelivery.Failed(ChannelName, "Discord answered 429 TooManyRequests without Retry-After.");
             }
 
-            if (wait.Value > MaxRetryDelay)
+            if (wait.Value > _settings.MaxRetryDelay)
             {
                 return NotificationDelivery.Failed(
                     ChannelName,

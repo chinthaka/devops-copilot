@@ -15,7 +15,7 @@ public class NotifyChannelsTests
         // Arrange
         var calls = new List<string>();
         var notifiers = ContractOrder.Select(name => new FakeNotifier(name, calls)).ToArray();
-        var stage = new NotifyChannels(notifiers);
+        var stage = new NotifyChannels(notifiers, TestTimeouts.Generous);
 
         // Act
         var deliveries = await stage.NotifyAsync(Notification());
@@ -32,7 +32,7 @@ public class NotifyChannelsTests
     {
         // Arrange
         var notifiers = ContractOrder.Select(name => new FakeNotifier(name) { IsConfigured = false }).ToArray();
-        var stage = new NotifyChannels(notifiers);
+        var stage = new NotifyChannels(notifiers, TestTimeouts.Generous);
 
         // Act
         var deliveries = await stage.NotifyAsync(Notification());
@@ -54,7 +54,7 @@ public class NotifyChannelsTests
             new FakeNotifier("discord"),
             new FakeNotifier("email"),
         };
-        var stage = new NotifyChannels(notifiers);
+        var stage = new NotifyChannels(notifiers, TestTimeouts.Generous);
 
         // Act
         var deliveries = await stage.NotifyAsync(Notification());
@@ -77,7 +77,7 @@ public class NotifyChannelsTests
             new FakeNotifier("discord"),
             new FakeNotifier("email"),
         };
-        var stage = new NotifyChannels(notifiers);
+        var stage = new NotifyChannels(notifiers, TestTimeouts.Generous);
 
         // Act
         var deliveries = await stage.NotifyAsync(Notification());
@@ -95,7 +95,7 @@ public class NotifyChannelsTests
         // Arrange
         var hanging = new FakeNotifier("teams") { Hangs = true };
         var next = new FakeNotifier("slack");
-        var stage = new NotifyChannels([hanging, next], timeout: TimeSpan.Zero);
+        var stage = new NotifyChannels([hanging, next], TimeSpan.Zero);
 
         // Act
         var deliveries = await stage.NotifyAsync(Notification());
@@ -110,7 +110,7 @@ public class NotifyChannelsTests
     public async Task NotifyAsync_WhenShutdownIsRequestedWhileAChannelSends_PropagatesTheCancellation()
     {
         // Arrange
-        var stage = new NotifyChannels([new FakeNotifier("teams") { Hangs = true }]);
+        var stage = new NotifyChannels([new FakeNotifier("teams") { Hangs = true }], TestTimeouts.Generous);
         using var shutdown = new CancellationTokenSource();
         await shutdown.CancelAsync();
 
@@ -127,6 +127,7 @@ public class NotifyChannelsTests
         var logger = new RecordingLogger<NotifyChannels>();
         var stage = new NotifyChannels(
             [new FakeNotifier("slack") { FailsWith = "channel_not_found" }],
+            TestTimeouts.Generous,
             logger);
 
         // Act
@@ -146,7 +147,7 @@ public class NotifyChannelsTests
         // Arrange
         var fifth = new FakeNotifier("pager");
         var notifiers = ContractOrder.Select(name => new FakeNotifier(name)).Append(fifth).ToArray();
-        var stage = new NotifyChannels(notifiers);
+        var stage = new NotifyChannels(notifiers, TestTimeouts.Generous);
 
         // Act
         var deliveries = await stage.NotifyAsync(Notification());

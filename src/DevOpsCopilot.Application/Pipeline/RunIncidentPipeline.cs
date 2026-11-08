@@ -35,8 +35,10 @@ public sealed class RunIncidentPipeline
         _evidence = evidence;
         _grounding = grounding;
         _reportWriter = reportWriter;
-        _diagnose = diagnose ?? new Diagnose(UnconfiguredDiagnosisModel.Instance);
-        _notify = notify ?? new NotifyChannels([]);
+        // The fallbacks never wait: an unconfigured model is never called and no channel is
+        // notified, so neither timeout is ever started.
+        _diagnose = diagnose ?? new Diagnose(UnconfiguredDiagnosisModel.Instance, Timeout.InfiniteTimeSpan);
+        _notify = notify ?? new NotifyChannels([], Timeout.InfiniteTimeSpan);
         _templates = templates;
     }
 

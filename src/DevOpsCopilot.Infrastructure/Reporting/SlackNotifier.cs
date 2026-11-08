@@ -17,8 +17,6 @@ public sealed class SlackNotifier : INotifier
 {
     public const string ChannelName = "slack";
 
-    private static readonly Uri PostMessageUri = new("https://slack.com/api/chat.postMessage");
-
     private readonly SlackSettings _settings;
     private readonly HttpClient _httpClient;
 
@@ -44,7 +42,7 @@ public sealed class SlackNotifier : INotifier
         var payload = JsonNode.Parse(SlackBlocks.Build(notification))!.AsObject();
         payload["channel"] = _settings.ChannelId;
         using var content = new StringContent(payload.ToJsonString(), Encoding.UTF8, "application/json");
-        using var request = new HttpRequestMessage(HttpMethod.Post, PostMessageUri) { Content = content };
+        using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(_settings.PostMessageUrl)) { Content = content };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _settings.BotToken);
 
         HttpResponseMessage response;

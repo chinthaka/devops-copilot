@@ -14,20 +14,18 @@ namespace DevOpsCopilot.Application.Reporting;
 /// </summary>
 public sealed class NotifyChannels
 {
-    public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(10);
-
     private readonly IReadOnlyList<INotifier> _notifiers;
     private readonly TimeSpan _timeout;
     private readonly ILogger<NotifyChannels> _logger;
 
     public NotifyChannels(
         IEnumerable<INotifier> notifiers,
-        ILogger<NotifyChannels>? logger = null,
-        TimeSpan? timeout = null)
+        TimeSpan timeout,
+        ILogger<NotifyChannels>? logger = null)
     {
         _notifiers = notifiers.ToArray();
         _logger = logger ?? NullLogger<NotifyChannels>.Instance;
-        _timeout = timeout ?? DefaultTimeout;
+        _timeout = timeout;
     }
 
     public async Task<IReadOnlyList<NotificationDelivery>> NotifyAsync(

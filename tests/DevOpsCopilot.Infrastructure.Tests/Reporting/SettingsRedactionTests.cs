@@ -16,11 +16,11 @@ public class SettingsRedactionTests
                 "sig-secret-value"
             },
             {
-                new SlackSettings("xoxb-secret-token", "C0123456789"),
+                new SlackSettings("xoxb-secret-token", "C0123456789", "https://slack.example.test/api/chat.postMessage"),
                 "xoxb-secret-token"
             },
             {
-                new DiscordSettings("https://discord.com/api/webhooks/123456/webhook-secret-token"),
+                new DiscordSettings("https://discord.com/api/webhooks/123456/webhook-secret-token", MaxRetryDelaySeconds: 10),
                 "webhook-secret-token"
             },
             {

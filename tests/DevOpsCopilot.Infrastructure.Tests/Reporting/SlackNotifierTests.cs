@@ -10,9 +10,10 @@ public class SlackNotifierTests
 {
     private const string BotToken = "xoxb-secret-token";
     private const string ChannelId = "C0123456789";
+    private const string PostMessageUrl = "https://slack.example.test/api/chat.postMessage";
 
     [Fact]
-    public async Task SendAsync_WithAConfiguredBotToken_CallsChatPostMessageWithTheBlocks()
+    public async Task SendAsync_WithAConfiguredBotToken_PostsTheBlocksToTheConfiguredPostMessageUrl()
     {
         // Arrange
         var handler = new StubHttpMessageHandler();
@@ -26,7 +27,7 @@ public class SlackNotifierTests
         // Assert
         var request = Assert.Single(handler.Requests);
         Assert.Equal(HttpMethod.Post, request.Method);
-        Assert.Equal(new Uri("https://slack.com/api/chat.postMessage"), request.Uri);
+        Assert.Equal(new Uri(PostMessageUrl), request.Uri);
         Assert.Equal($"Bearer {BotToken}", request.Authorization);
         Assert.Equal("application/json", request.ContentType);
         var body = JsonNode.Parse(request.Body)!;
@@ -95,7 +96,7 @@ public class SlackNotifierTests
     {
         // Arrange
         var notifier = new SlackNotifier(
-            new SlackSettings(BotToken, ChannelId),
+            new SlackSettings(BotToken, ChannelId, PostMessageUrl),
             new HttpClient(new ThrowingHandler()));
 
         // Act
@@ -117,7 +118,7 @@ public class SlackNotifierTests
     {
         // Arrange
         var handler = new StubHttpMessageHandler();
-        var notifier = new SlackNotifier(new SlackSettings(botToken, channelId), new HttpClient(handler));
+        var notifier = new SlackNotifier(new SlackSettings(botToken, channelId, PostMessageUrl), new HttpClient(handler));
 
         // Act
         var delivery = await notifier.SendAsync(Notifications.Complete(), CancellationToken.None);
@@ -142,7 +143,7 @@ public class SlackNotifierTests
     }
 
     private static SlackNotifier Notifier(StubHttpMessageHandler handler) =>
-        new(new SlackSettings(BotToken, ChannelId), new HttpClient(handler));
+        new(new SlackSettings(BotToken, ChannelId, PostMessageUrl), new HttpClient(handler));
 
     private sealed class ThrowingHandler : HttpMessageHandler
     {

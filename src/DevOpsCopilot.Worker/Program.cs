@@ -22,6 +22,16 @@ builder.AddServiceDefaults();
 // Composition root. Configuration is read only here; every layer below takes plain values.
 var incident = builder.Configuration.GetSection("Incident").Get<IncidentOptions>() ?? new IncidentOptions();
 
+// Timings and retry caps have no defaults in code; appsettings.json supplies them. A missing or
+// non-positive value stops the worker at startup instead of silently running unbounded.
+RequirePositive(incident.AzureOpenAI.TimeoutSeconds, "Incident:AzureOpenAI:TimeoutSeconds");
+RequirePositive(incident.Notifications.TimeoutSeconds, "Incident:Notifications:TimeoutSeconds");
+RequirePositive(incident.Notifications.Discord.MaxRetryDelaySeconds, "Incident:Notifications:Discord:MaxRetryDelaySeconds");
+if (string.IsNullOrWhiteSpace(incident.Notifications.Slack.PostMessageUrl))
+{
+    throw new InvalidOperationException("Configuration value Incident:Notifications:Slack:PostMessageUrl is required.");
+}
+
 builder.Services.AddInfrastructure(
     new EventHubSettings(
         builder.Configuration.GetConnectionString("eventhubs") ?? "",
@@ -42,8 +52,13 @@ builder.Services.AddInfrastructure(
         incident.AzureOpenAI.ApiKey,
         incident.AzureOpenAI.TimeoutSeconds),
     new TeamsSettings(incident.Notifications.Teams.WebhookUrl),
-    new SlackSettings(incident.Notifications.Slack.BotToken, incident.Notifications.Slack.ChannelId),
-    new DiscordSettings(incident.Notifications.Discord.WebhookUrl),
+    new SlackSettings(
+        incident.Notifications.Slack.BotToken,
+        incident.Notifications.Slack.ChannelId,
+        incident.Notifications.Slack.PostMessageUrl),
+    new DiscordSettings(
+        incident.Notifications.Discord.WebhookUrl,
+        incident.Notifications.Discord.MaxRetryDelaySeconds),
     new EmailSettings(
         incident.Notifications.Email.ConnectionString,
         incident.Notifications.Email.Endpoint,
@@ -64,8 +79,8 @@ builder.Services.AddSingleton<GroundInHistory>();
 // Stage 7's fan-out: the notifiers come from AddInfrastructure, the timeout from configuration.
 builder.Services.AddSingleton(provider => new NotifyChannels(
     provider.GetServices<INotifier>(),
-    provider.GetRequiredService<ILogger<NotifyChannels>>(),
-    TimeSpan.FromSeconds(incident.Notifications.TimeoutSeconds)));
+    TimeSpan.FromSeconds(incident.Notifications.TimeoutSeconds),
+    provider.GetRequiredService<ILogger<NotifyChannels>>()));
 
 // Stage 6 is registered by AddInfrastructure: the Azure OpenAI model when the deployment is
 // configured, and the deterministic path when it is not.
@@ -97,3 +112,11 @@ app.MapDefaultEndpoints();
 app.MapWorkerStatus();
 
 app.Run();
+
+static void RequirePositive(int value, string key)
+{
+    if (value <= 0)
+    {
+        throw new InvalidOperationException($"Configuration value {key} must be a positive number of seconds.");
+    }
+}
