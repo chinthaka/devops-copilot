@@ -1,21 +1,17 @@
 namespace DevOpsCopilot.Infrastructure.Reporting;
 
 /// <summary>
-/// The Communication Services resource, sender and recipients for the email channel (requirement
-/// D6). A connection string authenticates with its access key; an endpoint with no connection
-/// string means managed identity. The connection string is a credential and never printed, and
-/// recipients are printed as a count only. A missing resource, a blank sender or no non-blank
-/// recipient means the channel is unconfigured.
+/// Who the email channel sends as and to (requirement D6), whichever transport carries the
+/// message (D14). Recipients are trimmed, blank ones dropped and duplicates removed without regard
+/// to case. A blank sender or no recipient means the channel is unconfigured. The transport's own
+/// settings — and its credentials — live in <see cref="CommunicationServicesEmailSettings"/> and
+/// <see cref="SmtpSettings"/>.
 /// </summary>
-public sealed record EmailSettings(
-    string ConnectionString,
-    string Endpoint,
-    string SenderAddress,
-    IReadOnlyList<string> Recipients)
+public sealed record EmailSettings(string SenderAddress, IReadOnlyList<string> Recipients)
 {
-    public static EmailSettings Unconfigured { get; } = new("", "", "", []);
+    public static EmailSettings Unconfigured { get; } = new("", []);
 
-    /// <summary>Trimmed, non-blank and de-duplicated without regard to case, in configured order.</summary>
+    /// <summary>The cleaned recipient list every email is addressed to.</summary>
     public IReadOnlyList<string> To =>
         Recipients
             .Select(address => address.Trim())
@@ -23,17 +19,12 @@ public sealed record EmailSettings(
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-    public bool IsConfigured =>
-        (!string.IsNullOrWhiteSpace(ConnectionString) || !string.IsNullOrWhiteSpace(Endpoint))
-        && !string.IsNullOrWhiteSpace(SenderAddress)
-        && To.Count > 0;
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(SenderAddress) && To.Count > 0;
 
-    /// <summary>Keeps the connection string and the addresses out of logs and error messages.</summary>
+    /// <summary>Prints the recipients as a count, so no address list reaches a log line.</summary>
     private bool PrintMembers(System.Text.StringBuilder builder)
     {
-        builder.Append("ConnectionString = ").Append(string.IsNullOrWhiteSpace(ConnectionString) ? "(none)" : "(set)")
-            .Append(", Endpoint = ").Append(Endpoint)
-            .Append(", SenderAddress = ").Append(SenderAddress)
+        builder.Append("SenderAddress = ").Append(SenderAddress)
             .Append(", Recipients = ").Append(To.Count);
         return true;
     }

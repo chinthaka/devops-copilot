@@ -32,8 +32,8 @@ Known gaps between the code and the contract, closed by the milestones below:
 | ~~No LLM is wired; agents are deterministic~~ Closed: M5 wired Azure OpenAI behind `IDiagnosisModel`, with the citation guard and the deterministic fallback | `InfrastructureServiceCollectionExtensions.cs` | M5 (done) |
 | Only the `LogForwarder` JSON shape is parsed, not diagnostic-settings `records` arrays | `LogEventParser.cs` | M10 |
 | No triage, correlation, work item or learn stage | — | M11 to M14, M16 |
-| ~~A report is written to a file and delivered to nobody~~ Closed: M6 notifies Teams, Slack, Discord and email through `NotifyChannels` | `RunIncidentPipeline`, `NotifyChannels` | M6 (M6.1 to M6.6 done) |
-| Email can only be sent through Azure Communication Services | `CommunicationServicesEmailTransport` | M6.7 |
+| ~~A report is written to a file and delivered to nobody~~ Closed: M6 notifies Teams, Slack, Discord and email through `NotifyChannels` | `RunIncidentPipeline`, `NotifyChannels` | M6 (done) |
+| ~~Email can only be sent through Azure Communication Services~~ Closed: `SmtpEmailTransport` is selectable by configuration | `CommunicationServicesEmailTransport`, `SmtpEmailTransport` | M6.7 (done) |
 | Nothing deploys to Azure | `.github/workflows/` | M7 |
 | ~~The dashboard is still the weather sample~~ Closed: the status dashboard replaced it | `src/DevOpsCopilot.Frontend`, `src/DevOpsCopilot.Server` | M1 (done) |
 
@@ -103,7 +103,7 @@ Split into:
 
 **Done when:** with Azure OpenAI configured, a staged error event produces a report whose every claim cites real evidence; without it, the report says the model was unavailable.
 
-### M6 – Notification channels (L, in progress: M6.7 open)
+### M6 – Notification channels (L, done)
 
 Deliver the report to people. `INotifier` in Application and a `NotifyChannels` stage that calls every registered channel in a fixed order, with four implementations in Infrastructure: Microsoft Teams, Slack, Discord and email. Every channel is optional: an unconfigured one is recorded as `unavailable`, a failing one as `failed`, and neither stops the others or fails the run. The report is always written to `incidents/` before any channel is called, and is the only delivery when nothing is configured.
 
@@ -121,7 +121,7 @@ Split into:
 4. **M6.4 – Discord (S, done).** Embed posted to a channel webhook with `?wait=true` so the message id comes back. One `Retry-After` retry on `429`.
 5. **M6.5 – Email (S, done).** One message per report to every configured address through Azure Communication Services, HTML plus plain text, rendered from templates a deployment can replace without a new image.
 6. **M6.6 – Wiring, contract and docs (S, done).** Configuration for all four channels read only in the Host, the `pipeline.md` § 7 channel table updated, `tech-stack.md` and `mission.md` updated, end-to-end test with no channel configured.
-7. **M6.7 – SMTP email transport (S).** A second email transport over MailKit beside Azure Communication Services, selected by `Incident:Notifications:Email:Transport` (decisions D14 to D17 of the spec). The email channel, its templates, its recipients and its place in the channel order do not change; only how the message leaves the worker does. TLS is required unless the deployment explicitly configures none for a local test server. Unit tests for the message, the failure reasons and the selection; integration test against smtp4dev behind `Category=RequiresSmtp`. No `pipeline.md` change: the contract's email row names no transport.
+7. **M6.7 – SMTP email transport (S, done).** A second email transport over MailKit beside Azure Communication Services, selected by `Incident:Notifications:Email:Transport` (decisions D14 to D17 of the spec). The email channel, its templates, its recipients and its place in the channel order do not change; only how the message leaves the worker does. TLS is required unless the deployment explicitly configures none for a local test server. Unit tests for the message, the failure reasons and the selection; integration test against any SMTP server behind `Category=RequiresSmtp`, with no local test tool prescribed. No `pipeline.md` change: the contract's email row names no transport.
 
 **Known limitation, closed by M9 and M12:** delivery is at-least-once and messages are not updated in place. There is no incident id and nowhere to store a message id until the state store (M9) and the `Incident` aggregate (M12) exist, so a replayed event posts a second message. Recorded in decision D7 of the spec.
 

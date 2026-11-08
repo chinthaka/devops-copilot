@@ -9,11 +9,14 @@ namespace DevOpsCopilot.Infrastructure.Tests.Reporting;
 /// </summary>
 internal static class EmailConfiguration
 {
-    private static readonly Lazy<EmailSettings?> Lazy = new(Read);
+    private static readonly Lazy<(EmailSettings, CommunicationServicesEmailSettings)?> Lazy = new(Read);
 
-    public static EmailSettings? Settings => Lazy.Value;
+    /// <summary>The addressing, or null unless both it and Communication Services are set.</summary>
+    public static EmailSettings? Settings => Lazy.Value?.Item1;
 
-    private static EmailSettings? Read()
+    public static CommunicationServicesEmailSettings? CommunicationServices => Lazy.Value?.Item2;
+
+    private static (EmailSettings, CommunicationServicesEmailSettings)? Read()
     {
         var configuration = new ConfigurationBuilder()
             .AddUserSecrets(typeof(EmailConfiguration).Assembly, optional: true)
@@ -21,10 +24,13 @@ internal static class EmailConfiguration
             .Build();
         var section = configuration.GetSection("Incident:Notifications:Email");
         var settings = new EmailSettings(
-            section["ConnectionString"] ?? "",
-            section["Endpoint"] ?? "",
             section["SenderAddress"] ?? "",
             section.GetSection("Recipients").GetChildren().Select(child => child.Value ?? "").ToArray());
-        return settings.IsConfigured ? settings : null;
+        var communicationServices = new CommunicationServicesEmailSettings(
+            section["ConnectionString"] ?? "",
+            section["Endpoint"] ?? "");
+        return settings.IsConfigured && communicationServices.IsConfigured
+            ? (settings, communicationServices)
+            : null;
     }
 }

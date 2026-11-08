@@ -2,12 +2,17 @@ using DevOpsCopilot.Infrastructure.Reporting;
 
 namespace DevOpsCopilot.Infrastructure.Tests.Reporting;
 
-/// <summary>Records each outgoing email and answers with an operation id, or throws on request.</summary>
+/// <summary>
+/// Records each outgoing email and answers with an operation id, or throws on request. Configured
+/// unless told otherwise, so a test can prove the notifier respects an unconfigured transport.
+/// </summary>
 internal sealed class FakeEmailTransport : IEmailTransport
 {
     public List<OutgoingEmail> Sent { get; } = [];
 
     public Exception? Throws { get; init; }
+
+    public bool IsConfigured { get; init; } = true;
 
     public Task<string> SendAsync(OutgoingEmail email, CancellationToken cancellationToken)
     {

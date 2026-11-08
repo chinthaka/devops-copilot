@@ -4,7 +4,7 @@
 |---|---|
 | **Branch** | `features/2026-11-05-m6-notification-channels` |
 | **Milestone** | M6 – Notification channels, covering M6.1 to M6.6 and absorbing the former M15 ([roadmap](../roadmap.md#m6--notification-channels-l)) |
-| **Status** | In review – revision of 2026-11-08 (SMTP email transport, M6.7) awaiting approval; M6.1 to M6.6 done |
+| **Status** | Done – including the revision of 2026-11-08 (SMTP email transport, M6.7) |
 | **Author** | Chinthaka Kumarasiri |
 | **Date** | 2026-11-05 |
 | **Revised** | 2026-11-06 – Teams through a Workflows webhook (**D3**, replacing Graph; **D11** withdrawn); report and email templates (**D12**, **D13**) |
@@ -71,7 +71,7 @@ is not in the chat workspace still receives the report.
   HTML body and a plain-text alternative rendered from the email templates, through Azure
   Communication Services Email. See decisions **D6**, **D12** and **D13**.
 - **Email over SMTP** (M6.7): the same email, sent through any SMTP server instead — an
-  organisation's existing relay, a hosted SMTP service, or a local test server such as smtp4dev.
+  organisation's existing relay, a hosted SMTP service, or whatever local test server a developer prefers.
   Configuration selects the transport; the email channel, its content and its rules do not change.
   See decisions **D14** to **D17**.
 - Templates for the report and the email: one placeholder renderer in Domain, embedded defaults
@@ -113,8 +113,9 @@ is not in the chat workspace still receives the report.
   Kerberos, no client certificates. A relay that needs them is a later transport.
 - Opportunistic TLS. SMTP over TLS is required unless the deployment explicitly says `None`
   (**D17**).
-- Adding an SMTP test server to the AppHost. smtp4dev runs beside it as a Docker container for the
-  gated integration test and manual checks; wiring it into `aspire run` is a separate change.
+- Choosing or shipping a local SMTP test server. The project prescribes no tool: any server that
+  speaks SMTP satisfies the gated integration test and the manual checks, and each developer picks
+  their own. Nothing is added to the AppHost for it.
 - Provisioning: creating the Teams Workflows flow and its trigger URL, the Slack
   app, the Discord webhook, the Communication Services resource and the SMTP relay account are operations tasks, listed as
   manual checks and carried out alongside M7.3.
@@ -264,7 +265,7 @@ still propagates from every transport, because that is shutdown or the stage's t
 **D17 – SMTP security is explicit, and the message id is the `Message-ID` header.**
 `Incident:Notifications:Email:Smtp:Security` is one of `StartTls` (upgrade on connect and refuse to
 continue without it; the usual port 587), `SslOnConnect` (implicit TLS; the usual port 465) or
-`None` (plain text, meant only for a local test server such as smtp4dev). There is no
+`None` (plain text, meant only for a local test server). There is no
 "TLS when available" mode, because a downgrade would quietly send the password in clear. The
 username and password are optional — an internal relay may accept the sender by network — but
 are set together or not at all; one without the other stops the worker at startup. The password is

@@ -22,15 +22,24 @@ builder.AddServiceDefaults();
 // Composition root. Configuration is read only here; every layer below takes plain values.
 var incident = builder.Configuration.GetSection("Incident").Get<IncidentOptions>() ?? new IncidentOptions();
 
-// Timings and retry caps have no defaults in code; appsettings.json supplies them. A missing or
-// non-positive value stops the worker at startup instead of silently running unbounded.
-RequirePositive(incident.AzureOpenAI.TimeoutSeconds, "Incident:AzureOpenAI:TimeoutSeconds");
-RequirePositive(incident.Notifications.TimeoutSeconds, "Incident:Notifications:TimeoutSeconds");
-RequirePositive(incident.Notifications.Discord.MaxRetryDelaySeconds, "Incident:Notifications:Discord:MaxRetryDelaySeconds");
-if (string.IsNullOrWhiteSpace(incident.Notifications.Slack.PostMessageUrl))
-{
-    throw new InvalidOperationException("Configuration value Incident:Notifications:Slack:PostMessageUrl is required.");
-}
+// Timings, caps, endpoints and the email transport have no defaults in code; appsettings.json
+// supplies them. A missing or invalid value stops the worker at startup, naming the key.
+IncidentOptionsValidator.Validate(incident);
+var email = incident.Notifications.Email;
+var emailTransport = IncidentOptionsValidator.Parse<EmailTransportKind>(email.Transport, "Incident:Notifications:Email:Transport");
+
+// Only the selected transport's settings are read; the other one is passed as unconfigured.
+var smtp = emailTransport == EmailTransportKind.Smtp
+    ? new SmtpSettings(
+        email.Smtp.Host,
+        email.Smtp.Port,
+        IncidentOptionsValidator.Parse<SmtpSecurity>(email.Smtp.Security, "Incident:Notifications:Email:Smtp:Security"),
+        email.Smtp.Username,
+        email.Smtp.Password)
+    : SmtpSettings.Unconfigured;
+var communicationServices = emailTransport == EmailTransportKind.CommunicationServices
+    ? new CommunicationServicesEmailSettings(email.ConnectionString, email.Endpoint)
+    : CommunicationServicesEmailSettings.Unconfigured;
 
 builder.Services.AddInfrastructure(
     new EventHubSettings(
@@ -59,11 +68,8 @@ builder.Services.AddInfrastructure(
     new DiscordSettings(
         incident.Notifications.Discord.WebhookUrl,
         incident.Notifications.Discord.MaxRetryDelaySeconds),
-    new EmailSettings(
-        incident.Notifications.Email.ConnectionString,
-        incident.Notifications.Email.Endpoint,
-        incident.Notifications.Email.SenderAddress,
-        incident.Notifications.Email.Recipients.ToArray()),
+    new EmailSettings(email.SenderAddress, email.Recipients.ToArray()),
+    new EmailTransportSettings(emailTransport, communicationServices, smtp),
     new TemplateSettings(
         incident.Report.TemplatePath,
         incident.Notifications.Email.SubjectTemplatePath,
@@ -112,11 +118,3 @@ app.MapDefaultEndpoints();
 app.MapWorkerStatus();
 
 app.Run();
-
-static void RequirePositive(int value, string key)
-{
-    if (value <= 0)
-    {
-        throw new InvalidOperationException($"Configuration value {key} must be a positive number of seconds.");
-    }
-}

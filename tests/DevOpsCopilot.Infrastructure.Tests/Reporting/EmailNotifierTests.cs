@@ -1,4 +1,3 @@
-using Azure;
 using DevOpsCopilot.Application.Interfaces;
 using DevOpsCopilot.Application.Reporting;
 using DevOpsCopilot.Domain.Reporting;
@@ -9,7 +8,7 @@ namespace DevOpsCopilot.Infrastructure.Tests.Reporting;
 
 public class EmailNotifierTests
 {
-    private const string ConnectionString = "endpoint=https://acs.communication.azure.com/;accesskey=secret-access-key";
+    private const string Secret = "endpoint=https://acs.communication.azure.com/;accesskey=secret-access-key";
     private const string Sender = "DoNotReply@incidents.contoso.com";
 
     private static readonly string[] Recipients =
@@ -55,13 +54,11 @@ public class EmailNotifierTests
     }
 
     [Fact]
-    public async Task SendAsync_WhenTheTransportFails_RecordsItFailedWithTheErrorCode()
+    public async Task SendAsync_WhenTheTransportReportsAFailure_RecordsItFailedWithItsReason()
     {
         // Arrange
-        var transport = new FakeEmailTransport
-        {
-            Throws = new RequestFailedException(400, "Sender domain not verified for " + ConnectionString, "DomainNotLinked", null),
-        };
+        const string reason = "The SMTP server answered 550 (RecipientNotAccepted).";
+        var transport = new FakeEmailTransport { Throws = new EmailTransportException(reason) };
         var notifier = new EmailNotifier(Settings(), transport);
 
         // Act
@@ -69,16 +66,14 @@ public class EmailNotifierTests
 
         // Assert
         Assert.Equal(NotificationStatus.Failed, delivery.Status);
-        Assert.Contains("DomainNotLinked", delivery.Reason, StringComparison.Ordinal);
-        Assert.Contains("400", delivery.Reason, StringComparison.Ordinal);
-        Assert.DoesNotContain("secret-access-key", delivery.Reason, StringComparison.Ordinal);
+        Assert.Equal(reason, delivery.Reason);
     }
 
     [Fact]
     public async Task SendAsync_WhenTheTransportThrowsSomethingElse_RecordsItFailedWithTheType()
     {
         // Arrange
-        var transport = new FakeEmailTransport { Throws = new InvalidOperationException(ConnectionString) };
+        var transport = new FakeEmailTransport { Throws = new InvalidOperationException(Secret) };
         var notifier = new EmailNotifier(Settings(), transport);
 
         // Act
@@ -87,16 +82,15 @@ public class EmailNotifierTests
         // Assert
         Assert.Equal(NotificationStatus.Failed, delivery.Status);
         Assert.Contains(nameof(InvalidOperationException), delivery.Reason, StringComparison.Ordinal);
-        Assert.DoesNotContain("secret-access-key", delivery.Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain(Secret, delivery.Reason, StringComparison.Ordinal);
     }
 
     public static TheoryData<EmailSettings> Unconfigured() =>
         new()
         {
-            new EmailSettings("", "", Sender, Recipients),
-            new EmailSettings(ConnectionString, "", "", Recipients),
-            new EmailSettings(ConnectionString, "", Sender, []),
-            new EmailSettings(ConnectionString, "", Sender, ["", "  "]),
+            new EmailSettings("", Recipients),
+            new EmailSettings(Sender, []),
+            new EmailSettings(Sender, ["", "  "]),
         };
 
     [Theory]
@@ -117,16 +111,29 @@ public class EmailNotifierTests
     }
 
     [Fact]
+    public async Task IsConfigured_WhenTheTransportIsUnconfigured_IsFalse()
+    {
+        // Arrange
+        var transport = new FakeEmailTransport { IsConfigured = false };
+        var notifier = new EmailNotifier(Settings(), transport);
+
+        // Act
+        var delivery = await notifier.SendAsync(Notifications.Complete(), CancellationToken.None);
+
+        // Assert
+        Assert.False(notifier.IsConfigured);
+        Assert.Equal(NotificationStatus.Unavailable, delivery.Status);
+        Assert.Empty(transport.Sent);
+    }
+
+    [Fact]
     public void IsConfigured_WithAnEndpointAndNoConnectionString_IsTrueForManagedIdentity()
     {
         // Arrange
-        var settings = new EmailSettings("", "https://acs.communication.azure.com/", Sender, Recipients);
+        var settings = new CommunicationServicesEmailSettings("", "https://acs.communication.azure.com/");
 
-        // Act
-        var notifier = new EmailNotifier(settings, new FakeEmailTransport());
-
-        // Assert
-        Assert.True(notifier.IsConfigured);
+        // Act and assert
+        Assert.True(settings.IsConfigured);
     }
 
     [Fact]
@@ -182,7 +189,7 @@ public class EmailNotifierTests
             () => notifier.SendAsync(Notifications.Complete(), cancelled.Token));
     }
 
-    private static EmailSettings Settings() => new(ConnectionString, "", Sender, Recipients);
+    private static EmailSettings Settings() => new(Sender, Recipients);
 
     private sealed class FakeTemplateSource(Dictionary<string, string> templates) : ITemplateSource
     {

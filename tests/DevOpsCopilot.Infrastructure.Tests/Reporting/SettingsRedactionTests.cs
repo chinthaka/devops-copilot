@@ -24,12 +24,21 @@ public class SettingsRedactionTests
                 "webhook-secret-token"
             },
             {
-                new EmailSettings(
+                new CommunicationServicesEmailSettings(
                     "endpoint=https://acs.communication.azure.com/;accesskey=secret-access-key",
-                    "",
-                    "DoNotReply@incidents.contoso.com",
-                    ["oncall@contoso.com"]),
+                    ""),
                 "secret-access-key"
+            },
+            {
+                new SmtpSettings("smtp.contoso.com", 587, SmtpSecurity.StartTls, "relay-user", "smtp-secret-password"),
+                "smtp-secret-password"
+            },
+            {
+                new EmailTransportSettings(
+                    EmailTransportKind.Smtp,
+                    CommunicationServicesEmailSettings.Unconfigured,
+                    new SmtpSettings("smtp.contoso.com", 587, SmtpSecurity.StartTls, "relay-user", "smtp-secret-password")),
+                "smtp-secret-password"
             },
         };
 

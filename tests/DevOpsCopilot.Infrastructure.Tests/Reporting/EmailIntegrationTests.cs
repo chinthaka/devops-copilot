@@ -23,8 +23,9 @@ public class EmailIntegrationTests
     public async Task SendAsync_AgainstARealCommunicationServicesResource_QueuesOneEmail()
     {
         // Arrange
-        var settings = EmailConfiguration.Settings!;
-        var notifier = new EmailNotifier(settings, CommunicationServicesEmailTransport.Create(settings));
+        var notifier = new EmailNotifier(
+            EmailConfiguration.Settings!,
+            CommunicationServicesEmailTransport.Create(EmailConfiguration.CommunicationServices!));
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
         // Act

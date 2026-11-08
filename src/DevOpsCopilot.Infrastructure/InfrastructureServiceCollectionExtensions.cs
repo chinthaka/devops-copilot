@@ -31,6 +31,7 @@ public static class InfrastructureServiceCollectionExtensions
         SlackSettings? slack = null,
         DiscordSettings? discord = null,
         EmailSettings? email = null,
+        EmailTransportSettings? emailTransport = null,
         TemplateSettings? templates = null)
     {
         azureOpenAI ??= AzureOpenAISettings.Unconfigured;
@@ -77,10 +78,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddHttpClient<TeamsNotifier>();
         services.AddHttpClient<SlackNotifier>();
         services.AddHttpClient<DiscordNotifier>();
-        services.TryAddSingleton<IEmailTransport>(serviceProvider =>
-            serviceProvider.GetRequiredService<EmailSettings>().IsConfigured
-                ? CommunicationServicesEmailTransport.Create(serviceProvider.GetRequiredService<EmailSettings>())
-                : new UnconfiguredEmailTransport());
+        services.TryAddSingleton(_ => CreateEmailTransport(emailTransport));
         services.AddSingleton<INotifier>(serviceProvider => serviceProvider.GetRequiredService<TeamsNotifier>());
         services.AddSingleton<INotifier>(serviceProvider => serviceProvider.GetRequiredService<SlackNotifier>());
         services.AddSingleton<INotifier>(serviceProvider => serviceProvider.GetRequiredService<DiscordNotifier>());
@@ -94,4 +92,19 @@ public static class InfrastructureServiceCollectionExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Builds exactly the selected email transport (requirement D14). This is the only place the
+    /// kind is examined, and it is composition, not channel logic: the email notifier never asks
+    /// which transport it holds. No transport selected, or the selected one blank, leaves the
+    /// email channel unavailable.
+    /// </summary>
+    private static IEmailTransport CreateEmailTransport(EmailTransportSettings? settings) =>
+        settings?.Kind switch
+        {
+            EmailTransportKind.CommunicationServices when settings.CommunicationServices.IsConfigured =>
+                CommunicationServicesEmailTransport.Create(settings.CommunicationServices),
+            EmailTransportKind.Smtp => new SmtpEmailTransport(settings.Smtp),
+            _ => new UnconfiguredEmailTransport(),
+        };
 }

@@ -88,8 +88,8 @@ No network, no channel, no package. This group is the whole feature minus the tr
    `RunIncidentPipeline` fetch the `report` template through it before rendering. With no source
    registered the default is used, which keeps every existing test green.
 
-Groups 1 to 7 are implemented on this branch; group 8 is the revision of 2026-11-08 and awaits
-approval. The default report template is the embedded resource
+Groups 1 to 7 are implemented on this branch; group 8, the revision of 2026-11-08, is
+implemented too. The default report template is the embedded resource
 `src/DevOpsCopilot.Domain/Reporting/Templates/report.md`, which is also the starting point to copy
 for a custom template.
 
@@ -286,7 +286,7 @@ Each step leaves `dotnet build` and `dotnet test` green.
 8. **Integration test.** `SendAsync_AgainstAnSmtpServer_DeliversOneMessage` with
    `SmtpRequiredFactAttribute` and `SmtpConfiguration`, layered over the worker's
    `appsettings.json` like the other gated tests, `Category=RequiresSmtp`. Run it against
-   smtp4dev locally.
+   any SMTP server; no tool is prescribed.
 9. **Docs.** Run the manual checks, fill in the 2026-11-08 block of validation.md's **Results**,
    mark roadmap M6.7 and M6 done, and set this requirement's status back to Done.
 
@@ -348,7 +348,7 @@ Dependencies still point inwards only.
 | Report channels table | Microsoft Teams moves from "Planned (M6)" to built, naming the Teams Workflows webhook. Slack moves from "Planned (Phase 2)" to built, naming `chat.postMessage` and Block Kit. Two new rows: Discord (channel webhook, embeds) and Email (Azure Communication Services). |
 | Package | `Azure.Communication.Email` 1.1.0 added to `src/DevOpsCopilot.Infrastructure`, pinned at the version resolved during implementation and recorded in the same pull request. |
 | Package (2026-11-08) | `MailKit` 4.18.2 added to `src/DevOpsCopilot.Infrastructure` for the SMTP transport ([D15](requirement.md#decisions)); MimeKit comes with it. `System.Net.Mail.SmtpClient` is listed under "Not used". |
-| Testing (2026-11-08) | A fifth gated channel category, `RequiresSmtp`, run locally against smtp4dev (Docker image `rnwood/smtp4dev`), which is a development tool and not part of the AppHost. |
+| Testing (2026-11-08) | A fifth gated channel category, `RequiresSmtp`, run against any SMTP server the developer chooses. No local test server is prescribed or added to the AppHost. |
 | Package | `Microsoft.Extensions.Http` for `IHttpClientFactory` in Infrastructure, if it is not already available transitively. |
 | Identity | `Azure.Identity` 1.21.0 gains a second use: the email channel's managed identity when `Endpoint` is set without a connection string. No new package. |
 | Not used | A note that `Microsoft.Graph` is not used — Teams posts through a Workflows webhook ([D3](requirement.md#decisions)) — and that Slack and Discord have no first-party .NET SDK, so all three are plain HTTP over `IHttpClientFactory`, and that no templating package is used ([D12](requirement.md#decisions)). |
@@ -394,13 +394,13 @@ dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:Notificatio
 dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:Notifications:Discord:WebhookUrl" "https://discord.com/api/webhooks/…"
 ```
 
-Email through a local smtp4dev container (`docker run -p 2525:25 -p 5000:80 rnwood/smtp4dev`),
-none of which is a secret but all of which is environment-specific:
+Email through SMTP. For local testing use any SMTP test server you like; the values below are
+placeholders for its host and port. None of them is a secret, but all are environment-specific:
 
 ```bash
 dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:Notifications:Email:Transport" "Smtp"
 dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:Notifications:Email:Smtp:Host" "localhost"
-dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:Notifications:Email:Smtp:Port" "2525"
+dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:Notifications:Email:Smtp:Port" "<port>"
 dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:Notifications:Email:Smtp:Security" "None"
 dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:Notifications:Email:SenderAddress" "devopscopilot@example.test"
 dotnet user-secrets --project src/DevOpsCopilot.Worker set "Incident:Notifications:Email:Recipients:0" "oncall@example.test"
@@ -456,6 +456,6 @@ These are not code and are done alongside M7.3:
 - [ ] Results section of validation.md completed
 - [ ] Pull request links this feature folder
 - [ ] **Revision of 2026-11-08 (M6.7):** AC-16 to AC-18 covered and passing; AC-8, AC-10 and
-      AC-13 re-proven; `SendAsync_AgainstAnSmtpServer_DeliversOneMessage` run against smtp4dev;
+      AC-13 re-proven; `SendAsync_AgainstAnSmtpServer_DeliversOneMessage` run against an SMTP server;
       MailKit recorded in tech-stack.md; roadmap M6.7 marked done; the 2026-11-08 Results block
       filled in

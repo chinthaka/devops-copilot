@@ -20,6 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The shipped configuration, so the validator is proven against what the worker really reads. -->
+    <None Include="..\..\src\DevOpsCopilot.Worker\appsettings.json" Link="worker.appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 

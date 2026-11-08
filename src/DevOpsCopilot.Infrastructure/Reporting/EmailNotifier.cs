@@ -1,4 +1,3 @@
-using Azure;
 using DevOpsCopilot.Application.Interfaces;
 using DevOpsCopilot.Application.Reporting;
 using DevOpsCopilot.Domain.Reporting;
@@ -9,9 +8,11 @@ namespace DevOpsCopilot.Infrastructure.Reporting;
 /// Delivers one notification as one email with every configured address in To (requirement D6).
 /// The subject and both bodies come from the email templates — each a configured file when the
 /// template source has one, otherwise the embedded default (requirement D13). The delivery
-/// carries the send operation's id. A Communication Services error is a failed delivery naming
-/// its status and error code; any other failure names only the exception type, so no connection
-/// string can reach a reason.
+/// carries the transport's message id. The notifier is transport-neutral (requirement D14): a
+/// transport failure arrives as an <see cref="EmailTransportException"/> whose safe reason is
+/// recorded as it is (D16), and any other failure names only the exception type, so no credential
+/// can reach a reason. The channel is configured when the addressing and the selected transport
+/// both are.
 /// </summary>
 public sealed class EmailNotifier : INotifier
 {
@@ -30,7 +31,7 @@ public sealed class EmailNotifier : INotifier
 
     public string Channel => ChannelName;
 
-    public bool IsConfigured => _settings.IsConfigured;
+    public bool IsConfigured => _settings.IsConfigured && _transport.IsConfigured;
 
     public async Task<NotificationDelivery> SendAsync(
         IncidentNotification notification,
@@ -59,12 +60,9 @@ public sealed class EmailNotifier : INotifier
             // Shutdown or the stage's timeout; NotifyChannels tells the two apart.
             throw;
         }
-        catch (RequestFailedException exception)
+        catch (EmailTransportException exception)
         {
-            var code = string.IsNullOrWhiteSpace(exception.ErrorCode) ? "no error code" : exception.ErrorCode;
-            return NotificationDelivery.Failed(
-                ChannelName,
-                $"Communication Services answered {exception.Status} ({code}).");
+            return NotificationDelivery.Failed(ChannelName, exception.Message);
         }
         catch (Exception exception)
         {

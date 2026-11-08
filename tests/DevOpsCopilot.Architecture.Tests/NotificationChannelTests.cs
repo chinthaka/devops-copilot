@@ -19,7 +19,7 @@ public class NotificationChannelTests
     public void NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure()
     {
         // Arrange
-        string[] notificationPackages = ["Azure.Communication.Email", "Microsoft.Extensions.Http"];
+        string[] notificationPackages = ["Azure.Communication.Email", "MailKit", "Microsoft.Extensions.Http"];
         var infrastructure = Repository.Project($"src/{Infrastructure}/{Infrastructure}.csproj");
         string[] others =
         [
@@ -67,7 +67,7 @@ public class NotificationChannelTests
     public void Application_WhenInspectedForChannelNames_MentionsNoChannelType()
     {
         // Arrange: the stage resolves channels, it never names one (AC-12).
-        string[] channelNames = ["Teams", "Slack", "Discord", "Workflows", "CommunicationServices", "Graph"];
+        string[] channelNames = ["Teams", "Slack", "Discord", "Workflows", "CommunicationServices", "Graph", "Smtp", "MailKit", "MimeKit"];
         var assembly = Assembly.Load(Application);
 
         // Act

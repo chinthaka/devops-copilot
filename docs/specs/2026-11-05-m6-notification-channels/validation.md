@@ -30,7 +30,7 @@ tests driven by a stub `HttpMessageHandler`, in the way M5's `FakeChatClient` co
 | AC-14 | `Render_WithACustomTemplate_FollowsItsLayout`, `RunAsync_WithACustomReportTemplate_RendersTheReportThroughIt`, `Build_WithCustomEmailTemplates_FillsTheirPlaceholders`, `GetAsync_WithAConfiguredPath_RereadsTheFileOnEveryCall`, manual template-edit check | Unit, Manual | Domain, Application, Infrastructure | `tests/DevOpsCopilot.Domain.Tests`, `tests/DevOpsCopilot.Application.Tests`, `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-15 | `Render_WithAnUnknownPlaceholder_LeavesTheTokenVisible`, `RunAsync_WhenTheTemplateSourceReturnsNothing_RendersTheDefaultReport`, `GetAsync_WithAMissingFile_WarnsOnceAndReturnsNull` | Unit | Domain, Application, Infrastructure | `tests/DevOpsCopilot.Domain.Tests`, `tests/DevOpsCopilot.Application.Tests`, `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-16 | `Build_WithAnOutgoingEmail_ProducesAMultipartAlternativeWithTextThenHtml`, `Build_WithThreeRecipients_AddressesAllOfThemInTo`, `Build_WithAnOutgoingEmail_SetsTheSenderSubjectAndAMessageId`, `Build_WithTheSameEmailTwice_GivesEachMessageItsOwnMessageId`, `SecureSocketOption_ForEachSecurityMode_MapsToTheMatchingMailKitOption` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
-| AC-16 | `SendAsync_AgainstAnSmtpServer_DeliversOneMessage` (run locally against smtp4dev) | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
+| AC-16 | `SendAsync_AgainstAnSmtpServer_DeliversOneMessage` (run against any SMTP server the developer chooses) | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-17 | `AddInfrastructure_WithEachEmailTransportSelected_RegistersOnlyThatTransport` (theory), `AddInfrastructure_WithTheSelectedTransportUnconfigured_RegistersAnUnconfiguredEmailNotifier` (theory), `IsConfigured_WhenTheTransportIsUnconfigured_IsFalse`, `Validate_WithAnUnknownEmailTransport_ThrowsNamingTheKey`, `Validate_WithAnSmtpUsernameButNoPassword_ThrowsNamingTheKeys` | Unit | Infrastructure, Host | `tests/DevOpsCopilot.Infrastructure.Tests`, `tests/DevOpsCopilot.Worker.Tests` |
 | AC-18 | `Describe_WithACommandRejection_NamesTheReplyCodeAndCategoryOnly`, `Describe_WithARejectedLogin_SaysTheLoginWasRejected`, `Describe_WithATlsFailure_SaysTheHandshakeFailed`, `Describe_WithAnyOtherException_NamesOnlyTheType`, `SendAsync_WhenTheTransportReportsAFailure_RecordsItFailedWithItsReason`, `SendAsync_WhenCommunicationServicesFails_ThrowsATransportFailureWithTheStatusAndErrorCode` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-2, AC-3 | `EndToEnd_AnErrorEventWithNoChannelConfigured_WritesTheReportAndRecordsEveryChannelUnavailable` | Integration | Host | `tests/DevOpsCopilot.AppHost.Tests` |
@@ -227,7 +227,7 @@ and records the request it received. The payload builders are pure and tested di
 **Email over SMTP — revision of 2026-11-08** (AC-16 to AC-18, D14 to D17)
 
 The MIME message and the failure description are pure functions, tested directly. The connect,
-TLS and login path needs a server, so it is covered by the gated smtp4dev integration test and the
+TLS and login path needs a server, so it is covered by the gated SMTP integration test and the
 manual checks, as every other live transport in this milestone is.
 
 - **`Build_WithAnOutgoingEmail_ProducesAMultipartAlternativeWithTextThenHtml`** (AC-16) – Arrange:
@@ -330,8 +330,8 @@ way M5's `AzureOpenAIRequiredFact` gates the Azure OpenAI test, and none runs in
   operation is accepted and an operation id comes back. Marked `Category=RequiresEmail`.
 - **`SendAsync_AgainstAnSmtpServer_DeliversOneMessage`** (AC-16) – needs
   `Incident:Notifications:Email:Smtp:Host`, `:Port`, `:Security`, a sender and one recipient.
-  Locally this is smtp4dev (`docker run -p 2525:25 -p 5000:80 rnwood/smtp4dev`, host `localhost`,
-  port `2525`, security `None`); against a real relay add the username and password. Asserts a
+  Point it at any SMTP server: a local test server of the developer's choosing (typically with
+  security `None`), or a real relay with a username and password. Asserts a
   `sent` delivery whose message id is the `Message-ID`. Marked `Category=RequiresSmtp`.
 - **`EndToEnd_AnErrorEventWithNoChannelConfigured_WritesTheReportAndRecordsEveryChannelUnavailable`**
   (AC-2, AC-3) – extends the existing AppHost emulator test: produce one error event to hub `logs`
@@ -376,16 +376,16 @@ These need credentials and a human eye, and are run once before the pull request
   template files and produce another error event; the next report and email follow the edit with
   no restart (AC-14). Then point a template path at a missing file: the embedded defaults are used
   and one warning names the path (AC-15).
-- SMTP through smtp4dev (AC-16): transport `Smtp`, host `localhost`, port `2525`, security
-  `None`. One error event produces exactly one message in the smtp4dev inbox
-  (`http://localhost:5000`), addressed to every recipient, with both the HTML and the plain-text
+- SMTP through a local test server of the developer's choosing (AC-16): transport `Smtp`, the
+  server's host and port, security as the server needs. One error event produces exactly one
+  message in the server's inbox, addressed to every recipient, with both the HTML and the plain-text
   alternative, and its `Message-ID` matches the delivery logged by the worker.
 - SMTP through a real relay (AC-16, AC-18): security `StartTls` on port 587 with a username and
   password. The message arrives and renders as the Communication Services one does. Then set a
   wrong password: the email delivery is `failed` with "login rejected", the other channels still
   deliver, and the password appears nowhere in the console output.
 - Transport selection (AC-17): with the transport `CommunicationServices` and SMTP settings also
-  filled, smtp4dev receives nothing; with `Smtpp` (a typo) the worker refuses to start and names
+  filled, the SMTP server receives nothing; with `Smtpp` (a typo) the worker refuses to start and names
   the key.
 - Deliberate failure: revoke the Slack token and run again; Slack is `failed`, the other three
   still deliver and the worker keeps consuming.
@@ -434,20 +434,20 @@ Completed 2026-11-07.
 
 ### Revision of 2026-11-08 – SMTP email transport (M6.7)
 
-To be completed when M6.7 is implemented. The rows above stay as recorded on 2026-11-07; the
+Completed 2026-11-08. The rows above stay as recorded on 2026-11-07; the
 2026-11-08 changes to AC-8, AC-10 and AC-13 are re-proven here.
 
 | AC | Test or check | Result | Notes |
 |---|---|---|---|
-| AC-8 | Email unit tests, after the transport refactor (D16) | | |
-| AC-10 | `ToString_WithASecret_DoesNotPrintIt` with `SmtpSettings` and `CommunicationServicesEmailSettings` | | |
-| AC-13 | `NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure` with MailKit | | |
-| AC-16 | MIME builder and security-mode tests; `SendAsync_AgainstAnSmtpServer_DeliversOneMessage` against smtp4dev | | |
-| AC-17 | Registration, notifier and `IncidentOptionsValidator` tests | | |
-| AC-18 | `Describe_…` tests, transport-failure tests | | |
+| AC-8 | Email unit tests, after the transport refactor (D16) | Pass | `EmailNotifier` no longer references `Azure`; the Communication Services reason text is unchanged, now produced by the transport. |
+| AC-10 | `ToString_WithASecret_DoesNotPrintIt` with `SmtpSettings` and `CommunicationServicesEmailSettings` | Pass | Also a row for `EmailTransportSettings`, which prints both nested records. |
+| AC-13 | `NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure` with MailKit | Pass | `Smtp`, `MailKit` and `MimeKit` added to the Application channel-name rule. |
+| AC-16 | MIME builder and security-mode tests; `SendAsync_AgainstAnSmtpServer_DeliversOneMessage` against an SMTP server | Pass | Live run against a local SMTP test server with security `None`: one message, both recipients in `To`, `multipart/alternative` with `text/plain` then `text/html`, `Message-Id` set. Not yet run against a real relay with `StartTls` and a login. |
+| AC-17 | Registration, notifier and `IncidentOptionsValidator` tests | Pass | Extra tests beyond the plan: a transport in any case is accepted, the unselected transport's settings are not checked, and the Slack URL check moved into the validator. |
+| AC-18 | `Describe_…` tests, transport-failure tests | Pass | Live: a port with no listener is recorded `failed`, not thrown. |
 
-- **`dotnet build`:**
-- **`dotnet test`:**
-- **Gated integration tests:**
-- **Manual checks:**
-- **Date:**
+- **`dotnet build`:** clean, 0 errors; no new warnings (the remaining ones are pre-existing nullability warnings in `WorkerStatusEndpointTests` and package advisories).
+- **`dotnet test`:** 261 passed / 266 total in the solution's unit and integration projects; 5 skipped (the gated `RequiresTeams`, `RequiresSlack`, `RequiresEmail`, `RequiresSmtp` and `RequiresAzureOpenAI` tests without settings), 0 failed. AppHost end-to-end tests (`RequiresDocker`, 4): **failed** on 2026-11-08 — every one stopped at Aspire start-up with "Application orchestrator dependency check returned an error: The operation has timed out", before any project, the worker included, was launched. No configuration or validation error appears in the output, so the cause looks environmental (the orchestrator's `docker` probe timing out on this machine), but that has not been proven by running the same tests on the commit before this change. This is the first run since Docker access was granted.
+- **Gated integration tests:** `RequiresSmtp` passed against a local SMTP test server (any server will do; none is prescribed). `RequiresDiscord` passed on 2026-11-07 against a real webhook. `RequiresEmail` (Communication Services), `RequiresTeams` and `RequiresSlack` not run: no credentials.
+- **Manual checks:** the SMTP-through-a-real-relay check (StartTls, login, wrong password) and the transport-selection check through `aspire run` have not been run yet.
+- **Date:** 2026-11-08
