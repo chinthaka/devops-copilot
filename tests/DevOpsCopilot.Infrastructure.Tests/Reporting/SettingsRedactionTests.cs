@@ -1,3 +1,7 @@
+using DevOpsCopilot.Infrastructure.Reporting.Discord;
+using DevOpsCopilot.Infrastructure.Reporting.Email;
+using DevOpsCopilot.Infrastructure.Reporting.Slack;
+using DevOpsCopilot.Infrastructure.Reporting.Teams;
 using DevOpsCopilot.Infrastructure.Reporting;
 
 namespace DevOpsCopilot.Infrastructure.Tests.Reporting;

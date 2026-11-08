@@ -106,7 +106,7 @@ is not in the chat workspace still receives the report.
   (M12, M13).
 - The leftover sample project `src/DevOpsCopilot.EmailNotifier`. It is not extended, not reused and
   not deleted here; M18 removes it. The new email channel lives in
-  `src/DevOpsCopilot.Infrastructure/Reporting/`.
+  `src/DevOpsCopilot.Infrastructure/Reporting/Email/`.
 - Sending one email through both transports, or failing over from one to the other. Exactly one
   transport is selected per deployment (**D14**).
 - SMTP authentication other than username and password: no OAuth 2.0 (`XOAUTH2`), no NTLM or

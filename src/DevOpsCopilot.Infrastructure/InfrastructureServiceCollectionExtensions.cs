@@ -7,10 +7,14 @@ using DevOpsCopilot.Infrastructure.Diagnoses;
 using DevOpsCopilot.Infrastructure.Events;
 using DevOpsCopilot.Infrastructure.Grounding;
 using DevOpsCopilot.Infrastructure.Kql;
+using DevOpsCopilot.Infrastructure.Reporting.Discord;
+using DevOpsCopilot.Infrastructure.Reporting.Email;
+using DevOpsCopilot.Infrastructure.Reporting.Slack;
+using DevOpsCopilot.Infrastructure.Reporting.Teams;
 using DevOpsCopilot.Infrastructure.Reporting;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DevOpsCopilot.Infrastructure;
 

@@ -11,12 +11,16 @@ namespace DevOpsCopilot.Infrastructure.Tests.Common;
 /// </summary>
 internal sealed class StubHttpMessageHandler : HttpMessageHandler
 {
-    private readonly Queue<(HttpStatusCode Status, string Body, int? RetryAfterSeconds)> _responses = new();
+    private readonly Queue<(HttpStatusCode Status, string Body, int? RetryAfterSeconds, string MediaType)> _responses = new();
 
     public List<RecordedRequest> Requests { get; } = [];
 
-    public void Respond(HttpStatusCode status, string body = "", int? retryAfterSeconds = null) =>
-        _responses.Enqueue((status, body, retryAfterSeconds));
+    public void Respond(
+        HttpStatusCode status,
+        string body = "",
+        int? retryAfterSeconds = null,
+        string mediaType = "application/json") =>
+        _responses.Enqueue((status, body, retryAfterSeconds, mediaType));
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -34,12 +38,12 @@ internal sealed class StubHttpMessageHandler : HttpMessageHandler
             request.Content?.Headers.ContentType?.MediaType,
             request.Headers.Authorization?.ToString()));
 
-        var (status, responseBody, retryAfter) = _responses.Count > 0
+        var (status, responseBody, retryAfter, mediaType) = _responses.Count > 0
             ? _responses.Dequeue()
-            : (HttpStatusCode.Accepted, "", null);
+            : (HttpStatusCode.Accepted, "", null, "application/json");
         var response = new HttpResponseMessage(status)
         {
-            Content = new StringContent(responseBody, Encoding.UTF8, "application/json"),
+            Content = new StringContent(responseBody, Encoding.UTF8, mediaType),
             RequestMessage = request,
         };
         if (retryAfter is not null)

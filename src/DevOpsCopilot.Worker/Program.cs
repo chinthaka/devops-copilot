@@ -5,15 +5,19 @@ using DevOpsCopilot.Application.Kql;
 using DevOpsCopilot.Application.Pipeline;
 using DevOpsCopilot.Application.Reporting;
 using DevOpsCopilot.Domain.Kql;
-using DevOpsCopilot.Infrastructure;
 using DevOpsCopilot.Infrastructure.Diagnoses;
 using DevOpsCopilot.Infrastructure.Events;
 using DevOpsCopilot.Infrastructure.Grounding;
 using DevOpsCopilot.Infrastructure.Kql;
+using DevOpsCopilot.Infrastructure.Reporting.Discord;
+using DevOpsCopilot.Infrastructure.Reporting.Email;
+using DevOpsCopilot.Infrastructure.Reporting.Slack;
+using DevOpsCopilot.Infrastructure.Reporting.Teams;
 using DevOpsCopilot.Infrastructure.Reporting;
-using DevOpsCopilot.Worker;
+using DevOpsCopilot.Infrastructure;
 using DevOpsCopilot.Worker.Options;
 using DevOpsCopilot.Worker.Status;
+using DevOpsCopilot.Worker;
 
 var builder = WebApplication.CreateBuilder(args);
 

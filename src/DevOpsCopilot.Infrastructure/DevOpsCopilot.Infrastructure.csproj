@@ -12,22 +12,22 @@
     <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="Azure.Search.Documents" Version="12.0.0" />
     <PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.12.2" />
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.27.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.30.1" />
     <PackageReference Include="MailKit" Version="4.18.2" />
-    <PackageReference Include="Microsoft.Agents.AI" Version="1.25.0" />
-    <PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.25.0" />
+    <PackageReference Include="Microsoft.Agents.AI" Version="1.28.0" />
+    <PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.28.0" />
     <PackageReference Include="Microsoft.Azure.Kusto.Data" Version="14.2.4" />
     <PackageReference Include="Microsoft.Extensions.AI" Version="10.11.0" />
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.11.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Reporting\Templates\email-subject.txt" LogicalName="DevOpsCopilot.Infrastructure.Reporting.Templates.email-subject.txt" />
-    <EmbeddedResource Include="Reporting\Templates\email.html" LogicalName="DevOpsCopilot.Infrastructure.Reporting.Templates.email.html" />
-    <EmbeddedResource Include="Reporting\Templates\email.txt" LogicalName="DevOpsCopilot.Infrastructure.Reporting.Templates.email.txt" />
+    <EmbeddedResource Include="Reporting\Email\Templates\email-subject.txt" LogicalName="DevOpsCopilot.Infrastructure.Reporting.Email.Templates.email-subject.txt" />
+    <EmbeddedResource Include="Reporting\Email\Templates\email.html" LogicalName="DevOpsCopilot.Infrastructure.Reporting.Email.Templates.email.html" />
+    <EmbeddedResource Include="Reporting\Email\Templates\email.txt" LogicalName="DevOpsCopilot.Infrastructure.Reporting.Email.Templates.email.txt" />
   </ItemGroup>
 
   <ItemGroup>

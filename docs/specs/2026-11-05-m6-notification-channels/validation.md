@@ -158,6 +158,12 @@ and records the request it received. The payload builders are pure and tested di
   with `{"ok":false,"error":"channel_not_found"}`. Assert: `failed`, reason `channel_not_found`.
   The whole point of the test: a `200` is not a success here.
 - **`SendAsync_WhenSlackAnswersOk_ReportsTheTimestampAsTheMessageId`**.
+- **`SendAsync_WhenAnIncomingWebhookAnswersPlainTextOk_RecordsItFailedPointingAtThePostMessageUrl`**
+  (added 2026-11-08 after a live failure) – an incoming-webhook URL configured as `PostMessageUrl`
+  answers a bare `ok` as `text/html`. Assert: `failed`, the reason says the body is not JSON, names
+  the content type and points at `chat.postMessage`, and does not contain the webhook URL.
+- **`SendAsync_WhenSlackAnswersMalformedJson_RecordsItFailedSayingTheBodyIsNotJson`** (added
+  2026-11-08) – a non-JSON body is reported, never swallowed.
 - **`Build_WithAnOversizedDiagnosis_KeepsEveryBlockWithinSlacksLimits`** (AC-9) – 3 000 characters
   per text block, at most 50 blocks.
 - **`SendAsync_WithoutABotTokenOrChannel_ReportsItselfUnconfigured`** – theory.

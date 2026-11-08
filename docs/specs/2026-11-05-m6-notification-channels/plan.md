@@ -41,8 +41,12 @@ every render, lets a customer change either document by editing a file instead o
 rules are vendor-specific and asserted by tests, and nothing in M6 needs them customisable.
 
 All of it goes in the existing `Reporting` folder of each layer, because the contract's stage 7 is
-"report and notify". No new domain folder, so [AGENTS.md § Build](../../../AGENTS.md#build) needs no
-change.
+"report and notify". No new domain folder. Since 2026-11-08, Infrastructure and its tests split
+`Reporting` into one sub-folder per channel — `Reporting/Teams`, `Reporting/Slack`,
+`Reporting/Discord` and `Reporting/Email` (the email transports included) — with namespaces
+following the folders; what every channel shares (the report writer, the template source and their
+settings) stays in `Reporting`. Domain and Application name no channel, so they have no such
+sub-folders. [AGENTS.md § Build](../../../AGENTS.md#build) records the convention.
 
 ## Task groups
 
@@ -164,7 +168,7 @@ for a custom template.
    `EmailContent`. Values are HTML-encoded in the HTML body (log text is never trusted as markup),
    lists become `<ul>` there and `- ` lines in plain text, and line breaks are stripped from the
    subject so no value can inject a mail header. The defaults are embedded resources under
-   `src/DevOpsCopilot.Infrastructure/Reporting/Templates/` (`email-subject.txt`, `email.html`,
+   `src/DevOpsCopilot.Infrastructure/Reporting/Email/Templates/` (`email-subject.txt`, `email.html`,
    `email.txt`), held by `EmailTemplates.Default`. The defaults name
    the incident and its confidence in the subject and carry the same facts in both bodies; a
    custom template resolved through `ITemplateSource` replaces any of the three
@@ -244,7 +248,7 @@ Each step leaves `dotnet build` and `dotnet test` green.
    `SmtpSettings(Host, Port, Security, Username, Password)`: configured when the host is not blank
    and the port is positive; prints the host, port, security and whether a username and password
    are set, never the password.
-4. **Pure SMTP pieces**, each its own file in `src/DevOpsCopilot.Infrastructure/Reporting/`:
+4. **Pure SMTP pieces**, each its own file in `src/DevOpsCopilot.Infrastructure/Reporting/Email/`:
    - `SmtpMessage.Build(OutgoingEmail) : MimeMessage` — `From` the sender, every recipient in `To`
      ([D6](requirement.md#decisions)), the subject, and a `BodyBuilder` with `TextBody` and
      `HtmlBody`, which produces `multipart/alternative` with plain text first. MimeKit generates a
