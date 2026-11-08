@@ -16,19 +16,23 @@ tests driven by a stub `HttpMessageHandler`, in the way M5's `FakeChatClient` co
 | AC-4 | `NotifyAsync_WhenAChannelThrows_RecordsItFailedAndStillCallsTheRest`, `NotifyAsync_WhenAChannelTimesOut_RecordsItFailedWithTheTimeoutAsTheReason`, `RunAsync_WhenEveryChannelFails_StillCheckpointsTheEvent` | Unit | Application | `tests/DevOpsCopilot.Application.Tests` |
 | AC-5 | `Build_WithACompleteNotification_ProducesAMessageWithOneAdaptiveCardAttachment`, `SendAsync_WithAConfiguredWebhook_PostsTheCardToTheTriggerUrl`, `SendAsync_WhenTheWorkflowAccepts_RecordsItSentWithoutAMessageId`, `SendAsync_WhenTheWorkflowRejects_RecordsItFailedWithTheStatusAndNotTheUrl` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-5 | `SendAsync_AgainstARealTeamsChannel_PostsOneAdaptiveCard` | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
-| AC-6 | `Build_WithACompleteNotification_ProducesBlocksWhoseTextComesFromTheNotification`, `SendAsync_WithAConfiguredBotToken_CallsChatPostMessageWithTheBlocks`, `SendAsync_WhenSlackAnswersOkFalse_RecordsItFailedWithSlacksErrorCode`, `SendAsync_WhenSlackAnswersOk_ReportsTheTimestampAsTheMessageId` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
+| AC-6 | `Build_WithACompleteNotification_ProducesBlocksWhoseTextComesFromTheNotification`, `SendAsync_WithAConfiguredBotToken_PostsTheBlocksToTheConfiguredPostMessageUrl`, `SendAsync_WhenSlackAnswersOkFalse_RecordsItFailedWithSlacksErrorCode`, `SendAsync_WhenSlackAnswersOk_ReportsTheTimestampAsTheMessageId` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-6 | `SendAsync_AgainstARealSlackChannel_PostsOneBlockKitMessage` | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-7 | `Build_WithACompleteNotification_ProducesOneEmbedWithTheReportFields`, `SendAsync_WithAConfiguredWebhook_PostsWithWaitTrueAndReportsTheMessageId` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-7 | `SendAsync_AgainstARealDiscordWebhook_PostsOneEmbed` | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-8 | `Build_WithACompleteNotification_ProducesAnHtmlBodyAndAPlainTextAlternative`, `Build_WithANotification_SubjectNamesTheIncidentAndTheConfidence`, `SendAsync_WithThreeConfiguredRecipients_SendsOneMessageAddressedToAllOfThem`, `SendAsync_WithoutASenderOrRecipients_ReportsItselfUnconfigured` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-8 | `SendAsync_AgainstARealCommunicationServicesResource_QueuesOneEmail` | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-9 | `Build_WithAnOversizedDiagnosis_KeepsEveryBlockWithinSlacksLimits`, `Build_WithAnOversizedDiagnosis_KeepsTheEmbedWithinDiscordsLimits`, `Build_WithAnOversizedDiagnosis_TruncatesTheCardVisibly`, `Build_WithAnOversizedDiagnosis_StillNamesTheIncidentAndTheReportLocation` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
-| AC-10 | `ToString_WithASecret_DoesNotPrintIt` (theory over the four settings records), `NotifyAsync_WhenAChannelFails_LogsTheReasonWithoutTheCredential`, `Build_ForEveryChannel_PutsNoCredentialInThePayload` | Unit | Infrastructure, Application | `tests/DevOpsCopilot.Infrastructure.Tests`, `tests/DevOpsCopilot.Application.Tests` |
+| AC-10 | `ToString_WithASecret_DoesNotPrintIt` (theory over the channel settings records, including `SmtpSettings` and `CommunicationServicesEmailSettings` from the 2026-11-08 revision), `NotifyAsync_WhenAChannelFails_LogsTheReasonWithoutTheCredential`, `Build_ForEveryChannel_PutsNoCredentialInThePayload` | Unit | Infrastructure, Application | `tests/DevOpsCopilot.Infrastructure.Tests`, `tests/DevOpsCopilot.Application.Tests` |
 | AC-11 | `RunAsync_WithNotificationAdded_WritesTheSameReportBytesAsBefore`, `RunAsync_WhenAChannelIsConfigured_WritesTheReportBeforeCallingAnyChannel`, `Render_WithTheDefaultTemplate_MatchesTheHardCodedLayoutByteForByte` | Unit | Domain, Application | `tests/DevOpsCopilot.Domain.Tests`, `tests/DevOpsCopilot.Application.Tests` |
 | AC-12 | `NotifyAsync_WithAnAdditionalNotifierRegistered_CallsItWithoutAnyChangeToTheStage`, `Application_WhenInspectedForChannelNames_MentionsNoChannelType` | Unit, Architecture | Application | `tests/DevOpsCopilot.Application.Tests`, `tests/DevOpsCopilot.Architecture.Tests` |
-| AC-13 | `NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure`, `Application_WhenInspected_ReferencesNoHttpClientOrAzureSdk`, existing layer rules | Architecture | — | `tests/DevOpsCopilot.Architecture.Tests` |
+| AC-13 | `NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure` (now including MailKit), `Application_WhenInspected_ReferencesNoHttpClientOrAzureSdk`, existing layer rules | Architecture | — | `tests/DevOpsCopilot.Architecture.Tests` |
 | AC-14 | `Render_WithACustomTemplate_FollowsItsLayout`, `RunAsync_WithACustomReportTemplate_RendersTheReportThroughIt`, `Build_WithCustomEmailTemplates_FillsTheirPlaceholders`, `GetAsync_WithAConfiguredPath_RereadsTheFileOnEveryCall`, manual template-edit check | Unit, Manual | Domain, Application, Infrastructure | `tests/DevOpsCopilot.Domain.Tests`, `tests/DevOpsCopilot.Application.Tests`, `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-15 | `Render_WithAnUnknownPlaceholder_LeavesTheTokenVisible`, `RunAsync_WhenTheTemplateSourceReturnsNothing_RendersTheDefaultReport`, `GetAsync_WithAMissingFile_WarnsOnceAndReturnsNull` | Unit | Domain, Application, Infrastructure | `tests/DevOpsCopilot.Domain.Tests`, `tests/DevOpsCopilot.Application.Tests`, `tests/DevOpsCopilot.Infrastructure.Tests` |
+| AC-16 | `Build_WithAnOutgoingEmail_ProducesAMultipartAlternativeWithTextThenHtml`, `Build_WithThreeRecipients_AddressesAllOfThemInTo`, `Build_WithAnOutgoingEmail_SetsTheSenderSubjectAndAMessageId`, `Build_WithTheSameEmailTwice_GivesEachMessageItsOwnMessageId`, `SecureSocketOption_ForEachSecurityMode_MapsToTheMatchingMailKitOption` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
+| AC-16 | `SendAsync_AgainstAnSmtpServer_DeliversOneMessage` (run locally against smtp4dev) | Integration | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
+| AC-17 | `AddInfrastructure_WithEachEmailTransportSelected_RegistersOnlyThatTransport` (theory), `AddInfrastructure_WithTheSelectedTransportUnconfigured_RegistersAnUnconfiguredEmailNotifier` (theory), `IsConfigured_WhenTheTransportIsUnconfigured_IsFalse`, `Validate_WithAnUnknownEmailTransport_ThrowsNamingTheKey`, `Validate_WithAnSmtpUsernameButNoPassword_ThrowsNamingTheKeys` | Unit | Infrastructure, Host | `tests/DevOpsCopilot.Infrastructure.Tests`, `tests/DevOpsCopilot.Worker.Tests` |
+| AC-18 | `Describe_WithACommandRejection_NamesTheReplyCodeAndCategoryOnly`, `Describe_WithARejectedLogin_SaysTheLoginWasRejected`, `Describe_WithATlsFailure_SaysTheHandshakeFailed`, `Describe_WithAnyOtherException_NamesOnlyTheType`, `SendAsync_WhenTheTransportReportsAFailure_RecordsItFailedWithItsReason`, `SendAsync_WhenCommunicationServicesFails_ThrowsATransportFailureWithTheStatusAndErrorCode` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 | AC-2, AC-3 | `EndToEnd_AnErrorEventWithNoChannelConfigured_WritesTheReportAndRecordsEveryChannelUnavailable` | Integration | Host | `tests/DevOpsCopilot.AppHost.Tests` |
 | AC-2, AC-10 | `AddInfrastructure_WithEachChannelConfigured_RegistersThatNotifier` (theory), `AddInfrastructure_WithNoChannelConfigured_RegistersFourUnconfiguredNotifiers` | Unit | Infrastructure | `tests/DevOpsCopilot.Infrastructure.Tests` |
 
@@ -146,8 +150,9 @@ and records the request it received. The payload builders are pure and tested di
 **Slack** (AC-6, AC-9)
 
 - **`Build_WithACompleteNotification_ProducesBlocksWhoseTextComesFromTheNotification`**.
-- **`SendAsync_WithAConfiguredBotToken_CallsChatPostMessageWithTheBlocks`** – Assert: one `POST` to
-  `https://slack.com/api/chat.postMessage`, the bot token in the `Authorization` header, the
+- **`SendAsync_WithAConfiguredBotToken_PostsTheBlocksToTheConfiguredPostMessageUrl`** – Assert: one `POST` to
+  the configured `chat.postMessage` URL (`https://slack.com/api/chat.postMessage` in the shipped
+  `appsettings.json`), the bot token in the `Authorization` header, the
   channel id and the blocks in the body.
 - **`SendAsync_WhenSlackAnswersOkFalse_RecordsItFailedWithSlacksErrorCode`** – Arrange: `200 OK`
   with `{"ok":false,"error":"channel_not_found"}`. Assert: `failed`, reason `channel_not_found`.
@@ -208,6 +213,8 @@ and records the request it received. The payload builders are pure and tested di
 - **`SendAsync_WithBlankAndDuplicateRecipients_AddressesEachOnce`**.
 - **`SendAsync_WhenTheTransportFails_RecordsItFailedWithTheErrorCode`** (AC-10) – a
   `RequestFailedException`: the reason names status and error code and not the connection string.
+  **Replaced on 2026-11-08** by `SendAsync_WhenTheTransportReportsAFailure_RecordsItFailedWithItsReason`
+  below, because the Communication Services exception is now mapped inside its transport (D16).
 - **`SendAsync_WhenTheTransportThrowsSomethingElse_RecordsItFailedWithTheType`** (AC-10).
 - **`SendAsync_WithoutASenderOrRecipients_ReportsItselfUnconfigured`** – theory over a blank
   connection and endpoint, a blank sender, an empty and an all-blank recipient list.
@@ -216,6 +223,68 @@ and records the request it received. The payload builders are pure and tested di
   the source for all three names and falls back per template.
 - **`SendAsync_WhenTheTemplateSourceThrows_StillSendsWithTheDefaults`** (AC-15).
 - **`SendAsync_WhenTheCallerIsCancelled_PropagatesTheCancellation`**.
+
+**Email over SMTP — revision of 2026-11-08** (AC-16 to AC-18, D14 to D17)
+
+The MIME message and the failure description are pure functions, tested directly. The connect,
+TLS and login path needs a server, so it is covered by the gated smtp4dev integration test and the
+manual checks, as every other live transport in this milestone is.
+
+- **`Build_WithAnOutgoingEmail_ProducesAMultipartAlternativeWithTextThenHtml`** (AC-16) – Arrange:
+  an `OutgoingEmail` with a plain-text and an HTML body. Act: build the MIME message. Assert: the
+  body is `multipart/alternative` with exactly two parts, `text/plain` first and `text/html`
+  second (least preferred first, per RFC 2046), each carrying its rendering unchanged.
+- **`Build_WithThreeRecipients_AddressesAllOfThemInTo`** (AC-16, D6) – Assert: three `To`
+  addresses, no `Cc` and no `Bcc`.
+- **`Build_WithAnOutgoingEmail_SetsTheSenderSubjectAndAMessageId`** (AC-16, D17) – Assert: `From`
+  is the sender, the subject is the rendered subject, and `Message-ID` is set.
+- **`Build_WithTheSameEmailTwice_GivesEachMessageItsOwnMessageId`** (D17) – a replay is a new
+  message, so it never reuses an id.
+- **`SecureSocketOption_ForEachSecurityMode_MapsToTheMatchingMailKitOption`** (D17) – theory:
+  `StartTls` maps to MailKit's required `StartTls`, never to `StartTlsWhenAvailable`;
+  `SslOnConnect` to `SslOnConnect`; `None` to `None`.
+- **`IsConfigured_WithoutAHostOrPort_IsFalse`** (AC-17) – theory over a blank host and a
+  non-positive port on `SmtpSettings`.
+- **`Describe_WithACommandRejection_NamesTheReplyCodeAndCategoryOnly`** (AC-18, D16) – Arrange: an
+  `SmtpCommandException` for `550` whose server text contains a recipient address. Assert: the
+  reason contains `550` and the error category, and neither the address nor the server's text.
+- **`Describe_WithARejectedLogin_SaysTheLoginWasRejected`** (AC-18) – a MailKit
+  `AuthenticationException`; the reason contains neither the username nor the password.
+- **`Describe_WithATlsFailure_SaysTheHandshakeFailed`** (AC-18) – an `SslHandshakeException`.
+- **`Describe_WithAnyOtherException_NamesOnlyTheType`** (AC-18) – a `SocketException`: the reason
+  is the type name only.
+- **`SendAsync_WhenTheTransportReportsAFailure_RecordsItFailedWithItsReason`** (AC-18, D16) –
+  Arrange: a fake transport throwing `EmailTransportException("…")`. Assert: `failed` with exactly
+  that reason; the notifier names no transport.
+- **`SendAsync_WhenCommunicationServicesFails_ThrowsATransportFailureWithTheStatusAndErrorCode`**
+  (AC-10, D16) – Arrange: a mocked `EmailClient` (Azure SDK clients are mockable by design)
+  throwing `RequestFailedException`. Assert: an `EmailTransportException` whose reason names the
+  status and error code, as the notifier's reason did before, and not the connection string.
+- **`IsConfigured_WhenTheTransportIsUnconfigured_IsFalse`** (AC-17) – an `EmailNotifier` with a
+  sender and recipients but an unconfigured transport reports itself unconfigured and sends
+  nothing.
+- **`AddInfrastructure_WithEachEmailTransportSelected_RegistersOnlyThatTransport`** (AC-17) –
+  theory over both transports, with both transports' settings filled: the resolved
+  `IEmailTransport` is the selected one.
+- **`AddInfrastructure_WithTheSelectedTransportUnconfigured_RegistersAnUnconfiguredEmailNotifier`**
+  (AC-17) – theory: the selected transport's settings blank and the other's filled; the email
+  notifier reports itself unconfigured.
+
+### `tests/DevOpsCopilot.Worker.Tests` — configuration checks (AC-17, D17)
+
+The startup checks added on 2026-11-07 move from local functions in `Program.cs` into
+`IncidentOptionsValidator`, so they are unit-testable without booting the host.
+
+- **`Validate_WithTheShippedAppSettings_Passes`** – the repository's `appsettings.json` is valid
+  as shipped.
+- **`Validate_WithAnUnknownEmailTransport_ThrowsNamingTheKey`** – the message names
+  `Incident:Notifications:Email:Transport` and lists the accepted values.
+- **`Validate_WithAnSmtpUsernameButNoPassword_ThrowsNamingTheKeys`** – and the reverse, as a
+  theory.
+- **`Validate_WithSmtpSelectedAndAnUnknownSecurityMode_ThrowsNamingTheKey`**.
+- **`Validate_WithSmtpSelectedAndANonPositivePort_ThrowsNamingTheKey`**.
+- **`Validate_WithANonPositiveTimeout_ThrowsNamingTheKey`** – theory over the timeouts and the
+  Discord retry cap from the 2026-11-07 revision.
 
 **Templates — `FileTemplateSource`** (AC-14, AC-15, D13)
 
@@ -231,8 +300,10 @@ and records the request it received. The payload builders are pure and tested di
 **Settings and wiring** (AC-2, AC-10, AC-13)
 
 - **`ToString_WithASecret_DoesNotPrintIt`** – theory over `TeamsSettings`, `SlackSettings`,
-  `DiscordSettings` and `EmailSettings`: each prints `(set)` or `(none)` in place of the Teams
-  webhook URL, bot token, both webhook URLs and connection string.
+  `DiscordSettings`, `CommunicationServicesEmailSettings` and `SmtpSettings`: each prints `(set)`
+  or `(none)` in place of the Teams webhook URL, bot token, Discord webhook URL, connection string
+  and SMTP password. (`EmailSettings` keeps only the sender and the recipient count after the
+  2026-11-08 revision.)
 - **`AddInfrastructure_WithEachChannelConfigured_RegistersThatNotifier`** – theory over the four
   channels: the registered `INotifier` set contains that channel and it reports itself configured.
 - **`AddInfrastructure_WithNoChannelConfigured_RegistersFourUnconfiguredNotifiers`** – the worker
@@ -257,6 +328,11 @@ way M5's `AzureOpenAIRequiredFact` gates the Azure OpenAI test, and none runs in
 - **`SendAsync_AgainstARealCommunicationServicesResource_QueuesOneEmail`** (AC-8) – needs a
   Communication Services connection, a verified sender domain and one recipient. Asserts the send
   operation is accepted and an operation id comes back. Marked `Category=RequiresEmail`.
+- **`SendAsync_AgainstAnSmtpServer_DeliversOneMessage`** (AC-16) – needs
+  `Incident:Notifications:Email:Smtp:Host`, `:Port`, `:Security`, a sender and one recipient.
+  Locally this is smtp4dev (`docker run -p 2525:25 -p 5000:80 rnwood/smtp4dev`, host `localhost`,
+  port `2525`, security `None`); against a real relay add the username and password. Asserts a
+  `sent` delivery whose message id is the `Message-ID`. Marked `Category=RequiresSmtp`.
 - **`EndToEnd_AnErrorEventWithNoChannelConfigured_WritesTheReportAndRecordsEveryChannelUnavailable`**
   (AC-2, AC-3) – extends the existing AppHost emulator test: produce one error event to hub `logs`
   with no channel configured, then assert the report file appears and the worker logged four
@@ -265,12 +341,13 @@ way M5's `AzureOpenAIRequiredFact` gates the Azure OpenAI test, and none runs in
 ## Architecture tests
 
 - **`NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure`** (AC-13) – the
-  Communication Services package and any HTTP client registration appear
+  Communication Services package, MailKit and any HTTP client registration appear
   only in `src/DevOpsCopilot.Infrastructure`.
 - **`Application_WhenInspected_ReferencesNoHttpClientOrAzureSdk`** (AC-13) – extends the existing
   Application rule so a future channel cannot be written in the wrong layer.
 - **`Application_WhenInspectedForChannelNames_MentionsNoChannelType`** (AC-12) – no type or member
-  in `DevOpsCopilot.Application` names Teams, Workflows, Slack, Discord or Communication Services.
+  in `DevOpsCopilot.Application` names Teams, Workflows, Slack, Discord, Communication Services,
+  SMTP, MailKit or MimeKit.
 - The existing layer rules keep passing unchanged.
 
 ## Evaluation
@@ -299,6 +376,17 @@ These need credentials and a human eye, and are run once before the pull request
   template files and produce another error event; the next report and email follow the edit with
   no restart (AC-14). Then point a template path at a missing file: the embedded defaults are used
   and one warning names the path (AC-15).
+- SMTP through smtp4dev (AC-16): transport `Smtp`, host `localhost`, port `2525`, security
+  `None`. One error event produces exactly one message in the smtp4dev inbox
+  (`http://localhost:5000`), addressed to every recipient, with both the HTML and the plain-text
+  alternative, and its `Message-ID` matches the delivery logged by the worker.
+- SMTP through a real relay (AC-16, AC-18): security `StartTls` on port 587 with a username and
+  password. The message arrives and renders as the Communication Services one does. Then set a
+  wrong password: the email delivery is `failed` with "login rejected", the other channels still
+  deliver, and the password appears nowhere in the console output.
+- Transport selection (AC-17): with the transport `CommunicationServices` and SMTP settings also
+  filled, smtp4dev receives nothing; with `Smtpp` (a typo) the worker refuses to start and names
+  the key.
 - Deliberate failure: revoke the Slack token and run again; Slack is `failed`, the other three
   still deliver and the worker keeps consuming.
 
@@ -343,3 +431,23 @@ Completed 2026-11-07.
   messages, and are planned alongside M7.3 provisioning. The no-channel `aspire run` check is
   covered mechanically by the end-to-end test above once Docker access exists.
 - **Date:** 2026-11-07
+
+### Revision of 2026-11-08 – SMTP email transport (M6.7)
+
+To be completed when M6.7 is implemented. The rows above stay as recorded on 2026-11-07; the
+2026-11-08 changes to AC-8, AC-10 and AC-13 are re-proven here.
+
+| AC | Test or check | Result | Notes |
+|---|---|---|---|
+| AC-8 | Email unit tests, after the transport refactor (D16) | | |
+| AC-10 | `ToString_WithASecret_DoesNotPrintIt` with `SmtpSettings` and `CommunicationServicesEmailSettings` | | |
+| AC-13 | `NotificationPackages_AcrossTheSolution_LiveOnlyInInfrastructure` with MailKit | | |
+| AC-16 | MIME builder and security-mode tests; `SendAsync_AgainstAnSmtpServer_DeliversOneMessage` against smtp4dev | | |
+| AC-17 | Registration, notifier and `IncidentOptionsValidator` tests | | |
+| AC-18 | `Describe_…` tests, transport-failure tests | | |
+
+- **`dotnet build`:**
+- **`dotnet test`:**
+- **Gated integration tests:**
+- **Manual checks:**
+- **Date:**

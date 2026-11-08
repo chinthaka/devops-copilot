@@ -19,7 +19,7 @@ Strict Clean Architecture in four projects, with dependencies pointing inwards o
 |---|---|---|---|
 | Domain | `src/DevOpsCopilot.Domain` | Nothing beyond the base class library | None |
 | Application | `src/DevOpsCopilot.Application` | Domain | `Microsoft.Extensions.Logging.Abstractions` 10.0.12 |
-| Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain | The Azure, Kusto and Agent Framework packages below, plus `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.13 (raised from 10.0.12 by `Microsoft.Extensions.AI` in M5) and `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions` 10.0.12 |
+| Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain | The Azure, Kusto, Agent Framework and email packages below, plus `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.13 (raised from 10.0.12 by `Microsoft.Extensions.AI` in M5) and `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions` 10.0.12 |
 | Host | `src/DevOpsCopilot.Worker` | All of the above plus `ServiceDefaults`, for wiring only | None; ASP.NET Core comes from the web SDK |
 
 The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and the architecture tests fail the build when a layer breaks them.
@@ -71,7 +71,7 @@ When a workspace or search service is not configured, the stage reports `unavail
 | Microsoft Teams | Adaptive Card summarising the report, posted to a Teams Workflows webhook ("Post to a channel when a webhook request is received"). The trigger URL is a credential. | Built (roadmap M6.2) |
 | Slack | Block Kit message summarising the report, posted with `chat.postMessage` and a bot token. A `200` carrying `"ok": false` is a failure. | Built (roadmap M6.3, moved forward from Phase 2) |
 | Discord | Embed summarising the report, posted to a channel webhook with `?wait=true`. One `Retry-After` retry on `429`. | Built (roadmap M6.4) |
-| Email | The report summary, rendered from a customisable email template and sent as one message to every configured address through Azure Communication Services Email (`Azure.Communication.Email` 1.1.0, in Infrastructure only; managed identity through `Azure.Identity` when only an endpoint is set) | Built (roadmap M6.5) |
+| Email | The report summary, rendered from a customisable email template and sent as one message to every configured address through one transport selected by `Incident:Notifications:Email:Transport`: **Azure Communication Services Email** (`Azure.Communication.Email` 1.1.0; managed identity through `Azure.Identity` when only an endpoint is set), or **SMTP** (`MailKit` 4.18.2, which brings MimeKit; STARTTLS or implicit TLS required unless explicitly set to none for a local test server). Both packages are in Infrastructure only. | Communication Services built (roadmap M6.5); SMTP specified (roadmap M6.7) |
 | Azure DevOps work item | Full report | Planned (Phase 2) |
 | Local file | `incidents/YYYY-MM-DD-<id>.md`, always written before any channel is called; the only delivery when no channel is configured | Built. `incidents/` is gitignored. |
 
@@ -114,7 +114,8 @@ The polling interval is a constant in the frontend, not configuration.
 |---|---|
 | Framework | xUnit, projects under `tests/` in the solution folder `tests` |
 | Unit tests | Domain and Application: plain tests, no Azure SDK, network or emulator |
-| Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources. The Azure OpenAI test is marked `Category=RequiresAzureOpenAI` and skipped unless `Incident:AzureOpenAI` is in user secrets or the environment; it never runs in CI. The four channel tests are gated the same way: `RequiresTeams`, `RequiresSlack`, `RequiresDiscord` and `RequiresEmail`, each skipped unless its `Incident:Notifications:<channel>` secrets are set. |
+| Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources. The Azure OpenAI test is marked `Category=RequiresAzureOpenAI` and skipped unless `Incident:AzureOpenAI` is in user secrets or the environment; it never runs in CI. The channel tests are gated the same way: `RequiresTeams`, `RequiresSlack`, `RequiresDiscord`, `RequiresEmail` (Communication Services) and `RequiresSmtp`, each skipped unless its `Incident:Notifications:<channel>` settings are set. |
+| Local SMTP server | smtp4dev (Docker image `rnwood/smtp4dev`), run beside the AppHost for the `RequiresSmtp` test and the SMTP manual checks. A development tool only: not part of the AppHost, not deployed. |
 | Host tests | `tests/DevOpsCopilot.Worker.Tests`: the worker's statistics and status endpoint on an in-process test server (`Microsoft.AspNetCore.TestHost` 10.0.12). `tests/DevOpsCopilot.Server.Tests`: the status-document mapping against a stubbed worker HTTP handler. |
 | AppHost and end-to-end tests | `tests/DevOpsCopilot.AppHost.Tests` on `Aspire.Hosting.Testing` 13.6.1, producing events with `Azure.Messaging.EventHubs` 5.12.2. Needs Docker for the emulators; marked `Category=RequiresDocker` and skipped when no daemon answers. |
 | Architecture tests | `tests/DevOpsCopilot.Architecture.Tests`. Reflection over the built assemblies and the project files, so no extra package. Fail the build when a layer references something it must not. |
@@ -137,4 +138,4 @@ The polling interval is a constant in the frontend, not configuration.
 
 ## Not used
 
-Listed so nobody adds them by habit: event sourcing, CQRS, separate bounded-context projects, MediatR, AutoMapper, Semantic Kernel (superseded by Agent Framework), `Microsoft.Graph` (Teams posts through a Workflows webhook, decision D3 of the M6 spec), Slack and Discord SDKs (plain HTTP), and templating packages such as Scriban, Handlebars.Net or Razor (the placeholder renderer lives in Domain).
+Listed so nobody adds them by habit: event sourcing, CQRS, separate bounded-context projects, MediatR, AutoMapper, Semantic Kernel (superseded by Agent Framework), `Microsoft.Graph` (Teams posts through a Workflows webhook, decision D3 of the M6 spec), Slack and Discord SDKs (plain HTTP), `System.Net.Mail.SmtpClient` (Microsoft no longer recommends it for new development; SMTP uses MailKit, decision D15 of the M6 spec), and templating packages such as Scriban, Handlebars.Net or Razor (the placeholder renderer lives in Domain).

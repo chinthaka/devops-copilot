@@ -6,7 +6,7 @@ This file sets the order. It does not change the rules in [docs/pipeline.md](../
 
 Sizes are relative: **S** fits in one short feature branch, **M** is a few days of focused work, **L** is a week or more and should be split further when its spec is written.
 
-Last updated: 2026-11-05.
+Last updated: 2026-11-08.
 
 ## Where the code is now
 
@@ -32,7 +32,8 @@ Known gaps between the code and the contract, closed by the milestones below:
 | ~~No LLM is wired; agents are deterministic~~ Closed: M5 wired Azure OpenAI behind `IDiagnosisModel`, with the citation guard and the deterministic fallback | `InfrastructureServiceCollectionExtensions.cs` | M5 (done) |
 | Only the `LogForwarder` JSON shape is parsed, not diagnostic-settings `records` arrays | `LogEventParser.cs` | M10 |
 | No triage, correlation, work item or learn stage | — | M11 to M14, M16 |
-| ~~A report is written to a file and delivered to nobody~~ Closed: M6 notifies Teams, Slack, Discord and email through `NotifyChannels` | `RunIncidentPipeline`, `NotifyChannels` | M6 (done) |
+| ~~A report is written to a file and delivered to nobody~~ Closed: M6 notifies Teams, Slack, Discord and email through `NotifyChannels` | `RunIncidentPipeline`, `NotifyChannels` | M6 (M6.1 to M6.6 done) |
+| Email can only be sent through Azure Communication Services | `CommunicationServicesEmailTransport` | M6.7 |
 | Nothing deploys to Azure | `.github/workflows/` | M7 |
 | ~~The dashboard is still the weather sample~~ Closed: the status dashboard replaced it | `src/DevOpsCopilot.Frontend`, `src/DevOpsCopilot.Server` | M1 (done) |
 
@@ -102,9 +103,11 @@ Split into:
 
 **Done when:** with Azure OpenAI configured, a staged error event produces a report whose every claim cites real evidence; without it, the report says the model was unavailable.
 
-### M6 – Notification channels (L, done)
+### M6 – Notification channels (L, in progress: M6.7 open)
 
 Deliver the report to people. `INotifier` in Application and a `NotifyChannels` stage that calls every registered channel in a fixed order, with four implementations in Infrastructure: Microsoft Teams, Slack, Discord and email. Every channel is optional: an unconfigured one is recorded as `unavailable`, a failing one as `failed`, and neither stops the others or fails the run. The report is always written to `incidents/` before any channel is called, and is the only delivery when nothing is configured.
+
+Scope extended again on 2026-11-08: email can be sent through **SMTP** as well as Azure Communication Services, chosen per deployment in configuration (M6.7), so an organisation without Communication Services can use the SMTP relay it already runs.
 
 Scope extended on 2026-11-05 beyond the original Teams-only milestone: **Slack moves here from M15**, and Discord and email are added. Email is sent to every configured address for every report, so an engineer outside the chat workspace still gets the report. The four channels are one milestone because they share the notification, the interface, the fan-out, the failure rules and the truncation rules; only the payload and the transport differ.
 
@@ -118,10 +121,11 @@ Split into:
 4. **M6.4 – Discord (S, done).** Embed posted to a channel webhook with `?wait=true` so the message id comes back. One `Retry-After` retry on `429`.
 5. **M6.5 – Email (S, done).** One message per report to every configured address through Azure Communication Services, HTML plus plain text, rendered from templates a deployment can replace without a new image.
 6. **M6.6 – Wiring, contract and docs (S, done).** Configuration for all four channels read only in the Host, the `pipeline.md` § 7 channel table updated, `tech-stack.md` and `mission.md` updated, end-to-end test with no channel configured.
+7. **M6.7 – SMTP email transport (S).** A second email transport over MailKit beside Azure Communication Services, selected by `Incident:Notifications:Email:Transport` (decisions D14 to D17 of the spec). The email channel, its templates, its recipients and its place in the channel order do not change; only how the message leaves the worker does. TLS is required unless the deployment explicitly configures none for a local test server. Unit tests for the message, the failure reasons and the selection; integration test against smtp4dev behind `Category=RequiresSmtp`. No `pipeline.md` change: the contract's email row names no transport.
 
 **Known limitation, closed by M9 and M12:** delivery is at-least-once and messages are not updated in place. There is no incident id and nowhere to store a message id until the state store (M9) and the `Incident` aggregate (M12) exist, so a replayed event posts a second message. Recorded in decision D7 of the spec.
 
-**Done when:** a staged error event in a configured environment produces one Teams card, one Slack message, one Discord embed and one email, all carrying the same text as the report file; with nothing configured it produces the report file and four `unavailable` deliveries. The nothing-configured path is proven end-to-end in `tests/DevOpsCopilot.AppHost.Tests`; the configured path runs through the four gated integration tests and the manual checks alongside M7.3, where the channel resources are provisioned.
+**Done when:** a staged error event in a configured environment produces one Teams card, one Slack message, one Discord embed and one email, all carrying the same text as the report file; the email arrives through whichever transport is selected, Communication Services or SMTP; with nothing configured it produces the report file and four `unavailable` deliveries. The nothing-configured path is proven end-to-end in `tests/DevOpsCopilot.AppHost.Tests`; the configured path runs through the four gated integration tests and the manual checks alongside M7.3, where the channel resources are provisioned.
 
 ### M7 – Deploy to Azure (M)
 
@@ -278,6 +282,7 @@ See [mission.md](mission.md#boundaries). In short:
 | State store choice made late | Rework of triage and correlation | Decide in M9 before M11. |
 | Azure cost of KQL and LLM calls | Budget overrun | Query and round limits enforced in code (M13.2), evaluation runs only when secrets are present. |
 | Teams app-only posting needs a resource-specific-consent app installed in the team | No Teams delivery | The channel degrades to `failed` and the other three still deliver (M6); an app-based incoming webhook is the fallback and is a new `INotifier`, not a rewrite. |
+| The organisation cannot provision Azure Communication Services | No email delivery | SMTP transport through the organisation's existing relay (M6.7); the transport is a configuration choice, not a rebuild. |
 | Four channels in one milestone grow the branch | Slow review | M6.1 merges first; M6.2 to M6.5 are independent and can be separate pull requests. |
 | Replayed events post duplicate messages | Noise in the channels | Accepted and documented in M6 (decision D7); removed by the stable `incidentId` in M12 and the message ids stored in M15. |
 | Leftover sample projects confuse contributors | Wasted effort | Marked do-not-extend now; removed in M18. |

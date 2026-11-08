@@ -4,10 +4,12 @@
 |---|---|
 | **Branch** | `features/2026-11-05-m6-notification-channels` |
 | **Milestone** | M6 – Notification channels, covering M6.1 to M6.6 and absorbing the former M15 ([roadmap](../roadmap.md#m6--notification-channels-l)) |
-| **Status** | Done |
+| **Status** | In review – revision of 2026-11-08 (SMTP email transport, M6.7) awaiting approval; M6.1 to M6.6 done |
 | **Author** | Chinthaka Kumarasiri |
 | **Date** | 2026-11-05 |
 | **Revised** | 2026-11-06 – Teams through a Workflows webhook (**D3**, replacing Graph; **D11** withdrawn); report and email templates (**D12**, **D13**) |
+| **Revised** | 2026-11-07 – timeouts, the Discord retry cap and the Slack endpoint moved from code into configuration (non-functional requirements, [plan.md § Configuration](plan.md#configuration-and-secrets)) |
+| **Revised** | 2026-11-08 – email can be sent through SMTP as well as Azure Communication Services, chosen in configuration (**D6** amended; **D14** to **D17**; **AC-16** to **AC-18**; roadmap M6.7) |
 
 ## Summary
 
@@ -16,7 +18,8 @@ to a file; this feature sends that same report to the people who need it. One ch
 notification is built from the `Diagnosis` and the two handoffs, and four delivery channels render
 it: a Microsoft Teams Adaptive Card through a Teams Workflows webhook, a Slack Block Kit message
 through `chat.postMessage`, a Discord embed through a channel webhook, and an email to every
-configured address through Azure Communication Services. The report and the email are rendered
+configured address through Azure Communication Services or an SMTP server, whichever the
+deployment selects (decision **D14**). The report and the email are rendered
 from templates with embedded defaults, so a customer can change their wording by editing a file,
 without a new deployment (decisions **D12** and **D13**).
 
@@ -67,6 +70,10 @@ is not in the chat workspace still receives the report.
 - **Email** (M6.5): one message per report, sent to every configured address, with a subject, an
   HTML body and a plain-text alternative rendered from the email templates, through Azure
   Communication Services Email. See decisions **D6**, **D12** and **D13**.
+- **Email over SMTP** (M6.7): the same email, sent through any SMTP server instead — an
+  organisation's existing relay, a hosted SMTP service, or a local test server such as smtp4dev.
+  Configuration selects the transport; the email channel, its content and its rules do not change.
+  See decisions **D14** to **D17**.
 - Templates for the report and the email: one placeholder renderer in Domain, embedded defaults
   that reproduce today's wording, and optional configured template files re-read on every render,
   so a customer changes the text without a deployment. See decisions **D12** and **D13**.
@@ -100,8 +107,16 @@ is not in the chat workspace still receives the report.
 - The leftover sample project `src/DevOpsCopilot.EmailNotifier`. It is not extended, not reused and
   not deleted here; M18 removes it. The new email channel lives in
   `src/DevOpsCopilot.Infrastructure/Reporting/`.
+- Sending one email through both transports, or failing over from one to the other. Exactly one
+  transport is selected per deployment (**D14**).
+- SMTP authentication other than username and password: no OAuth 2.0 (`XOAUTH2`), no NTLM or
+  Kerberos, no client certificates. A relay that needs them is a later transport.
+- Opportunistic TLS. SMTP over TLS is required unless the deployment explicitly says `None`
+  (**D17**).
+- Adding an SMTP test server to the AppHost. smtp4dev runs beside it as a Docker container for the
+  gated integration test and manual checks; wiring it into `aspire run` is a separate change.
 - Provisioning: creating the Teams Workflows flow and its trigger URL, the Slack
-  app, the Discord webhook and the Communication Services resource are operations tasks, listed as
+  app, the Discord webhook, the Communication Services resource and the SMTP relay account are operations tasks, listed as
   manual checks and carried out alongside M7.3.
 
 ## Decisions
@@ -154,7 +169,9 @@ channel, so it is treated exactly like a token.
 
 **D6 – Email goes through Azure Communication Services, as one message to all recipients.**
 The product is Azure-hosted and already uses `Azure.Identity`; Communication Services Email is the
-Azure-native path and needs no SMTP relay or mailbox. One email is sent per report with every
+Azure-native path and needs no SMTP relay or mailbox, so it stays the transport shipped in
+`appsettings.json`; **D14** (2026-11-08) adds SMTP as an alternative a deployment can select.
+One email is sent per report with every
 configured address in `To` — the recipients are one on-call team, and a shared `To` means a reply
 reaches everyone. The send is started with `WaitUntil.Started` and the operation id is recorded:
 the pipeline must not block on delivery polling, and a queued message is a success for our
@@ -210,6 +227,52 @@ end-to-end test and AC-11 hold wherever no custom template is configured. In Azu
 files come from a mounted Azure Files share, so an edit needs no image rebuild; locally they are
 any path on disk.
 
+**D14 – SMTP is a second email transport, selected in configuration; email stays one channel.**
+Added 2026-11-08 at the product owner's request: not every organisation can provision
+Communication Services, and most already run an SMTP relay, so the email channel can send through
+either. `Incident:Notifications:Email:Transport` names the transport, `CommunicationServices` or
+`Smtp`, and exactly one is used. It is not a fifth channel: the notification, the templates, the
+recipients-in-`To` rule (**D6**), the delivery and its place in the fixed order (**D9**) are the
+same whichever transport carries the message. SMTP is therefore a new `IEmailTransport`
+implementation beside `CommunicationServicesEmailTransport`, which is the open/closed rule of
+[AGENTS.md § SOLID](../../../AGENTS.md#solid): `EmailNotifier` keeps no `if` or `switch` on the
+transport, Application learns nothing, and the choice is made once, in the composition. The
+transport value has no default in code; `appsettings.json` ships `CommunicationServices`, which
+keeps today's behaviour, and an unknown value stops the worker at startup naming the key, as the
+other configuration checks do. A selected transport whose own settings are blank leaves the
+channel `unavailable`, exactly as a blank connection string does today.
+
+**D15 – MailKit, not `System.Net.Mail.SmtpClient`.**
+The base class library's `SmtpClient` needs no package, but Microsoft no longer recommends it for
+new development: it lacks modern protocol support and points users to MailKit. MailKit (with its
+MIME library MimeKit) is the maintained .NET SMTP client, supports STARTTLS and implicit TLS
+properly, accepts a `CancellationToken` on every call, and builds standards-compliant
+`multipart/alternative` messages. It is referenced only by Infrastructure and recorded in
+[tech-stack.md](../tech-stack.md) in the same change.
+
+**D16 – Each transport maps its own failures; the notifier stays transport-neutral.**
+Today `EmailNotifier` catches the Communication Services `RequestFailedException` itself, so a
+second transport would mean a second vendor exception in the notifier. Instead each transport
+turns its own failures into an `EmailTransportException` carrying a safe reason, and the notifier
+records that reason as a `failed` delivery. The Communication Services reason is unchanged — its
+status and error code. The SMTP reason names the server's reply code and MailKit's error category
+(for example `550 (RecipientNotAccepted)`), a rejected login, or a failed TLS handshake, and
+anything else names only the exception type. No reason ever carries the password, the username,
+the connection string or the server's free-text reply, which can echo addresses. A cancelled caller
+still propagates from every transport, because that is shutdown or the stage's timeout.
+
+**D17 – SMTP security is explicit, and the message id is the `Message-ID` header.**
+`Incident:Notifications:Email:Smtp:Security` is one of `StartTls` (upgrade on connect and refuse to
+continue without it; the usual port 587), `SslOnConnect` (implicit TLS; the usual port 465) or
+`None` (plain text, meant only for a local test server such as smtp4dev). There is no
+"TLS when available" mode, because a downgrade would quietly send the password in clear. The
+username and password are optional — an internal relay may accept the sender by network — but
+are set together or not at all; one without the other stops the worker at startup. The password is
+a credential and is never printed. SMTP returns no operation id, so the delivery's message id is
+the message's RFC 5322 `Message-ID`, generated for each message. That is also the value a
+follow-up email will reference when reports are updated (M15). The send is bounded by the stage's
+per-channel timeout through the cancellation token, so SMTP adds no timing setting of its own.
+
 ## Inputs and outputs
 
 | | Description | Shape |
@@ -242,6 +305,7 @@ any path on disk.
 |---|---|
 | **Notification** | The channel-neutral content of one message about one report. Built from the diagnosis; holds no channel vocabulary. |
 | **Channel** | One delivery destination: Teams, Slack, Discord or email. Each is an `INotifier`. |
+| **Transport** | How the email channel hands a message over: Azure Communication Services or SMTP. One per deployment; not a channel and not a term Application knows. |
 | **Delivery** | The outcome of one channel for one report: `sent`, `unavailable` or `failed`, with a message id where there is one. |
 | **Report** | Unchanged in substance: the seven-section document of [pipeline.md § 7](../../pipeline.md#report-sections-in-this-order). A notification summarises it; it does not replace it. |
 | **Template** | The text shape of the report or of the email: fixed wording plus `{{placeholder}}` tokens filled from the diagnosis and the handoffs. An embedded default ships with the worker; a configured file replaces it without a deployment. |
@@ -301,7 +365,7 @@ same pull request.
 **AC-8** – Email reaches every configured address, for every report
 - **Given** a configured Communication Services connection, sender address and three recipients
 - **When** a report is notified
-- **Then** exactly one email is sent, with all three addresses in `To`, a subject naming the
+- **Then** exactly one email is sent through the selected transport, with all three addresses in `To`, a subject naming the
   incident and its confidence, an HTML body and a plain-text alternative both rendered from the
   email templates and carrying the notification's facts, and the operation id reported back — and this happens for every report, whatever
   the other channels did
@@ -315,7 +379,8 @@ same pull request.
   where the full report is
 
 **AC-10** – No secret is logged or rendered
-- **Given** every channel configured with a token, a secret, a webhook URL and a connection string
+- **Given** every channel configured with a token, a secret, a webhook URL, a connection string and
+  an SMTP username and password
 - **When** the settings are stringified, the stage logs a delivery, and every payload is built
 - **Then** no secret value appears in any of them; each settings record prints `(set)` or `(none)`
   in place of the value, as `AzureOpenAISettings` already does
@@ -336,7 +401,7 @@ same pull request.
 **AC-13** – The layers stay clean
 - **Given** the solution
 - **When** the architecture tests run
-- **Then** the Communication Services package and every HTTP client are
+- **Then** the Communication Services package, MailKit and every HTTP client are
   referenced only by Infrastructure, Application still references no Azure SDK or HTTP client,
   Domain still references no package, and all dependencies point inwards
 
@@ -354,17 +419,49 @@ same pull request.
 - **Then** the report and the email are produced from the embedded defaults, one warning names the
   missing path, and the run completes normally
 
+**AC-16** – Email can be sent through an SMTP server
+- **Given** the transport set to `Smtp`, a host, port and security mode, a sender and three
+  recipients
+- **When** a report is notified
+- **Then** exactly one message is handed to the SMTP server, from the configured sender, with all
+  three addresses in `To`, the subject from the email templates, and a `multipart/alternative` body
+  carrying the plain-text and HTML renderings; the delivery is `sent` and its message id is the
+  message's `Message-ID`; the username and password are used only when set
+
+**AC-17** – Configuration selects exactly one transport
+- **Given** the transport set to `CommunicationServices`, then to `Smtp`, then to an unknown value
+- **When** the worker starts
+- **Then** the first sends through Communication Services and never opens an SMTP connection, the
+  second sends through SMTP and never creates a Communication Services client, and the third stops
+  startup with an error naming `Incident:Notifications:Email:Transport`; in the first two cases the
+  channel is `unavailable` when the selected transport's own settings are blank, whatever the other
+  transport's settings hold
+
+**AC-18** – An SMTP failure is recorded safely
+- **Given** an SMTP server that rejects a recipient, rejects the login, fails the TLS handshake or
+  cannot be reached
+- **When** a report is notified
+- **Then** the email delivery is `failed` with a reason naming the reply code and error category,
+  the rejected login, the TLS failure or the exception type respectively; the reason contains
+  neither the password, the username nor the server's free-text reply; and the other channels are
+  unaffected
+
 ## Non-functional requirements
 
 - **Bounded cost per incident.** At most one message per channel per report, at most one retry per
-  channel (only on `429` with `Retry-After`), and a per-channel timeout of 10 seconds by default.
-  Stage 7 can therefore add at most ~40 seconds to one event in the worst case, and the worker
-  keeps consuming.
+  channel (only on `429` with `Retry-After`, within the configured cap), and a configured
+  per-channel timeout (10 seconds in the shipped `appsettings.json`). Stage 7 can therefore add at
+  most four timeouts to one event — ~40 seconds with the shipped values — and the worker keeps
+  consuming. The SMTP transport's connect, login and send all run under the same per-channel
+  timeout.
+- **No configuration in code.** Timeouts, the retry cap, endpoints and the email transport come
+  from configuration with no fallback value in code; a missing or invalid value stops the worker at
+  startup with an error naming the key (revision of 2026-11-07, extended by **D14** and **D17**).
 - **Idempotency.** Notification is at-least-once: if the worker crashes after sending and before
   checkpointing, the event is replayed and the message is posted again. This is accepted for M6 and
   disappears when M12 gives messages a stable incident id. It is recorded as a known limitation in
   the roadmap, not hidden.
-- **Secrets.** Tokens, client secrets, webhook URLs and connection strings come from user secrets
+- **Secrets.** Tokens, client secrets, webhook URLs, connection strings and the SMTP password come from user secrets
   locally and from Azure configuration in a deployed environment. None is committed, logged or
   rendered.
 - **Determinism.** The same notification produces byte-identical payloads, so the renderer tests
@@ -372,7 +469,14 @@ same pull request.
 
 ## Open questions
 
-- None blocking. Two choices are recorded as decisions rather than questions and can be revisited
+- **For review of the 2026-11-08 revision:** the Communication Services keys stay where they are
+  (`Email:ConnectionString`, `Email:Endpoint`) so existing secrets and docs keep working, while
+  SMTP gets its own `Email:Smtp` section. Moving the first two under `Email:CommunicationServices`
+  would be more symmetrical; it breaks existing secrets and is a small change if review prefers it.
+- **For review of the 2026-11-08 revision:** `Security = None` is allowed in every environment and
+  documented as local-only. Refusing it outside `Development` is a one-line startup check if
+  review prefers it.
+- None blocking otherwise. Two choices are recorded as decisions rather than questions and can be revisited
   in review: the email recipients are in `To` rather than `Bcc` (**D6**), and Teams delivery
   returns no message id, so it cannot be updated in place later (**D3**). If review
   prefers `Bcc`, it is a one-line change in the email renderer and one test name.
