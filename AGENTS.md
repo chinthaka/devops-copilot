@@ -71,7 +71,7 @@ Rules:
 
 Apply DDD where it makes the model clearer, not as ceremony.
 
-- **Ubiquitous language:** use the terms from `docs/pipeline.md` (event, candidate, fingerprint, incident, evidence, finding, hit, diagnosis, report, confirmed report) in class, method and test names.
+- **Ubiquitous language:** use the terms from `docs/pipeline.md` (event, candidate, fingerprint, incident, evidence, finding, hit, diagnosis, report, confirmed report, notification, channel, delivery, template) in class, method and test names.
 - **Aggregate:** `Incident` is the aggregate root. It owns its candidates and lifecycle, and only its own methods may change its status, following the lifecycle in `docs/pipeline.md`.
 - **Value objects:** immutable types for identifiers and small concepts, such as `IncidentId`, `TraceId`, `ResourceId`, `Fingerprint` and `Confidence`. Validate on creation; no raw strings for these in Domain or Application.
 - **Domain events:** raise events for lifecycle changes, such as `IncidentOpened`, `IncidentReady`, `IncidentReported` and `IncidentResolved`.
@@ -120,6 +120,7 @@ Leftover projects: the samples `src/DevOpsCopilot.ApiService`, `src/DevOpsCopilo
 - Nullable reference types on. Match the style of the project you edit.
 - One top-level type (class, record, interface or enum) per file, with the file named after the type. Private types nested inside a test class may stay nested.
 - Group files into folders by domain, using the same folder names across the layers so a domain can be followed vertically: `Events`, `Kql`, `Grounding`, `Diagnoses`, `Reporting`, `Pipeline`, plus host-specific `Options` and `Status`. Put cross-domain items in `Common`, and all of a project's interfaces in a flat `Interfaces/` folder at the project root. Namespaces follow folders (`src/DevOpsCopilot.Domain/Kql/` → `DevOpsCopilot.Domain.Kql`), and test projects mirror the folders and namespaces of the code they test, with shared test helpers in `Common/`. (`Diagnoses` is plural to avoid clashing with the `Diagnosis` type.)
+- Inside `Reporting`, Infrastructure and its tests give each notification channel its own sub-folder and namespace: `Reporting/Teams`, `Reporting/Slack`, `Reporting/Discord` and `Reporting/Email` (the email transports live under `Email`). Code shared by every channel stays in `Reporting`. A new channel gets a new sub-folder. Domain and Application never name a channel, so they have no channel folders.
 - Run the stack from the AppHost. Event Hubs uses the emulator locally.
 - Keep secrets out of the repo. Read Event Hubs, Log Analytics, Azure AI Search, Azure OpenAI, Teams, Slack and Azure DevOps settings from Aspire references or user secrets.
 

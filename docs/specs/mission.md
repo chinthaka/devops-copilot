@@ -48,7 +48,7 @@ These are the rules every feature is checked against. A feature that breaks one 
 **In scope**
 
 - Azure-hosted resources and applications whose logs reach Event Hubs through Azure Monitor or Application Insights diagnostic settings.
-- Microsoft Teams, Slack and Azure DevOps work items as report channels.
+- Microsoft Teams, Slack, Discord and email as report channels, and Azure DevOps work items. Email is sent through Azure Communication Services or through an SMTP server the organisation already runs, chosen in configuration.
 - A dashboard showing the worker's status and processing statistics.
 
 **Out of scope, for now**

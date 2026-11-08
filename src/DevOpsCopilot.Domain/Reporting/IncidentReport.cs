@@ -1,97 +1,84 @@
 using DevOpsCopilot.Domain.Diagnoses;
 using DevOpsCopilot.Domain.Grounding;
 using DevOpsCopilot.Domain.Kql;
-using System.Text;
+using System.Globalization;
 
 namespace DevOpsCopilot.Domain.Reporting;
 
 /// <summary>
-/// Renders one diagnosis into the seven report sections of pipeline.md § 7, in order: header,
-/// impact, likely cause with confidence, evidence, similar incidents, suggested steps and open
-/// questions. An unavailable tool is stated in its section and nothing is listed for it.
+/// Renders one diagnosis through a report template. The embedded default template is the seven
+/// sections of pipeline.md § 7, in order: header, impact, likely cause with confidence, evidence,
+/// similar incidents, suggested steps and open questions. A custom template may reword or reorder
+/// them; every value still comes from the diagnosis and the handoffs. An unavailable tool is
+/// stated in its section and nothing is listed for it.
 /// </summary>
 public static class IncidentReport
 {
-    public static string Render(Diagnosis diagnosis, DiagnosticHandoff diagnostic, GroundingHandoff grounding)
+    /// <summary>What the evidence section says when KQL returned nothing usable.</summary>
+    public const string KqlUnavailable = "KQL was unavailable. No rows were returned.";
+
+    /// <summary>What the similar-incidents section says when search returned nothing usable.</summary>
+    public const string SearchUnavailable = "Azure AI Search was unavailable. No historical post-mortems were returned.";
+
+    private const string DefaultTemplateResource = "DevOpsCopilot.Domain.Reporting.Templates.report.md";
+
+    private static readonly Lazy<string> Default = new(LoadDefaultTemplate);
+
+    /// <summary>The embedded seven-section template, with <c>\n</c> line endings.</summary>
+    public static string DefaultTemplate => Default.Value;
+
+    /// <summary>Renders with <paramref name="template"/>, or with the default when it is null or blank.</summary>
+    public static string Render(
+        Diagnosis diagnosis,
+        DiagnosticHandoff diagnostic,
+        GroundingHandoff grounding,
+        string? template = null)
     {
-        var builder = new StringBuilder();
-        builder.Append("# Incident report: ").AppendLine(diagnosis.Title);
-        builder.AppendLine();
-        builder.AppendLine("- Status: Reported");
-        builder.Append("- Incident id: ").AppendLine(diagnosis.IncidentId);
-        builder.Append("- Trace id: ").AppendLine(string.IsNullOrWhiteSpace(diagnostic.TraceId) ? "(missing)" : diagnostic.TraceId);
-        builder.AppendLine("- Hub: logs");
-        builder.AppendLine();
-
-        builder.AppendLine("## Impact");
-        builder.AppendLine();
-        builder.Append("- Services: ").AppendLine(NamesOrNone(diagnosis.Impact.Services));
-        builder.Append("- Resources: ").AppendLine(NamesOrNone(diagnosis.Impact.Resources));
-        builder.Append("- Event count: ").AppendLine(diagnosis.Impact.EventCount.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        builder.Append("- Window: ").AppendLine(diagnosis.Impact.Window);
-        builder.AppendLine();
-
-        builder.AppendLine("## Likely cause");
-        builder.AppendLine();
-        builder.Append(diagnosis.LikelyCause).Append(" (confidence: ").Append(diagnosis.Confidence.Value).AppendLine(")");
-        builder.AppendLine();
-
-        builder.AppendLine("## Evidence");
-        builder.AppendLine();
-        if (diagnostic.KustoStatus == "ok" && diagnostic.Findings.Count > 0)
-        {
-            foreach (var finding in diagnostic.Findings)
-            {
-                builder.Append("- ").AppendLine(finding);
-            }
-        }
-        else
-        {
-            builder.AppendLine("KQL was unavailable. No rows were returned.");
-        }
-
-        builder.AppendLine();
-        builder.AppendLine("## Similar incidents");
-        builder.AppendLine();
-        if (grounding.SearchStatus == "ok" && grounding.Hits.Count > 0)
-        {
-            foreach (var hit in grounding.Hits)
-            {
-                builder.Append("- ").Append(hit.Title).Append(": \"").Append(hit.Excerpt).AppendLine("\"");
-            }
-        }
-        else
-        {
-            builder.AppendLine("Azure AI Search was unavailable. No historical post-mortems were returned.");
-        }
-
-        builder.AppendLine();
-        builder.AppendLine("## Suggested steps");
-        builder.AppendLine();
-        AppendListOrNone(builder, diagnosis.SuggestedSteps);
-        builder.AppendLine();
-        builder.AppendLine("## Open questions");
-        builder.AppendLine();
-        AppendListOrNone(builder, diagnosis.OpenQuestions);
-        return builder.ToString();
+        var source = string.IsNullOrWhiteSpace(template) ? DefaultTemplate : template;
+        var rendered = TemplateRenderer.Render(Normalise(source), Values(diagnosis, diagnostic, grounding));
+        return rendered.Replace("\n", Environment.NewLine, StringComparison.Ordinal);
     }
 
-    private static string NamesOrNone(IReadOnlyList<string> names)
+    /// <summary>The placeholders a report template can use, by name.</summary>
+    public static IReadOnlyDictionary<string, TemplateValue> Values(
+        Diagnosis diagnosis,
+        DiagnosticHandoff diagnostic,
+        GroundingHandoff grounding)
     {
-        return names.Count == 0 ? "(none)" : string.Join(", ", names);
+        var evidence = diagnostic.KustoStatus == "ok" ? diagnostic.Findings : [];
+        var similar = grounding.SearchStatus == "ok"
+            ? grounding.Hits.Select(hit => $"{hit.Title}: \"{hit.Excerpt}\"").ToArray()
+            : [];
+
+        return new Dictionary<string, TemplateValue>(StringComparer.Ordinal)
+        {
+            ["Title"] = TemplateValue.Of(diagnosis.Title),
+            ["IncidentId"] = TemplateValue.Of(diagnosis.IncidentId),
+            ["TraceId"] = TemplateValue.Of(string.IsNullOrWhiteSpace(diagnostic.TraceId) ? "(missing)" : diagnostic.TraceId),
+            ["Services"] = TemplateValue.Of(NamesOrNone(diagnosis.Impact.Services)),
+            ["Resources"] = TemplateValue.Of(NamesOrNone(diagnosis.Impact.Resources)),
+            ["EventCount"] = TemplateValue.Of(diagnosis.Impact.EventCount.ToString(CultureInfo.InvariantCulture)),
+            ["Window"] = TemplateValue.Of(diagnosis.Impact.Window),
+            ["LikelyCause"] = TemplateValue.Of(diagnosis.LikelyCause),
+            ["Confidence"] = TemplateValue.Of(diagnosis.Confidence.Value),
+            ["Evidence"] = TemplateValue.List(evidence, KqlUnavailable),
+            ["SimilarIncidents"] = TemplateValue.List(similar, SearchUnavailable),
+            ["SuggestedSteps"] = TemplateValue.List(diagnosis.SuggestedSteps, "- None."),
+            ["OpenQuestions"] = TemplateValue.List(diagnosis.OpenQuestions, "- None."),
+        };
     }
 
-    private static void AppendListOrNone(StringBuilder builder, IReadOnlyList<string> lines)
-    {
-        if (lines.Count == 0)
-        {
-            builder.AppendLine("- None.");
-            return;
-        }
+    private static string NamesOrNone(IReadOnlyList<string> names) =>
+        names.Count == 0 ? "(none)" : string.Join(", ", names);
 
-        foreach (var line in lines)
-        {
-            builder.Append("- ").AppendLine(line);
-        }
+    private static string Normalise(string template) =>
+        template.Replace("\r\n", "\n", StringComparison.Ordinal);
+
+    private static string LoadDefaultTemplate()
+    {
+        using var stream = typeof(IncidentReport).Assembly.GetManifestResourceStream(DefaultTemplateResource)
+            ?? throw new InvalidOperationException($"The embedded report template {DefaultTemplateResource} is missing.");
+        using var reader = new StreamReader(stream);
+        return Normalise(reader.ReadToEnd());
     }
 }

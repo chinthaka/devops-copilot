@@ -15,10 +15,18 @@ builder.Services.AddOpenApi();
 // timeout caps the retries the shared resilience handler adds: a status probe should report the
 // worker as not running quickly rather than hold the dashboard's poll open.
 builder.Services.AddSingleton(TimeProvider.System);
+var workerBaseAddress = builder.Configuration["WorkerStatus:BaseAddress"];
+var workerTimeoutSeconds = builder.Configuration.GetValue<int>("WorkerStatus:TimeoutSeconds");
+if (string.IsNullOrWhiteSpace(workerBaseAddress) || workerTimeoutSeconds <= 0)
+{
+    throw new InvalidOperationException(
+        "Configuration values WorkerStatus:BaseAddress and a positive WorkerStatus:TimeoutSeconds are required.");
+}
+
 builder.Services.AddHttpClient<WorkerStatusClient>(client =>
 {
-    client.BaseAddress = new Uri("http://worker");
-    client.Timeout = TimeSpan.FromSeconds(5);
+    client.BaseAddress = new Uri(workerBaseAddress);
+    client.Timeout = TimeSpan.FromSeconds(workerTimeoutSeconds);
 });
 
 var app = builder.Build();
