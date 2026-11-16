@@ -7,12 +7,10 @@ namespace DevOpsCopilot.Infrastructure.Diagnoses;
 /// </summary>
 public sealed record AzureOpenAISettings(string Endpoint, string Deployment, string ApiKey, int TimeoutSeconds)
 {
-    public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
-
     /// <summary>No endpoint, no deployment, no key: the diagnosis model is unavailable.</summary>
     public static AzureOpenAISettings Unconfigured { get; } = new("", "", "", 0);
 
-    public TimeSpan Timeout => TimeoutSeconds > 0 ? TimeSpan.FromSeconds(TimeoutSeconds) : DefaultTimeout;
+    public TimeSpan Timeout => TimeSpan.FromSeconds(TimeoutSeconds);
 
     /// <summary>Keeps the key out of logs and error messages. Records print their members by default.</summary>
     private bool PrintMembers(System.Text.StringBuilder builder)

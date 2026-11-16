@@ -18,7 +18,7 @@ public class DiagnosisAgentTests
     {
         // Arrange
         var writer = new RecordingReportWriter();
-        var agent = new DiagnosisAgent(new Diagnose(UnconfiguredDiagnosisModel.Instance), writer);
+        var agent = new DiagnosisAgent(new Diagnose(UnconfiguredDiagnosisModel.Instance, TimeSpan.FromSeconds(10)), writer);
         var diagnostic = UnavailableDiagnostic();
         var grounding = UnavailableGrounding(diagnostic.EventId);
         string[] headings =
@@ -60,9 +60,9 @@ public class DiagnosisAgentTests
             new GatherEvidence(new UnconfiguredLogQuery(), LogQueryTargets.Unconfigured),
             new GroundInHistory(new UnconfiguredKnowledgeSearch()),
             pipelineWriter,
-            new Diagnose(UnconfiguredDiagnosisModel.Instance));
+            new Diagnose(UnconfiguredDiagnosisModel.Instance, TimeSpan.FromSeconds(10)));
         var agentWriter = new RecordingReportWriter();
-        var agent = new DiagnosisAgent(new Diagnose(UnconfiguredDiagnosisModel.Instance), agentWriter);
+        var agent = new DiagnosisAgent(new Diagnose(UnconfiguredDiagnosisModel.Instance, TimeSpan.FromSeconds(10)), agentWriter);
 
         // Act
         var result = await pipeline.RunAsync(ErrorEvent());
@@ -81,7 +81,7 @@ public class DiagnosisAgentTests
 
         // Act
         var agent = new DiagnosisAgent(
-            new Diagnose(UnconfiguredDiagnosisModel.Instance),
+            new Diagnose(UnconfiguredDiagnosisModel.Instance, TimeSpan.FromSeconds(10)),
             new RecordingReportWriter(),
             chatClient);
 

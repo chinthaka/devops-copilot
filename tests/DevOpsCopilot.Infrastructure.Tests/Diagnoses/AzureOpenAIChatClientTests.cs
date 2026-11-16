@@ -77,22 +77,6 @@ public class AzureOpenAIChatClientTests
     }
 
     [Fact]
-    public void Timeout_WithANonPositiveConfiguredValue_FallsBackToTheDefault()
-    {
-        // Arrange
-        var zero = new AzureOpenAISettings("https://contoso.openai.azure.com/", "gpt-4o", "", 0);
-        var negative = new AzureOpenAISettings("https://contoso.openai.azure.com/", "gpt-4o", "", -5);
-
-        // Act
-        var zeroTimeout = zero.Timeout;
-        var negativeTimeout = negative.Timeout;
-
-        // Assert
-        Assert.Equal(AzureOpenAISettings.DefaultTimeout, zeroTimeout);
-        Assert.Equal(AzureOpenAISettings.DefaultTimeout, negativeTimeout);
-    }
-
-    [Fact]
     public void Timeout_WithAPositiveConfiguredValue_ReturnsTheConfiguredValue()
     {
         // Arrange

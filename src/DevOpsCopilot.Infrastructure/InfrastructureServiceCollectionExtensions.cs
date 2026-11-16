@@ -7,10 +7,14 @@ using DevOpsCopilot.Infrastructure.Diagnoses;
 using DevOpsCopilot.Infrastructure.Events;
 using DevOpsCopilot.Infrastructure.Grounding;
 using DevOpsCopilot.Infrastructure.Kql;
+using DevOpsCopilot.Infrastructure.Reporting.Discord;
+using DevOpsCopilot.Infrastructure.Reporting.Email;
+using DevOpsCopilot.Infrastructure.Reporting.Slack;
+using DevOpsCopilot.Infrastructure.Reporting.Teams;
 using DevOpsCopilot.Infrastructure.Reporting;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DevOpsCopilot.Infrastructure;
 
@@ -26,7 +30,13 @@ public static class InfrastructureServiceCollectionExtensions
         KustoSettings kusto,
         SearchSettings search,
         ReportSettings report,
-        AzureOpenAISettings? azureOpenAI = null)
+        AzureOpenAISettings? azureOpenAI = null,
+        TeamsSettings? teams = null,
+        SlackSettings? slack = null,
+        DiscordSettings? discord = null,
+        EmailSettings? email = null,
+        EmailTransportSettings? emailTransport = null,
+        TemplateSettings? templates = null)
     {
         azureOpenAI ??= AzureOpenAISettings.Unconfigured;
         services.AddSingleton(eventHub);
@@ -34,6 +44,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton(search);
         services.AddSingleton(report);
         services.AddSingleton(azureOpenAI);
+        services.AddSingleton(teams ?? TeamsSettings.Unconfigured);
+        services.AddSingleton(slack ?? SlackSettings.Unconfigured);
+        services.AddSingleton(discord ?? DiscordSettings.Unconfigured);
+        services.AddSingleton(email ?? EmailSettings.Unconfigured);
+        services.AddSingleton(templates ?? TemplateSettings.Unconfigured);
 
         services.TryAddSingleton<IEventSource, EventHubLogConsumer>();
         services.TryAddSingleton<ILogQuery, KustoLogQuery>();
@@ -61,6 +76,19 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddSingleton(serviceProvider => new RagGroundingAgent(
             serviceProvider.GetRequiredService<GroundInHistory>(),
             serviceProvider.GetService<IChatClient>()));
+        // Stage 7. Every notifier is always registered, in the contract order Teams, Slack,
+        // Discord, email; its settings decide only whether it sends (AC-2, AC-3). The HTTP
+        // notifiers are typed clients so IHttpClientFactory owns the handlers.
+        services.AddHttpClient<TeamsNotifier>();
+        services.AddHttpClient<SlackNotifier>();
+        services.AddHttpClient<DiscordNotifier>();
+        services.TryAddSingleton(_ => CreateEmailTransport(emailTransport));
+        services.AddSingleton<INotifier>(serviceProvider => serviceProvider.GetRequiredService<TeamsNotifier>());
+        services.AddSingleton<INotifier>(serviceProvider => serviceProvider.GetRequiredService<SlackNotifier>());
+        services.AddSingleton<INotifier>(serviceProvider => serviceProvider.GetRequiredService<DiscordNotifier>());
+        services.AddSingleton<INotifier, EmailNotifier>();
+        services.TryAddSingleton<ITemplateSource, FileTemplateSource>();
+
         services.AddSingleton(serviceProvider => new DiagnosisAgent(
             serviceProvider.GetRequiredService<Diagnose>(),
             serviceProvider.GetRequiredService<IReportWriter>(),
@@ -68,4 +96,19 @@ public static class InfrastructureServiceCollectionExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Builds exactly the selected email transport (requirement D14). This is the only place the
+    /// kind is examined, and it is composition, not channel logic: the email notifier never asks
+    /// which transport it holds. No transport selected, or the selected one blank, leaves the
+    /// email channel unavailable.
+    /// </summary>
+    private static IEmailTransport CreateEmailTransport(EmailTransportSettings? settings) =>
+        settings?.Kind switch
+        {
+            EmailTransportKind.CommunicationServices when settings.CommunicationServices.IsConfigured =>
+                CommunicationServicesEmailTransport.Create(settings.CommunicationServices),
+            EmailTransportKind.Smtp => new SmtpEmailTransport(settings.Smtp),
+            _ => new UnconfiguredEmailTransport(),
+        };
 }
