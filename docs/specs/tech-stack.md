@@ -1,132 +1,155 @@
 # Tech stack
 
-The technologies, versions and services DevOpsCopilot uses. Do not introduce anything outside this list without updating this file in the same pull request. Versions are those pinned in the repo as of 2026-10-24; bump them here when you bump them in a project file.
+The technologies, versions and services DevOpsCopilot uses. Do not introduce anything outside this list without updating this file in the same pull request. Versions are those in use as of 2026-10-24; update them here whenever they change in the project. Exact library versions are listed in [Library versions](#library-versions) at the end.
 
 ## Runtime and language
 
 | Item | Choice | Notes |
 |---|---|---|
-| Runtime | .NET 10 (`net10.0`) | Every .NET project targets `net10.0`. Nullable reference types and implicit usings on. |
+| Runtime | .NET 10 | Every .NET project uses .NET 10, with null-safety checks switched on. |
 | Language | C# | Match the style of the project you edit. |
-| Host model | `BackgroundService` in the ASP.NET Core minimal host | The product is a long-running worker; the web host exists only for `/health` and the status endpoint the dashboard reads (roadmap M1). |
-| Packaging | Containers | Built from the Aspire AppHost for deployment. |
+| Host model | A long-running background worker inside a small ASP.NET Core web host | The product is a worker; the web host exists only for the health check and the status information the dashboard reads (roadmap M1). |
+| Packaging | Containers | Built from the .NET Aspire setup for deployment. |
 
 ## Solution structure
 
-Strict Clean Architecture in four projects, with dependencies pointing inwards only. Built by [roadmap.md](roadmap.md) M3.
+Strict Clean Architecture in four layers, where each layer may depend only on the layers inside it. Built by [roadmap.md](roadmap.md) M3.
 
-| Layer | Project | May reference | Packages |
+| Layer | What it holds | May depend on | Libraries |
 |---|---|---|---|
-| Domain | `src/DevOpsCopilot.Domain` | Nothing beyond the base class library | None |
-| Application | `src/DevOpsCopilot.Application` | Domain | `Microsoft.Extensions.Logging.Abstractions` 10.0.12 |
-| Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain | The Azure, Kusto and Agent Framework packages below, plus `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.13 (raised from 10.0.12 by `Microsoft.Extensions.AI` in M5) and `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions` 10.0.12 |
-| Host | `src/DevOpsCopilot.Worker` | All of the above plus `ServiceDefaults`, for wiring only | None; ASP.NET Core comes from the web SDK |
+| Domain | The business concepts and rules | Nothing | None |
+| Application | The use cases, the stage order, and descriptions of what each outside service must do | Domain | Logging abstractions only |
+| Infrastructure | The connections to outside services: Azure, log queries, search and the AI agents | Application, Domain | The Azure, query and agent libraries below, plus the standard .NET wiring and health-check abstractions |
+| Host | Start-up and wiring only | All of the above, plus the shared service defaults | None beyond ASP.NET Core |
 
-The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and the architecture tests fail the build when a layer breaks them.
+The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and automated architecture checks fail the build when a layer breaks them.
 
 ## Local orchestration
 
-| Item | Choice | Version |
-|---|---|---|
-| Orchestration | .NET Aspire AppHost (`src/DevOpsCopilot.AppHost`) | Aspire 13.6.1 |
-| Event Hubs | Aspire Azure Event Hubs resource `eventhubs`, run as emulator, hub `logs`, consumer group `devops-copilot` | |
-| Storage | Aspire Azure Storage resource `storage`, run as Azurite emulator; blob container `checkpoints` | |
-| Shared defaults | `src/DevOpsCopilot.ServiceDefaults`: health checks, service discovery, OpenTelemetry | |
+| Item | Choice |
+|---|---|
+| Orchestration | .NET Aspire, which starts the whole product locally with one command |
+| Event stream | Azure Event Hubs, run as a local emulator, with one hub for logs and one consumer group for the worker |
+| Storage | Azure Storage, run locally with the Azurite emulator, holding the worker's progress checkpoints |
+| Shared defaults | Health checks, service discovery and OpenTelemetry, shared by every service |
 
 ## Ingestion
 
-| Item | Choice | Version |
-|---|---|---|
-| Stream | Azure Event Hubs | `Azure.Messaging.EventHubs.Processor` 5.12.2 |
-| Checkpoints | Azure Blob Storage | `Azure.Storage.Blobs` 12.27.0 |
-| Production sources | Azure Monitor diagnostic settings (platform logs) and Application Insights diagnostic settings (application logs, exceptions, traces) | No SDK; configured in Azure |
-| Local test producer | `src/DevOpsCopilot.LogForwarder`, an OpenTelemetry log exporter that JSON-encodes application logs to hub `logs` | `OpenTelemetry` 1.15.3, `Azure.Messaging.EventHubs` 5.12.2 |
+| Item | Choice |
+|---|---|
+| Stream | Azure Event Hubs |
+| Checkpoints | Azure Blob Storage |
+| Production sources | Azure Monitor diagnostic settings (platform logs) and Application Insights diagnostic settings (application logs, exceptions and traces). Nothing to install; configured in Azure. |
+| Local test producer | A log forwarder that sends application logs to the event stream through OpenTelemetry |
 
-The `LogForwarder` exists because Azure Monitor cannot stream into the local emulator. It is not the product's ingestion path.
+The log forwarder exists because Azure Monitor cannot send logs to the local emulator. It is not how the product receives logs in production.
 
 ## Agents and AI
 
-| Item | Choice | Version |
+| Item | Choice | Status |
 |---|---|---|
-| Agent framework | Microsoft Agent Framework | `Microsoft.Agents.AI` 1.25.0, `Microsoft.Agents.AI.Workflows` 1.25.0 |
-| Chat abstraction | `Microsoft.Extensions.AI` (`IChatClient`) | `Microsoft.Extensions.AI` 10.11.0, `Microsoft.Extensions.AI.OpenAI` 10.11.0 |
-| LLM | Azure OpenAI | `Azure.AI.OpenAI` 2.1.0, `Azure.Identity` 1.21.0. Built (roadmap M5): the diagnosis stage asks the configured deployment for a structured `Diagnosis`. Without an endpoint and a deployment the stage runs deterministically and the report says the model was unavailable. The deployment's model family is chosen per environment and is not pinned here. |
-| Evaluation | Staged incidents with known causes, run in CI | Not yet built. See roadmap M8. |
+| Agent framework | Microsoft Agent Framework | Built |
+| AI abstraction | Microsoft.Extensions.AI, so the AI model can be swapped without changing the agents | Built |
+| AI model | Azure OpenAI | Built (roadmap M5). The diagnosis stage asks the configured model for a structured diagnosis. Without Azure OpenAI configured, the stage uses simple rules instead and the report says the model was unavailable. The model family is chosen per environment and is not fixed here. |
+| Quality check | Test incidents with known causes, run automatically | Not yet built. See roadmap M8. |
 
-The three agents (diagnostic, grounding, diagnosis) are Agent Framework implementations in Infrastructure behind Application interfaces. Stage order is orchestrated in Application by `RunIncidentPipeline`, which uses no Agent Framework type, so the stages stay testable without one.
+The three agents (evidence, grounding and diagnosis) are built with the Agent Framework in the Infrastructure layer. The order of the stages is controlled by the Application layer, which does not use the Agent Framework, so the stages can be tested without it.
 
 ## Evidence and knowledge
 
-| Item | Choice | Version |
-|---|---|---|
-| Live evidence | Azure Monitor Log Analytics, queried with read-only KQL | `Microsoft.Azure.Kusto.Data` 14.2.4 |
-| Knowledge search | Azure AI Search, index `historical-postmortems`, hybrid keyword and vector search | `Azure.Search.Documents` 12.0.0 |
+| Item | Choice |
+|---|---|
+| Live evidence | Azure Monitor Log Analytics, queried with read-only KQL |
+| Knowledge search | Azure AI Search, one index of past incidents, combining keyword and meaning-based search |
 
-When a workspace or search service is not configured, the stage reports `unavailable` and returns no rows or hits. Query limits and allowed questions are in [docs/pipeline.md](../pipeline.md).
+When Log Analytics or Azure AI Search is not configured, the stage reports it as unavailable and returns no results. Query limits and allowed questions are in [the pipeline contract](../pipeline.md).
 
 ## Report channels
 
 | Channel | Content | Status |
 |---|---|---|
-| Microsoft Teams | Adaptive Card summarising the report | Planned (roadmap M6) |
-| Slack | mrkdwn message summarising the report | Planned (Phase 2) |
-| Azure DevOps work item | Full report | Planned (Phase 2) |
-| Local file | `incidents/YYYY-MM-DD-<id>.md` when no channel is configured | Built. `incidents/` is gitignored. |
+| Microsoft Teams | A card summarising the report | Planned (roadmap M6) |
+| Slack | A message summarising the report | Planned (Phase 2) |
+| Azure DevOps work item | The full report | Planned (Phase 2) |
+| Local file | The report saved on disk when no channel is configured | Built. Saved reports are never committed. |
 
 ## State
 
 | Item | Choice | Status |
 |---|---|---|
-| Triage and correlation state | Shared state store, so behaviour is identical across replicas | Planned (Phase 2). Store not yet chosen; Azure Table Storage or Cosmos DB are the candidates. Decide in the triage spec and record it here. |
-| Incident repository | `IIncidentRepository` in Application, implemented in Infrastructure | Planned (Phase 2) |
+| Triage and grouping state | Shared storage, so the product behaves the same with more than one copy of the worker | Planned (Phase 2). Not yet chosen; Azure Table Storage and Cosmos DB are the candidates. Decided in roadmap M9 and recorded here. |
+| Incident storage | Incidents are saved in the shared storage | Planned (Phase 2) |
 
 ## Dashboard
 
-| Item | Choice | Version |
-|---|---|---|
-| Frontend | React with Vite and TypeScript, in `src/DevOpsCopilot.Frontend` | React 19.2, Vite 8, TypeScript 5.9, ESLint 9 |
-| Backend for frontend | `src/DevOpsCopilot.Server` (ASP.NET Core), publishes the built frontend into `wwwroot` | |
-| Component tests | Vitest with jsdom and React Testing Library | Vitest 5.0, jsdom 30.1, `@testing-library/react` 16.3, `@testing-library/jest-dom` 7.0 |
-| Node | Node 22 | Required by CI |
+| Item | Choice |
+|---|---|
+| Front end | React with Vite and TypeScript, checked with ESLint |
+| Back end for the front end | ASP.NET Core, which also serves the built front end |
+| Component tests | Vitest with jsdom and React Testing Library |
+| Node | Node 22, required by the build pipeline |
 
-The frontend is the status dashboard: it reads the status document from `/api/status` on
-`DevOpsCopilot.Server`, which in turn reads the worker's `/status` over Aspire service discovery.
-The polling interval is a constant in the frontend, not configuration.
+The dashboard shows the worker's status. Its back end collects the status from the worker and the health of the supporting services and gives the front end one summary. How often the dashboard refreshes is fixed in the front end, not configurable.
 
 ## Telemetry
 
 | Item | Choice |
 |---|---|
-| Instrumentation | OpenTelemetry via `ServiceDefaults` |
-| Export | OTLP, only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; Application Insights and Azure Monitor in Azure |
+| Instrumentation | OpenTelemetry, through the shared service defaults |
+| Export | OpenTelemetry export only when an export destination is configured; Application Insights and Azure Monitor in Azure |
 
 ## Testing
 
 | Item | Choice |
 |---|---|
-| Framework | xUnit, projects under `tests/` in the solution folder `tests` |
-| Unit tests | Domain and Application: plain tests, no Azure SDK, network or emulator |
-| Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources. The Azure OpenAI test is marked `Category=RequiresAzureOpenAI` and skipped unless `Incident:AzureOpenAI` is in user secrets or the environment; it never runs in CI. |
-| Host tests | `tests/DevOpsCopilot.Worker.Tests`: the worker's statistics and status endpoint on an in-process test server (`Microsoft.AspNetCore.TestHost` 10.0.12). `tests/DevOpsCopilot.Server.Tests`: the status-document mapping against a stubbed worker HTTP handler. |
-| AppHost and end-to-end tests | `tests/DevOpsCopilot.AppHost.Tests` on `Aspire.Hosting.Testing` 13.6.1, producing events with `Azure.Messaging.EventHubs` 5.12.2. Needs Docker for the emulators; marked `Category=RequiresDocker` and skipped when no daemon answers. |
-| Architecture tests | `tests/DevOpsCopilot.Architecture.Tests`. Reflection over the built assemblies and the project files, so no extra package. Fail the build when a layer references something it must not. |
-| Evaluation | Staged-incident set for diagnosis quality (M8) |
+| Framework | xUnit, with all test projects grouped together |
+| Unit tests | Domain and Application: plain tests with no Azure services, network or emulator |
+| Integration tests | Infrastructure, against the Event Hubs and storage emulators or test resources. The Azure OpenAI test runs only when a developer has configured Azure OpenAI on their own machine; it never runs in the build pipeline. |
+| Host tests | The worker's statistics and status information, and the dashboard back end's status summary, each tested on an in-process test server |
+| End-to-end tests | The whole local environment started by .NET Aspire's testing support, with test events sent to the stream. These need Docker for the emulators and are skipped when Docker is not running. |
+| Architecture tests | Checks over the built code and project setup that fail the build when a layer depends on something it must not |
+| Quality check | Test incidents for diagnosis quality (roadmap M8) |
 
 ## Build, CI and hosting
 
 | Item | Choice | Status |
 |---|---|---|
-| CI | GitHub Actions `.github/workflows/ci.yml`: Release build of the solution, tests (excluding `Category=RequiresDocker`), frontend lint, Vitest tests and build, on pull requests and pushes to `main` | Built |
-| Deployment | GitHub Actions workflow deploying the AppHost resources on `main` after CI passes | Planned (M7) |
-| Hosting | Azure Container Apps | Planned (M7) |
-| Secrets | Aspire references, user secrets locally; GitHub and Azure configuration in CI. Never in the repo. | Rule |
+| CI | GitHub Actions: build, tests (except those needing Docker), and the dashboard's lint, tests and build, on every pull request and every change to the main branch | Built |
+| Deployment | GitHub Actions, deploying the product after the main branch passes its checks | Planned (roadmap M7) |
+| Hosting | Azure Container Apps | Planned (roadmap M7) |
+| Secrets | Kept in .NET Aspire settings or private developer settings locally, and in GitHub and Azure settings for automation. Never in the repository. | Rule |
 
 ## Leftover projects
 
-`src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions` and `src/DevOpsCopilot.EmailNotifier` are samples from the template. Do not extend them. They are removed by a dedicated roadmap item (M18) once nothing in the AppHost depends on them.
+The sample API, the Azure Functions sample and the email notifier sample came with the starter template. Do not extend them. They are removed by roadmap M18 once nothing depends on them.
 
-`src/DevOpsCopilot.Server` and `src/DevOpsCopilot.Frontend` are no longer samples: M1 replaced the weather screen with the product status dashboard, so they are extended like any other project.
+The dashboard and its back end are no longer samples: M1 replaced the weather screen with the product's status dashboard, so they are developed like any other part of the product.
 
 ## Not used
 
-Listed so nobody adds them by habit: event sourcing, CQRS, separate bounded-context projects, MediatR, AutoMapper, Semantic Kernel (superseded by Agent Framework).
+Listed so nobody adds them by habit: event sourcing, CQRS, separate bounded-context projects, MediatR, AutoMapper, and Semantic Kernel (replaced by the Agent Framework).
+
+## Library versions
+
+The exact versions in use, for developers updating them.
+
+| Area | Library | Version |
+|---|---|---|
+| Orchestration | .NET Aspire | 13.6.1 |
+| Event stream | Azure.Messaging.EventHubs.Processor | 5.12.2 |
+| Event stream | Azure.Messaging.EventHubs | 5.12.2 |
+| Checkpoints | Azure.Storage.Blobs | 12.27.0 |
+| Local test producer | OpenTelemetry | 1.15.3 |
+| Agents | Microsoft.Agents.AI and Microsoft.Agents.AI.Workflows | 1.25.0 |
+| AI abstraction | Microsoft.Extensions.AI and Microsoft.Extensions.AI.OpenAI | 10.11.0 |
+| AI model | Azure.AI.OpenAI | 2.1.0 |
+| Azure sign-in | Azure.Identity | 1.21.0 |
+| Live evidence | Microsoft.Azure.Kusto.Data | 14.2.4 |
+| Knowledge search | Azure.Search.Documents | 12.0.0 |
+| Application layer | Microsoft.Extensions.Logging.Abstractions | 10.0.12 |
+| Infrastructure layer | Microsoft.Extensions.DependencyInjection.Abstractions | 10.0.13 |
+| Infrastructure layer | Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions | 10.0.12 |
+| Host tests | Microsoft.AspNetCore.TestHost | 10.0.12 |
+| End-to-end tests | Aspire.Hosting.Testing | 13.6.1 |
+| Dashboard | React 19.2, Vite 8, TypeScript 5.9, ESLint 9 | |
+| Dashboard tests | Vitest 5.0, jsdom 30.1, React Testing Library 16.3, jest-dom 7.0 | |
