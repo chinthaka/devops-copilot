@@ -1,6 +1,6 @@
 # Tech stack
 
-The technologies, versions and services DevOpsCopilot uses. Do not introduce anything outside this list without updating this file in the same pull request. Versions are those in use as of 2026-10-24; update them here whenever they change in the project. Exact library versions are listed in [Library versions](#library-versions) at the end.
+The technologies, versions and services DevOpsCopilot uses. Do not introduce anything outside this list without updating this file in the same pull request. Versions are those pinned in the repo as of 2026-11-08; bump them here when you bump them in a project file. [§ NuGet packages](#nuget-packages) lists every package and the projects that use it.
 
 ## Runtime and language
 
@@ -17,30 +17,30 @@ Strict Clean Architecture in four layers, where each layer may depend only on th
 
 | Layer | What it holds | May depend on | Libraries |
 |---|---|---|---|
-| Domain | The business concepts and rules | Nothing | None |
-| Application | The use cases, the stage order, and descriptions of what each outside service must do | Domain | Logging abstractions only |
-| Infrastructure | The connections to outside services: Azure, log queries, search and the AI agents | Application, Domain | The Azure, query and agent libraries below, plus the standard .NET wiring and health-check abstractions |
-| Host | Start-up and wiring only | All of the above, plus the shared service defaults | None beyond ASP.NET Core |
+| Domain | `src/DevOpsCopilot.Domain` | Nothing beyond the base class library | None |
+| Application | `src/DevOpsCopilot.Application` | Domain | `Microsoft.Extensions.Logging.Abstractions` 10.0.14 |
+| Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain | The Azure, Kusto, Agent Framework and email packages below, plus `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.14 and `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions` 10.0.14 |
+| Host | `src/DevOpsCopilot.Worker` | All of the above plus `ServiceDefaults`, for wiring only | None; ASP.NET Core comes from the web SDK |
 
 The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and automated architecture checks fail the build when a layer breaks them.
 
 ## Local orchestration
 
-| Item | Choice |
-|---|---|
-| Orchestration | .NET Aspire, which starts the whole product locally with one command |
-| Event stream | Azure Event Hubs, run as a local emulator, with one hub for logs and one consumer group for the worker |
-| Storage | Azure Storage, run locally with the Azurite emulator, holding the worker's progress checkpoints |
-| Shared defaults | Health checks, service discovery and OpenTelemetry, shared by every service |
+| Item | Choice | Version |
+|---|---|---|
+| Orchestration | .NET Aspire AppHost (`src/DevOpsCopilot.AppHost`) | Aspire 13.6.4 (`Aspire.AppHost.Sdk` and the `Aspire.Hosting.*` packages) |
+| Event Hubs | Aspire Azure Event Hubs resource `eventhubs`, run as emulator, hub `logs`, consumer group `devops-copilot` | |
+| Storage | Aspire Azure Storage resource `storage`, run as Azurite emulator; blob container `checkpoints` | |
+| Shared defaults | `src/DevOpsCopilot.ServiceDefaults`: health checks, service discovery, OpenTelemetry | |
 
 ## Ingestion
 
-| Item | Choice |
-|---|---|
-| Stream | Azure Event Hubs |
-| Checkpoints | Azure Blob Storage |
-| Production sources | Azure Monitor diagnostic settings (platform logs) and Application Insights diagnostic settings (application logs, exceptions and traces). Nothing to install; configured in Azure. |
-| Local test producer | A log forwarder that sends application logs to the event stream through OpenTelemetry |
+| Item | Choice | Version |
+|---|---|---|
+| Stream | Azure Event Hubs | `Azure.Messaging.EventHubs.Processor` 5.12.2 |
+| Checkpoints | Azure Blob Storage | `Azure.Storage.Blobs` 12.30.1 |
+| Production sources | Azure Monitor diagnostic settings (platform logs) and Application Insights diagnostic settings (application logs, exceptions, traces) | No SDK; configured in Azure |
+| Local test producer | `src/DevOpsCopilot.LogForwarder`, an OpenTelemetry log exporter that JSON-encodes application logs to hub `logs` | `OpenTelemetry` 1.20.1, `Azure.Messaging.EventHubs` 5.12.2 |
 
 The log forwarder exists because Azure Monitor cannot send logs to the local emulator. It is not how the product receives logs in production.
 
@@ -48,10 +48,10 @@ The log forwarder exists because Azure Monitor cannot send logs to the local emu
 
 | Item | Choice | Status |
 |---|---|---|
-| Agent framework | Microsoft Agent Framework | Built |
-| AI abstraction | Microsoft.Extensions.AI, so the AI model can be swapped without changing the agents | Built |
-| AI model | Azure OpenAI | Built (roadmap M5). The diagnosis stage asks the configured model for a structured diagnosis. Without Azure OpenAI configured, the stage uses simple rules instead and the report says the model was unavailable. The model family is chosen per environment and is not fixed here. |
-| Quality check | Test incidents with known causes, run automatically | Not yet built. See roadmap M8. |
+| Agent framework | Microsoft Agent Framework | `Microsoft.Agents.AI` 1.28.0, `Microsoft.Agents.AI.Workflows` 1.28.0 |
+| Chat abstraction | `Microsoft.Extensions.AI` (`IChatClient`) | `Microsoft.Extensions.AI` 10.11.0, `Microsoft.Extensions.AI.OpenAI` 10.11.0 |
+| LLM | Azure OpenAI | `Azure.AI.OpenAI` 2.1.0, `Azure.Identity` 1.21.0. Built (roadmap M5): the diagnosis stage asks the configured deployment for a structured `Diagnosis`. Without an endpoint and a deployment the stage runs deterministically and the report says the model was unavailable. The deployment's model family is chosen per environment and is not pinned here. |
+| Evaluation | Staged incidents with known causes, run in CI | Not yet built. See roadmap M8. |
 
 The three agents (evidence, grounding and diagnosis) are built with the Agent Framework in the Infrastructure layer. The order of the stages is controlled by the Application layer, which does not use the Agent Framework, so the stages can be tested without it.
 
@@ -68,10 +68,18 @@ When Log Analytics or Azure AI Search is not configured, the stage reports it as
 
 | Channel | Content | Status |
 |---|---|---|
-| Microsoft Teams | A card summarising the report | Planned (roadmap M6) |
-| Slack | A message summarising the report | Planned (Phase 2) |
-| Azure DevOps work item | The full report | Planned (Phase 2) |
-| Local file | The report saved on disk when no channel is configured | Built. Saved reports are never committed. |
+| Microsoft Teams | Adaptive Card summarising the report, posted to a Teams Workflows webhook ("Post to a channel when a webhook request is received"). The trigger URL is a credential. | Built (roadmap M6.2) |
+| Slack | Block Kit message summarising the report, posted with `chat.postMessage` and a bot token. A `200` carrying `"ok": false` is a failure. | Built (roadmap M6.3, moved forward from Phase 2) |
+| Discord | Embed summarising the report, posted to a channel webhook with `?wait=true`. One `Retry-After` retry on `429`. | Built (roadmap M6.4) |
+| Email | The report summary, rendered from a customisable email template and sent as one message to every configured address through one transport selected by `Incident:Notifications:Email:Transport`: **Azure Communication Services Email** (`Azure.Communication.Email` 1.1.0; managed identity through `Azure.Identity` when only an endpoint is set), or **SMTP** (`MailKit` 4.18.2, which brings MimeKit; STARTTLS or implicit TLS required unless explicitly set to none for a local test server). Both packages are in Infrastructure only. | Built (Communication Services roadmap M6.5, SMTP roadmap M6.7) |
+| Azure DevOps work item | Full report | Planned (Phase 2) |
+| Local file | `incidents/YYYY-MM-DD-<id>.md`, always written before any channel is called; the only delivery when no channel is configured | Built. `incidents/` is gitignored. |
+
+Slack and Discord have no first-party .NET SDK, and Teams needs none for a webhook POST, so all
+three are plain HTTP over `IHttpClientFactory` (`Microsoft.Extensions.Http` 10.0.14, Infrastructure
+only). The report and the email render from templates with embedded defaults; a custom template is
+a file named in configuration and re-read on every render, with no templating package. Channel
+secrets live in `Incident:Notifications:*` configuration, read only by the Worker.
 
 ## State
 
@@ -102,13 +110,14 @@ The dashboard shows the worker's status. Its back end collects the status from t
 
 | Item | Choice |
 |---|---|
-| Framework | xUnit, with all test projects grouped together |
-| Unit tests | Domain and Application: plain tests with no Azure services, network or emulator |
-| Integration tests | Infrastructure, against the Event Hubs and storage emulators or test resources. The Azure OpenAI test runs only when a developer has configured Azure OpenAI on their own machine; it never runs in the build pipeline. |
-| Host tests | The worker's statistics and status information, and the dashboard back end's status summary, each tested on an in-process test server |
-| End-to-end tests | The whole local environment started by .NET Aspire's testing support, with test events sent to the stream. These need Docker for the emulators and are skipped when Docker is not running. |
-| Architecture tests | Checks over the built code and project setup that fail the build when a layer depends on something it must not |
-| Quality check | Test incidents for diagnosis quality (roadmap M8) |
+| Framework | xUnit, projects under `tests/` in the solution folder `tests` |
+| Unit tests | Domain and Application: plain tests, no Azure SDK, network or emulator |
+| Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources. The Azure OpenAI test is marked `Category=RequiresAzureOpenAI` and skipped unless `Incident:AzureOpenAI` is in user secrets or the environment; it never runs in CI. The channel tests are gated the same way: `RequiresTeams`, `RequiresSlack`, `RequiresDiscord`, `RequiresEmail` (Communication Services) and `RequiresSmtp`, each skipped unless its `Incident:Notifications:<channel>` settings are set. |
+| Local SMTP server | Not prescribed. The `RequiresSmtp` test and the SMTP manual checks run against any SMTP server; each developer chooses their own local test tool. Nothing is added to the AppHost. |
+| Host tests | `tests/DevOpsCopilot.Worker.Tests`: the worker's statistics and status endpoint on an in-process test server (`Microsoft.AspNetCore.TestHost` 10.0.14). `tests/DevOpsCopilot.Server.Tests`: the status-document mapping against a stubbed worker HTTP handler. |
+| AppHost and end-to-end tests | `tests/DevOpsCopilot.AppHost.Tests` on `Aspire.Hosting.Testing` 13.6.4, producing events with `Azure.Messaging.EventHubs` 5.12.2. Needs Docker for the emulators; marked `Category=RequiresDocker` and skipped when no daemon answers. |
+| Architecture tests | `tests/DevOpsCopilot.Architecture.Tests`. Reflection over the built assemblies and the project files, so no extra package. Fail the build when a layer references something it must not. |
+| Evaluation | Staged-incident set for diagnosis quality (M8) |
 
 ## Build, CI and hosting
 
@@ -125,31 +134,92 @@ The sample API, the Azure Functions sample and the email notifier sample came wi
 
 The dashboard and its back end are no longer samples: M1 replaced the weather screen with the product's status dashboard, so they are developed like any other part of the product.
 
+## NuGet packages
+
+Every `PackageReference` in the solution as of 2026-11-08, after a full update to the latest
+stable versions on nuget.org (`dotnet list package --outdated` reports nothing for any project).
+The same list is the source of truth for the versions quoted above. The leftover samples
+(`ApiService`, `Functions`, `EmailNotifier`) were updated only for security and currency; they are
+still not extended.
+
+| Package | Version | Projects |
+|---|---|---|
+| `Aspire.AppHost.Sdk` | 13.6.4 | AppHost |
+| `Aspire.Azure.Data.Tables` | 13.6.4 | ApiService |
+| `Aspire.Azure.Storage.Queues` | 13.6.4 | ApiService |
+| `Aspire.Hosting.Azure.EventHubs` | 13.6.4 | AppHost |
+| `Aspire.Hosting.Azure.Functions` | 13.6.4 | AppHost |
+| `Aspire.Hosting.Azure.Storage` | 13.6.4 | AppHost |
+| `Aspire.Hosting.JavaScript` | 13.6.4 | AppHost |
+| `Aspire.Hosting.Testing` | 13.6.4 | AppHost.Tests |
+| `Azure.AI.OpenAI` | 2.1.0 | Infrastructure |
+| `Azure.Communication.Email` | 1.1.0 | Infrastructure |
+| `Azure.Data.Tables` | 12.13.0 | EmailNotifier |
+| `Azure.Identity` | 1.21.0 | Infrastructure |
+| `Azure.Messaging.EventHubs` | 5.12.2 | AppHost.Tests, LogForwarder |
+| `Azure.Messaging.EventHubs.Processor` | 5.12.2 | Infrastructure |
+| `Azure.Search.Documents` | 12.0.0 | Infrastructure |
+| `Azure.Storage.Blobs` | 12.30.1 | EmailNotifier, Infrastructure |
+| `Azure.Storage.Files.Shares` | 12.28.0 | EmailNotifier |
+| `Azure.Storage.Queues` | 12.28.1 | EmailNotifier |
+| `coverlet.collector` | 10.1.0 | ApiService.Tests, AppHost.Tests, Application.Tests, Architecture.Tests, Domain.Tests, Infrastructure.Tests, LogForwarder.Tests, Server.Tests, Worker.Tests |
+| `MailKit` | 4.18.2 | Infrastructure |
+| `Microsoft.Agents.AI` | 1.28.0 | Infrastructure |
+| `Microsoft.Agents.AI.Workflows` | 1.28.0 | Infrastructure |
+| `Microsoft.ApplicationInsights.WorkerService` | 3.2.0 | EmailNotifier, Functions |
+| `Microsoft.AspNetCore.Mvc.Testing` | 10.0.14 | ApiService.Tests |
+| `Microsoft.AspNetCore.OpenApi` | 10.0.14 | ApiService, Server |
+| `Microsoft.AspNetCore.TestHost` | 10.0.14 | Worker.Tests |
+| `Microsoft.Azure.Functions.Worker` | 2.52.0 | EmailNotifier, Functions |
+| `Microsoft.Azure.Functions.Worker.ApplicationInsights` | 2.51.0 | EmailNotifier, Functions |
+| `Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore` | 2.1.1 | EmailNotifier, Functions |
+| `Microsoft.Azure.Functions.Worker.Extensions.Storage.Queues` | 5.5.5 | EmailNotifier, Functions |
+| `Microsoft.Azure.Functions.Worker.Extensions.Tables` | 1.5.0 | Functions |
+| `Microsoft.Azure.Functions.Worker.Sdk` | 2.1.0 | EmailNotifier, Functions |
+| `Microsoft.Azure.Kusto.Data` | 14.2.4 | Infrastructure |
+| `Microsoft.Extensions.AI` | 10.11.0 | Infrastructure |
+| `Microsoft.Extensions.AI.OpenAI` | 10.11.0 | Infrastructure |
+| `Microsoft.Extensions.Azure` | 1.14.1 | EmailNotifier |
+| `Microsoft.Extensions.Configuration.EnvironmentVariables` | 10.0.14 | Infrastructure.Tests |
+| `Microsoft.Extensions.Configuration.UserSecrets` | 10.0.14 | EmailNotifier, Infrastructure.Tests |
+| `Microsoft.Extensions.DependencyInjection` | 10.0.14 | Infrastructure.Tests |
+| `Microsoft.Extensions.DependencyInjection.Abstractions` | 10.0.14 | Infrastructure |
+| `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions` | 10.0.14 | Infrastructure |
+| `Microsoft.Extensions.Http` | 10.0.14 | Infrastructure |
+| `Microsoft.Extensions.Http.Resilience` | 10.11.0 | Server, ServiceDefaults |
+| `Microsoft.Extensions.Logging` | 10.0.14 | LogForwarder |
+| `Microsoft.Extensions.Logging.Abstractions` | 10.0.14 | Application |
+| `Microsoft.Extensions.ServiceDiscovery` | 10.11.0 | Server, ServiceDefaults |
+| `Microsoft.NET.Test.Sdk` | 18.11.0 | ApiService.Tests, AppHost.Tests, Application.Tests, Architecture.Tests, Domain.Tests, Infrastructure.Tests, LogForwarder.Tests, Server.Tests, Worker.Tests |
+| `OpenTelemetry` | 1.20.1 | LogForwarder |
+| `OpenTelemetry.Exporter.OpenTelemetryProtocol` | 1.20.1 | Server, ServiceDefaults |
+| `OpenTelemetry.Extensions.Hosting` | 1.20.1 | Server, ServiceDefaults |
+| `OpenTelemetry.Instrumentation.AspNetCore` | 1.20.2 | Server, ServiceDefaults |
+| `OpenTelemetry.Instrumentation.Http` | 1.20.2 | Server, ServiceDefaults |
+| `OpenTelemetry.Instrumentation.Runtime` | 1.20.1 | Server, ServiceDefaults |
+| `SendGrid` | 9.29.3 | Functions |
+| `xunit` | 2.9.3 | ApiService.Tests, AppHost.Tests, Application.Tests, Architecture.Tests, Domain.Tests, Infrastructure.Tests, LogForwarder.Tests, Server.Tests, Worker.Tests |
+| `xunit.runner.visualstudio` | 4.0.1 | ApiService.Tests, AppHost.Tests, Application.Tests, Architecture.Tests, Domain.Tests, Infrastructure.Tests, LogForwarder.Tests, Server.Tests, Worker.Tests |
+
+Test tooling: xUnit 2.9.3 (the latest of the `xunit` v2 package) runs under
+`xunit.runner.visualstudio` 4.0.1 and `Microsoft.NET.Test.Sdk` 18.11.0, with coverage by
+`coverlet.collector` 10.1.0. The same 268 tests are discovered before and after the runner's major
+upgrade.
+
+### Package audit
+
+`dotnet list package --vulnerable --include-transitive` reports no vulnerable package in any
+project. The 2026-11-08 update resolved the two advisories the build used to warn about:
+
+| Advisory | Package | Was | Now | Fixed by |
+|---|---|---|---|---|
+| [GHSA-v5pm-xwqc-g5wc](https://github.com/advisories/GHSA-v5pm-xwqc-g5wc) (high, NU1903) | `Microsoft.OpenApi`, transitive in `Server`, `ApiService` and their tests | 2.0.0 | 2.12.2 | `Microsoft.AspNetCore.OpenApi` 10.0.8 → 10.0.14 |
+| [GHSA-qhrr-8q5h-9q3h](https://github.com/advisories/GHSA-qhrr-8q5h-9q3h) (moderate, NU1902) | `MessagePack`, transitive in `AppHost` and `AppHost.Tests` | 2.5.302 | 2.5.307 | Aspire 13.6.1 → 13.6.4 |
+
+Major-version upgrades in this update: `Microsoft.NET.Test.Sdk` 17 → 18, `coverlet.collector`
+6 → 10, `xunit.runner.visualstudio` 3 → 4, and `Microsoft.ApplicationInsights.WorkerService`
+2 → 3 (leftover samples `Functions` and `EmailNotifier` only).
+
 ## Not used
 
-Listed so nobody adds them by habit: event sourcing, CQRS, separate bounded-context projects, MediatR, AutoMapper, and Semantic Kernel (replaced by the Agent Framework).
-
-## Library versions
-
-The exact versions in use, for developers updating them.
-
-| Area | Library | Version |
-|---|---|---|
-| Orchestration | .NET Aspire | 13.6.1 |
-| Event stream | Azure.Messaging.EventHubs.Processor | 5.12.2 |
-| Event stream | Azure.Messaging.EventHubs | 5.12.2 |
-| Checkpoints | Azure.Storage.Blobs | 12.27.0 |
-| Local test producer | OpenTelemetry | 1.15.3 |
-| Agents | Microsoft.Agents.AI and Microsoft.Agents.AI.Workflows | 1.25.0 |
-| AI abstraction | Microsoft.Extensions.AI and Microsoft.Extensions.AI.OpenAI | 10.11.0 |
-| AI model | Azure.AI.OpenAI | 2.1.0 |
-| Azure sign-in | Azure.Identity | 1.21.0 |
-| Live evidence | Microsoft.Azure.Kusto.Data | 14.2.4 |
-| Knowledge search | Azure.Search.Documents | 12.0.0 |
-| Application layer | Microsoft.Extensions.Logging.Abstractions | 10.0.12 |
-| Infrastructure layer | Microsoft.Extensions.DependencyInjection.Abstractions | 10.0.13 |
-| Infrastructure layer | Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions | 10.0.12 |
-| Host tests | Microsoft.AspNetCore.TestHost | 10.0.12 |
-| End-to-end tests | Aspire.Hosting.Testing | 13.6.1 |
-| Dashboard | React 19.2, Vite 8, TypeScript 5.9, ESLint 9 | |
-| Dashboard tests | Vitest 5.0, jsdom 30.1, React Testing Library 16.3, jest-dom 7.0 | |
+Listed so nobody adds them by habit: event sourcing, CQRS, separate bounded-context projects, MediatR, AutoMapper, Semantic Kernel (superseded by Agent Framework), `Microsoft.Graph` (Teams posts through a Workflows webhook, decision D3 of the M6 spec), Slack and Discord SDKs (plain HTTP), `System.Net.Mail.SmtpClient` (Microsoft no longer recommends it for new development; SMTP uses MailKit, decision D15 of the M6 spec), and templating packages such as Scriban, Handlebars.Net or Razor (the placeholder renderer lives in Domain).

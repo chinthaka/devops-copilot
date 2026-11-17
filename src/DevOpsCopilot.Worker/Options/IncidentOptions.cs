@@ -9,5 +9,9 @@ public sealed class IncidentOptions
 
     public AzureOpenAIOptions AzureOpenAI { get; set; } = new();
 
+    public NotificationOptions Notifications { get; set; } = new();
+
+    public ReportOptions Report { get; set; } = new();
+
     public string DraftsDirectory { get; set; } = "incidents";
 }

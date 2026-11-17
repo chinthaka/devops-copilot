@@ -1,3 +1,4 @@
+using DevOpsCopilot.Application.Tests.Common;
 using DevOpsCopilot.Application.Diagnoses;
 using DevOpsCopilot.Application.Events;
 using DevOpsCopilot.Application.Grounding;
@@ -111,7 +112,7 @@ public class DiagnosePipelineTests
             new GatherEvidence(new RecordingLogQuery { IsConfigured = false }, LogQueryTargets.Unconfigured),
             new GroundInHistory(new RecordingKnowledgeSearch { IsConfigured = false }),
             writer,
-            new Diagnose(model));
+            new Diagnose(model, TestTimeouts.Generous));
 
     private static LogEvent ErrorEvent() =>
         new(

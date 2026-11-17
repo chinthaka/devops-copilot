@@ -16,7 +16,7 @@ public class DiagnoseTests
         var grounding = Handoffs.Grounding(diagnostic.EventId, "ok", Handoffs.Hit("h1"));
 
         // Act
-        var diagnosis = await new Diagnose(model).DiagnoseAsync(diagnostic, grounding);
+        var diagnosis = await new Diagnose(model, TestTimeouts.Generous).DiagnoseAsync(diagnostic, grounding);
 
         // Assert
         var expected = Diagnosis.Deterministic(diagnostic, grounding, Diagnose.ModelUnavailable);
@@ -37,7 +37,7 @@ public class DiagnoseTests
         var grounding = Handoffs.Grounding(diagnostic.EventId, "unavailable");
 
         // Act
-        var diagnosis = await new Diagnose(model).DiagnoseAsync(diagnostic, grounding);
+        var diagnosis = await new Diagnose(model, TestTimeouts.Generous).DiagnoseAsync(diagnostic, grounding);
 
         // Assert
         Assert.Contains(diagnosis.OpenQuestions, question => question.Contains("model was unavailable", StringComparison.Ordinal));
@@ -52,7 +52,7 @@ public class DiagnoseTests
         var model = new RecordingDiagnosisModel { Proposed = Proposed(diagnostic, Confidence.High) };
 
         // Act
-        var diagnosis = await new Diagnose(model).DiagnoseAsync(diagnostic, grounding);
+        var diagnosis = await new Diagnose(model, TestTimeouts.Generous).DiagnoseAsync(diagnostic, grounding);
 
         // Assert
         Assert.Equal("The payment gateway stopped answering.", diagnosis.LikelyCause);
@@ -74,7 +74,7 @@ public class DiagnoseTests
         };
 
         // Act
-        var diagnosis = await new Diagnose(model).DiagnoseAsync(diagnostic, grounding);
+        var diagnosis = await new Diagnose(model, TestTimeouts.Generous).DiagnoseAsync(diagnostic, grounding);
 
         // Assert
         Assert.Equal(Confidence.Low, diagnosis.Confidence);
@@ -93,7 +93,7 @@ public class DiagnoseTests
         };
 
         // Act
-        var diagnosis = await new Diagnose(model).DiagnoseAsync(diagnostic, grounding);
+        var diagnosis = await new Diagnose(model, TestTimeouts.Generous).DiagnoseAsync(diagnostic, grounding);
 
         // Assert
         Assert.Equal("Not determined from the available evidence.", diagnosis.LikelyCause);
@@ -113,7 +113,7 @@ public class DiagnoseTests
         var model = new RecordingDiagnosisModel { Throws = new InvalidOperationException("the endpoint refused the call") };
 
         // Act
-        var diagnosis = await new Diagnose(model).DiagnoseAsync(diagnostic, grounding);
+        var diagnosis = await new Diagnose(model, TestTimeouts.Generous).DiagnoseAsync(diagnostic, grounding);
 
         // Assert
         Assert.Equal("Not determined from the available evidence.", diagnosis.LikelyCause);
@@ -134,7 +134,7 @@ public class DiagnoseTests
         var model = new RecordingDiagnosisModel { Proposed = null };
 
         // Act
-        var diagnosis = await new Diagnose(model).DiagnoseAsync(diagnostic, grounding);
+        var diagnosis = await new Diagnose(model, TestTimeouts.Generous).DiagnoseAsync(diagnostic, grounding);
 
         // Assert
         Assert.Equal("Not determined from the available evidence.", diagnosis.LikelyCause);
@@ -171,7 +171,7 @@ public class DiagnoseTests
         await shutdown.CancelAsync();
 
         // Act
-        var act = () => new Diagnose(model).DiagnoseAsync(diagnostic, grounding, shutdown.Token);
+        var act = () => new Diagnose(model, TestTimeouts.Generous).DiagnoseAsync(diagnostic, grounding, shutdown.Token);
 
         // Assert
         await Assert.ThrowsAnyAsync<OperationCanceledException>(act);

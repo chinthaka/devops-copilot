@@ -216,17 +216,25 @@ One report per incident, rendered from the diagnosis.
 6. **Suggested steps** – for an engineer to carry out.
 7. **Open questions** – missing tool results and unanswered facts.
 
+The seven-section layout is the embedded default report template. A deployment may configure its
+own report and email templates; a template changes wording and layout only — every fact still
+comes from the diagnosis and the handoffs, and no template adds a claim.
+
 ### Channels
 
 | Channel | Content |
 |---|---|
-| Microsoft Teams | Card summarising the report, linking to the work item |
-| Slack | mrkdwn message summarising the report, linking to the work item |
+| Microsoft Teams | Adaptive Card summarising the report. It links to the work item once M14 exists. |
+| Slack | Block Kit message summarising the report |
+| Discord | Embed summarising the report |
+| Email | The report summary, sent to every configured address |
 | Work item (Azure DevOps) | The full report |
 
-- Each channel is optional. An unconfigured channel is recorded as `unavailable` and does not fail the run.
-- One message per incident per channel. When the incident changes, update the existing message where the channel supports it; otherwise post a single update linked to the original.
-- Teams and Slack text must match the diagnosis and the hits.
+- Each channel is optional. An unconfigured channel is recorded as `unavailable` and does not fail the run; a failing channel is recorded as `failed` and does not stop the others.
+- Email is sent to every configured address for every report. It is not a fallback for the other channels.
+- The report is always written to `incidents/YYYY-MM-DD-<incident-id>.md` before any channel is called. When no channel is configured, that file is the only delivery. `incidents/` is gitignored and is never committed unless asked.
+- One message per incident per channel. Until incidents exist (M12), one message per report; a replayed event posts again. When the incident changes, update the existing message where the channel supports it (M15); otherwise post a single update linked to the original.
+- Every channel's text must match the diagnosis and the hits.
 - When no channel is configured (for example in local runs), write the report to `incidents/YYYY-MM-DD-<incident-id>.md`. `incidents/` is gitignored and is never committed unless asked.
 
 ---
