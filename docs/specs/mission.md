@@ -40,8 +40,8 @@ These are the rules every feature is checked against. A feature that breaks one 
 3. **Fixed, bounded investigation.** The agents follow a fixed stage order with limits on follow-up queries, rows and hits. This keeps behaviour predictable, testable and cost-controlled.
 4. **Learn only from confirmed causes.** A report enters the knowledge base only after an engineer confirms or corrects it. DevOpsCopilot never marks an incident resolved by itself.
 5. **Zero-touch onboarding.** New systems are added through configuration, not code.
-6. **Cloud-neutral core.** The domain and application layers depend on interfaces. Azure services are the first implementations, not the only possible ones.
-7. **Spec first, test first.** Every feature starts with a written spec in `docs/specs/`, and tests are written from its acceptance criteria before the code. See [AGENTS.md](../../AGENTS.md).
+6. **Cloud-neutral core.** The core decision-making does not depend on any particular cloud. Azure services are the first ones connected, not the only possible ones.
+7. **Spec first, test first.** Every feature starts with a written spec in the specs folder, and tests are written from its acceptance criteria before the code. See [AGENTS.md](../../AGENTS.md).
 
 ## Boundaries
 
@@ -55,10 +55,10 @@ These are the rules every feature is checked against. A feature that breaks one 
 
 - Automated remediation of any kind, including generating commands, scripts or templates that change resources. See [roadmap.md § Out of scope](roadmap.md#out-of-scope).
 - AWS and GCP support. The core is designed to allow it later; nothing is built for it.
-- A direct OpenTelemetry exporter for applications that do not use Application Insights. The in-repo `LogForwarder` exists only as a local test producer.
+- A direct OpenTelemetry exporter for applications that do not use Application Insights. The log forwarder included in the repository exists only to send test logs during local development.
 - Collecting historical data in advance. The knowledge base starts empty and grows from confirmed incidents.
 - A fourth agent. The workflow has a diagnostic agent, a grounding agent and a diagnosis agent.
-- Treating a `Warning` on its own as an incident.
+- Treating a warning on its own as an incident.
 
 ## Success looks like
 

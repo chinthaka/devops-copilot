@@ -6,23 +6,23 @@ The technologies, versions and services DevOpsCopilot uses. Do not introduce any
 
 | Item | Choice | Notes |
 |---|---|---|
-| Runtime | .NET 10 (`net10.0`) | Every .NET project targets `net10.0`. Nullable reference types and implicit usings on. |
+| Runtime | .NET 10 | Every .NET project uses .NET 10, with null-safety checks switched on. |
 | Language | C# | Match the style of the project you edit. |
-| Host model | `BackgroundService` in the ASP.NET Core minimal host | The product is a long-running worker; the web host exists only for `/health` and the status endpoint the dashboard reads (roadmap M1). |
-| Packaging | Containers | Built from the Aspire AppHost for deployment. |
+| Host model | A long-running background worker inside a small ASP.NET Core web host | The product is a worker; the web host exists only for the health check and the status information the dashboard reads (roadmap M1). |
+| Packaging | Containers | Built from the .NET Aspire setup for deployment. |
 
 ## Solution structure
 
-Strict Clean Architecture in four projects, with dependencies pointing inwards only. Built by [roadmap.md](roadmap.md) M3.
+Strict Clean Architecture in four layers, where each layer may depend only on the layers inside it. Built by [roadmap.md](roadmap.md) M3.
 
-| Layer | Project | May reference | Packages |
+| Layer | What it holds | May depend on | Libraries |
 |---|---|---|---|
 | Domain | `src/DevOpsCopilot.Domain` | Nothing beyond the base class library | None |
 | Application | `src/DevOpsCopilot.Application` | Domain | `Microsoft.Extensions.Logging.Abstractions` 10.0.14 |
 | Infrastructure | `src/DevOpsCopilot.Infrastructure` | Application, Domain | The Azure, Kusto, Agent Framework and email packages below, plus `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.14 and `Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions` 10.0.14 |
 | Host | `src/DevOpsCopilot.Worker` | All of the above plus `ServiceDefaults`, for wiring only | None; ASP.NET Core comes from the web SDK |
 
-The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and the architecture tests fail the build when a layer breaks them.
+The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and automated architecture checks fail the build when a layer breaks them.
 
 ## Local orchestration
 
@@ -42,27 +42,27 @@ The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and t
 | Production sources | Azure Monitor diagnostic settings (platform logs) and Application Insights diagnostic settings (application logs, exceptions, traces) | No SDK; configured in Azure |
 | Local test producer | `src/DevOpsCopilot.LogForwarder`, an OpenTelemetry log exporter that JSON-encodes application logs to hub `logs` | `OpenTelemetry` 1.20.1, `Azure.Messaging.EventHubs` 5.12.2 |
 
-The `LogForwarder` exists because Azure Monitor cannot stream into the local emulator. It is not the product's ingestion path.
+The log forwarder exists because Azure Monitor cannot send logs to the local emulator. It is not how the product receives logs in production.
 
 ## Agents and AI
 
-| Item | Choice | Version |
+| Item | Choice | Status |
 |---|---|---|
 | Agent framework | Microsoft Agent Framework | `Microsoft.Agents.AI` 1.28.0, `Microsoft.Agents.AI.Workflows` 1.28.0 |
 | Chat abstraction | `Microsoft.Extensions.AI` (`IChatClient`) | `Microsoft.Extensions.AI` 10.11.0, `Microsoft.Extensions.AI.OpenAI` 10.11.0 |
 | LLM | Azure OpenAI | `Azure.AI.OpenAI` 2.1.0, `Azure.Identity` 1.21.0. Built (roadmap M5): the diagnosis stage asks the configured deployment for a structured `Diagnosis`. Without an endpoint and a deployment the stage runs deterministically and the report says the model was unavailable. The deployment's model family is chosen per environment and is not pinned here. |
 | Evaluation | Staged incidents with known causes, run in CI | Not yet built. See roadmap M8. |
 
-The three agents (diagnostic, grounding, diagnosis) are Agent Framework implementations in Infrastructure behind Application interfaces. Stage order is orchestrated in Application by `RunIncidentPipeline`, which uses no Agent Framework type, so the stages stay testable without one.
+The three agents (evidence, grounding and diagnosis) are built with the Agent Framework in the Infrastructure layer. The order of the stages is controlled by the Application layer, which does not use the Agent Framework, so the stages can be tested without it.
 
 ## Evidence and knowledge
 
-| Item | Choice | Version |
-|---|---|---|
-| Live evidence | Azure Monitor Log Analytics, queried with read-only KQL | `Microsoft.Azure.Kusto.Data` 14.2.4 |
-| Knowledge search | Azure AI Search, index `historical-postmortems`, hybrid keyword and vector search | `Azure.Search.Documents` 12.0.0 |
+| Item | Choice |
+|---|---|
+| Live evidence | Azure Monitor Log Analytics, queried with read-only KQL |
+| Knowledge search | Azure AI Search, one index of past incidents, combining keyword and meaning-based search |
 
-When a workspace or search service is not configured, the stage reports `unavailable` and returns no rows or hits. Query limits and allowed questions are in [docs/pipeline.md](../pipeline.md).
+When Log Analytics or Azure AI Search is not configured, the stage reports it as unavailable and returns no results. Query limits and allowed questions are in [the pipeline contract](../pipeline.md).
 
 ## Report channels
 
@@ -85,28 +85,26 @@ secrets live in `Incident:Notifications:*` configuration, read only by the Worke
 
 | Item | Choice | Status |
 |---|---|---|
-| Triage and correlation state | Shared state store, so behaviour is identical across replicas | Planned (Phase 2). Store not yet chosen; Azure Table Storage or Cosmos DB are the candidates. Decide in the triage spec and record it here. |
-| Incident repository | `IIncidentRepository` in Application, implemented in Infrastructure | Planned (Phase 2) |
+| Triage and grouping state | Shared storage, so the product behaves the same with more than one copy of the worker | Planned (Phase 2). Not yet chosen; Azure Table Storage and Cosmos DB are the candidates. Decided in roadmap M9 and recorded here. |
+| Incident storage | Incidents are saved in the shared storage | Planned (Phase 2) |
 
 ## Dashboard
 
-| Item | Choice | Version |
-|---|---|---|
-| Frontend | React with Vite and TypeScript, in `src/DevOpsCopilot.Frontend` | React 19.2, Vite 8, TypeScript 5.9, ESLint 9 |
-| Backend for frontend | `src/DevOpsCopilot.Server` (ASP.NET Core), publishes the built frontend into `wwwroot` | |
-| Component tests | Vitest with jsdom and React Testing Library | Vitest 5.0, jsdom 30.1, `@testing-library/react` 16.3, `@testing-library/jest-dom` 7.0 |
-| Node | Node 22 | Required by CI |
+| Item | Choice |
+|---|---|
+| Front end | React with Vite and TypeScript, checked with ESLint |
+| Back end for the front end | ASP.NET Core, which also serves the built front end |
+| Component tests | Vitest with jsdom and React Testing Library |
+| Node | Node 22, required by the build pipeline |
 
-The frontend is the status dashboard: it reads the status document from `/api/status` on
-`DevOpsCopilot.Server`, which in turn reads the worker's `/status` over Aspire service discovery.
-The polling interval is a constant in the frontend, not configuration.
+The dashboard shows the worker's status. Its back end collects the status from the worker and the health of the supporting services and gives the front end one summary. How often the dashboard refreshes is fixed in the front end, not configurable.
 
 ## Telemetry
 
 | Item | Choice |
 |---|---|
-| Instrumentation | OpenTelemetry via `ServiceDefaults` |
-| Export | OTLP, only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set; Application Insights and Azure Monitor in Azure |
+| Instrumentation | OpenTelemetry, through the shared service defaults |
+| Export | OpenTelemetry export only when an export destination is configured; Application Insights and Azure Monitor in Azure |
 
 ## Testing
 
@@ -125,16 +123,16 @@ The polling interval is a constant in the frontend, not configuration.
 
 | Item | Choice | Status |
 |---|---|---|
-| CI | GitHub Actions `.github/workflows/ci.yml`: Release build of the solution, tests (excluding `Category=RequiresDocker`), frontend lint, Vitest tests and build, on pull requests and pushes to `main` | Built |
-| Deployment | GitHub Actions workflow deploying the AppHost resources on `main` after CI passes | Planned (M7) |
-| Hosting | Azure Container Apps | Planned (M7) |
-| Secrets | Aspire references, user secrets locally; GitHub and Azure configuration in CI. Never in the repo. | Rule |
+| CI | GitHub Actions: build, tests (except those needing Docker), and the dashboard's lint, tests and build, on every pull request and every change to the main branch | Built |
+| Deployment | GitHub Actions, deploying the product after the main branch passes its checks | Planned (roadmap M7) |
+| Hosting | Azure Container Apps | Planned (roadmap M7) |
+| Secrets | Kept in .NET Aspire settings or private developer settings locally, and in GitHub and Azure settings for automation. Never in the repository. | Rule |
 
 ## Leftover projects
 
-`src/DevOpsCopilot.ApiService`, `src/DevOpsCopilot.Functions` and `src/DevOpsCopilot.EmailNotifier` are samples from the template. Do not extend them. They are removed by a dedicated roadmap item (M18) once nothing in the AppHost depends on them.
+The sample API, the Azure Functions sample and the email notifier sample came with the starter template. Do not extend them. They are removed by roadmap M18 once nothing depends on them.
 
-`src/DevOpsCopilot.Server` and `src/DevOpsCopilot.Frontend` are no longer samples: M1 replaced the weather screen with the product status dashboard, so they are extended like any other project.
+The dashboard and its back end are no longer samples: M1 replaced the weather screen with the product's status dashboard, so they are developed like any other part of the product.
 
 ## NuGet packages
 
