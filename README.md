@@ -91,6 +91,8 @@ Every feature starts with a written specification before any code is written. A 
 - the rules it must follow (for example, read-only KQL and never inventing evidence),
 - clear, testable acceptance criteria.
 
+Specs are written in plain English, with no code syntax: no class, interface or file names, and no code or configuration snippets. Anyone the feature touches should be able to read a spec and judge whether it is the right thing to build, and the names stay the builder's choice. See [Writing specs](AGENTS.md#writing-specs).
+
 The spec is the source of truth. Code, tests and AI-agent prompts are written to match it, and if the behaviour needs to change, the spec is updated first, in the same pull request.
 
 ### Test-Driven Development

@@ -6,9 +6,7 @@ This file sets the order. It does not change the rules in [the pipeline contract
 
 Sizes are relative: **S** fits in one short feature branch, **M** is a few days of focused work, **L** is a week or more and should be split further when its spec is written.
 
-Last updated: 2026-11-08.
-
-Last updated: 2026-11-16.
+Last updated: 2026-11-17.
 
 ## Where the product is now
 

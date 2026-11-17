@@ -3,43 +3,48 @@
 <!--
 Write this file second, before plan.md and before any code.
 Every acceptance criterion in requirement.md must appear here at least once.
+
+Plain English only. Describe each test by the behaviour it proves, in a sentence. Do not write
+test names, class names or file paths; those are chosen when the test is written. Name the layer
+and the kind of test instead. See "Writing specs" in AGENTS.md.
+
 Leave the Results section empty until the work is done. Delete these comments when done.
 -->
 
 ## Coverage
 
-| AC | Test or check | Type | Layer | Project |
-|---|---|---|---|---|
-| AC-1 | `<BehaviourUnderTest_WhenCondition_ThenOutcome>` | Unit | Domain | `tests/DevOpsCopilot.Domain.Tests` |
-| AC-2 | | | | |
+| AC | Behaviour proven | Type | Layer |
+|---|---|---|---|
+| AC-1 | <!-- e.g. a report with no channel configured is still written to disk --> | Unit | Domain |
+| AC-2 | | | |
 
 <!--
 Type: Unit, Integration, Architecture, Evaluation or Manual.
 Layer: Domain, Application, Infrastructure or Host.
-Domain and Application tests are plain unit tests: no Azure SDKs, network or emulator.
+Domain and Application tests are plain unit tests: no cloud services, network or emulator.
 -->
 
 ## Unit tests (written first)
 
-<!-- One line per test: the behaviour it proves, written as Arrange, Act, Assert. -->
+<!-- One line per test: the starting state, the action, and the outcome it checks. -->
 
-- **`<TestName>`** (AC-1) – Arrange: … Act: … Assert: …
+- (AC-1) Given … when … then …
 
 ## Integration tests
 
-<!-- Infrastructure behaviour against the emulator or test resources. Delete if none. -->
+<!-- Behaviour checked against the local emulator or a real test resource, and which one it needs. Delete if none. -->
 
-- **`<TestName>`** (AC-n) – what it exercises and which emulator or resource it needs.
+- (AC-n) …
 
 ## Architecture tests
 
-<!-- Any new or changed layer rule this feature must not break. Delete if the existing tests already cover it. -->
+<!-- Any layering rule this feature must not break. Delete if the existing tests already cover it. -->
 
 -
 
 ## Evaluation
 
-<!-- Only for LLM behaviour: which staged incidents are run and the pass condition. Delete if not applicable. -->
+<!-- Only for AI model behaviour: which staged incidents are run and the pass condition. Delete if not applicable. -->
 
 | Staged incident | Expected outcome | Pass condition |
 |---|---|---|
@@ -57,12 +62,12 @@ Domain and Application tests are plain unit tests: no Azure SDKs, network or emu
 
 <!-- Fill in after implementation. Include this section in the pull request. -->
 
-| AC | Test or check | Result | Notes |
+| AC | Behaviour proven | Result | Notes |
 |---|---|---|---|
 | AC-1 | | Pass / Fail | |
 | AC-2 | | | |
 
-- **`dotnet build`:** 
-- **`dotnet test`:** <passed> / <total>
+- **Build:** <clean, or what failed>
+- **Tests:** <passed> / <total>
 - **Evaluation run:** <result, or not applicable>
 - **Date:** YYYY-MM-DD

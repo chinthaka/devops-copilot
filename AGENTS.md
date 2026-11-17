@@ -12,7 +12,7 @@ The worker consumes error events from Azure Event Hubs and runs eight stages in 
 | [docs/specs/tech-stack.md](docs/specs/tech-stack.md) | The technologies, versions and services the project uses. Do not introduce anything outside it without updating it in the same pull request. |
 | [docs/specs/roadmap.md](docs/specs/roadmap.md) | Phases, milestones and scope. |
 | [docs/pipeline.md](docs/pipeline.md) | The system contract: stages, handoff shapes, evidence rules and tool rules. Read it before changing any stage, schema, tool contract or report section. |
-| `docs/specs/YYYY-MM-DD-m<milestone>-feature-name/` | One folder per feature: `requirement.md`, `validation.md` and `plan.md`. The folder name carries the roadmap milestone, e.g. `docs/specs/2026-11-04-m4-report-contract/`. |
+| `docs/specs/YYYY-MM-DD-m<milestone>-feature-name/` | One folder per feature: `requirement.md`, `validation.md` and `plan.md`. The folder name carries the roadmap milestone, e.g. `docs/specs/2026-11-04-m4-report-contract/`. Written in plain English — see [Writing specs](#writing-specs). |
 | [README.md](README.md) | Project overview for people. |
 
 Do not restate `docs/pipeline.md` here or in specs. Link to the relevant section instead.
@@ -24,14 +24,34 @@ This project follows Spec-Driven Development and uses Test-Driven Development wh
 1. **Branch.** Create a branch from the latest `main` before any change, named `features/YYYY-MM-DD-m<milestone>-feature-name` with the roadmap milestone included (for example `features/2026-11-04-m4-report-contract`). Never commit directly to `main`.
 2. **Spec first.** Find the feature's folder `docs/specs/YYYY-MM-DD-m<milestone>-feature-name/`, using the same date and name as the branch. If it does not exist, create it by copying `docs/specs/_template/`. Check the feature against `mission.md`, `tech-stack.md` and `roadmap.md` first. Write the three files in this order:
    1. `requirement.md` – what the feature must do and why, its inputs and outputs, the `pipeline.md` rules it touches, and numbered acceptance criteria.
-   2. `validation.md` – how each acceptance criterion will be proven: the unit tests (written first, TDD), integration tests and evaluation runs, each linked to a criterion number. Leave a **Results** section empty.
-   3. `plan.md` – the technical approach, the files and classes affected, any `pipeline.md` contract changes, and ordered implementation steps.
+   2. `validation.md` – how each acceptance criterion will be proven: the behaviour each unit test must prove (written first, TDD), the integration tests and the evaluation runs, each linked to a criterion number. Leave a **Results** section empty.
+   3. `plan.md` – the approach and why it was chosen over the alternatives, which layers change and what each gains, any `pipeline.md` contract changes, and ordered implementation steps.
+
+   Write all three in plain English, with no code syntax. See [Writing specs](#writing-specs).
 
    Stop for review after all three files exist. Do not write code until they are approved.
 3. **Test first.** Implement the tests listed in `validation.md` as failing tests, then write the code to make them pass, then refactor with the tests green. Where a test cannot come first (LLM output quality, live Azure services), use the staged-incident evaluation set or an integration test against the emulator, as `validation.md` says. When done, fill in the **Results** section of `validation.md` with what passed.
 4. **Stay in scope.** One feature per branch. Change only what the spec covers. If the work needs a different shape or rule, update the spec and `docs/pipeline.md` in the same pull request and say so in the description.
 5. **Verify.** Run `dotnet build` and `dotnet test` before every commit. When the change touches `src/DevOpsCopilot.Frontend`, also run `npm run lint`, `npm run test` and `npm run build` there. Do not commit with failing tests.
 6. **Pull request.** Open a pull request into `main` that links the feature folder and includes the completed **Results** section of `validation.md`. Do not merge it yourself.
+
+### Writing specs
+
+A spec is read by everyone the feature touches, not only by the people who build it. Write every spec in plain English, so someone who does not program can follow what the feature does and judge whether it is the right thing to build.
+
+- **No code syntax in a spec.** Do not name classes, interfaces, methods, types, properties, namespaces, projects or files. No code, configuration or JSON snippets, no code blocks, and no backticked identifiers. Describe the behaviour instead of the thing that implements it: "the stage that sends the report to every configured channel", not the name of the class that does it.
+- **Names are the builder's choice.** A spec that fixes names decides the design before the plan is reviewed, and goes out of date the first time the code is renamed. The plan says which layer changes and what responsibility it gains; the developer chooses the names while building.
+- **Describe tests by the behaviour they prove**, in a sentence. The three-part test names in [Tests](#tests) are chosen when the test is written, not in the spec.
+- **Keep the product's vocabulary.** The terms in `docs/pipeline.md` — event, candidate, fingerprint, incident, evidence, finding, hit, diagnosis, report, confirmed report, notification, channel, delivery, template — are the shared language and are already plain English. Use them.
+- **Settings** are described by what they control, what happens when they are absent, and where a deployment sets them, without writing the configuration key.
+- **Bookkeeping is not code.** Links to `docs/pipeline.md` sections, roadmap milestone numbers, dates, branch names and spec folder names stay as they are.
+
+This rule covers everything under `docs/specs/`, including `mission.md` and `roadmap.md`. Two exceptions:
+
+- `docs/specs/tech-stack.md` names technologies, packages and versions, because recording exactly what is in use is the whole point of that file. Everything around those names is still plain English.
+- `AGENTS.md`, `README.md` and `docs/pipeline.md` are not specs. They are written for the people and agents building the system and may name whatever they need to.
+
+Specs written before this rule are left as they are. Bring one into line only when a feature changes it anyway.
 
 ### Tests
 
