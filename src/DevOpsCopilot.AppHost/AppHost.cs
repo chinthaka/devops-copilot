@@ -1,6 +1,6 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var server = builder.AddProject<Projects.DevOpsCopilot_Server>("server")
+var server = builder.AddDotnetProject("server", "../DevOpsCopilot.Server/DevOpsCopilot.Server.csproj")
     .WithHttpHealthCheck("/health")
     .WithExternalHttpEndpoints();
 
@@ -43,7 +43,7 @@ var checkpoints = storage.AddBlobs("checkpoints");
 
 
 // Api porject - reference both queue and table connections
-var api = builder.AddProject<Projects.DevOpsCopilot_ApiService>("api")
+var api = builder.AddDotnetProject("api", "../DevOpsCopilot.ApiService/DevOpsCopilot.ApiService.csproj")
 	.WithReference(queues)
 	.WithReference(tables)
 	.WithReference(eventHub, "eventhubs")
@@ -51,7 +51,7 @@ var api = builder.AddProject<Projects.DevOpsCopilot_ApiService>("api")
 	.WaitFor(storage);
 
 
-var worker = builder.AddProject<Projects.DevOpsCopilot_Worker>("worker")
+var worker = builder.AddDotnetProject("worker", "../DevOpsCopilot.Worker/DevOpsCopilot.Worker.csproj")
 	.WithReference(eventHub, "eventhubs")
 	.WithReference(checkpoints, "checkpoints")
 	.WaitFor(eventHub)

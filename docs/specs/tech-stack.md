@@ -1,6 +1,6 @@
 # Tech stack
 
-The technologies, versions and services DevOpsCopilot uses. Do not introduce anything outside this list without updating this file in the same pull request. Versions are those pinned in the repo as of 2026-11-08; bump them here when you bump them in a project file. [§ NuGet packages](#nuget-packages) lists every package and the projects that use it.
+The technologies, versions and services DevOpsCopilot uses. Do not introduce anything outside this list without updating this file in the same pull request. Versions are those pinned in the repo as of 2026-11-20; bump them here when you bump them in a project file. [§ NuGet packages](#nuget-packages) lists every package and the projects that use it.
 
 ## Runtime and language
 
@@ -28,7 +28,8 @@ The rules for each layer are in [AGENTS.md](../../AGENTS.md#architecture), and a
 
 | Item | Choice | Version |
 |---|---|---|
-| Orchestration | .NET Aspire AppHost (`src/DevOpsCopilot.AppHost`) | Aspire 13.6.4 (`Aspire.AppHost.Sdk` and the `Aspire.Hosting.*` packages) |
+| Orchestration | .NET Aspire AppHost (`src/DevOpsCopilot.AppHost`), a plain `Microsoft.NET.Sdk` project. .NET projects are added by path with `AddDotnetProject`; the Functions sample is the one exception, through `AddAzureFunctionsProject` | Aspire 17.0.0 (`Aspire.Hosting.AppHost`, `Aspire.Hosting.Dotnet` and the `Aspire.Hosting.*` integrations) |
+| Aspire CLI | Required to build and run the AppHost: it supplies the orchestrator (DCP) and the dashboard, as the CLI bundle in `~/.aspire/bundle`. With no `aspire` on the `PATH`, the AppHost build runs the paired `Aspire.Cli` through `dnx` (.NET 10 SDK or later) and extracts the bundle itself, so CI needs no separate install. `aspire run --watch` is not yet supported for projects added by path. | Paired with `Aspire.Hosting.AppHost`, so 17.0.0 |
 | Event Hubs | Aspire Azure Event Hubs resource `eventhubs`, run as emulator, hub `logs`, consumer group `devops-copilot` | |
 | Storage | Aspire Azure Storage resource `storage`, run as Azurite emulator; blob container `checkpoints` | |
 | Shared defaults | `src/DevOpsCopilot.ServiceDefaults`: health checks, service discovery, OpenTelemetry | |
@@ -115,7 +116,7 @@ The dashboard shows the worker's status. Its back end collects the status from t
 | Integration tests | Infrastructure against the Event Hubs and Azurite emulators or test resources. The Azure OpenAI test is marked `Category=RequiresAzureOpenAI` and skipped unless `Incident:AzureOpenAI` is in user secrets or the environment; it never runs in CI. The channel tests are gated the same way: `RequiresTeams`, `RequiresSlack`, `RequiresDiscord`, `RequiresEmail` (Communication Services) and `RequiresSmtp`, each skipped unless its `Incident:Notifications:<channel>` settings are set. |
 | Local SMTP server | Not prescribed. The `RequiresSmtp` test and the SMTP manual checks run against any SMTP server; each developer chooses their own local test tool. Nothing is added to the AppHost. |
 | Host tests | `tests/DevOpsCopilot.Worker.Tests`: the worker's statistics and status endpoint on an in-process test server (`Microsoft.AspNetCore.TestHost` 10.0.14). `tests/DevOpsCopilot.Server.Tests`: the status-document mapping against a stubbed worker HTTP handler. |
-| AppHost and end-to-end tests | `tests/DevOpsCopilot.AppHost.Tests` on `Aspire.Hosting.Testing` 13.6.4, producing events with `Azure.Messaging.EventHubs` 5.12.2. Needs Docker for the emulators; marked `Category=RequiresDocker` and skipped when no daemon answers. |
+| AppHost and end-to-end tests | `tests/DevOpsCopilot.AppHost.Tests` on `Aspire.Hosting.Testing` 17.0.0, producing events with `Azure.Messaging.EventHubs` 5.12.2. Needs Docker for the emulators; marked `Category=RequiresDocker` and skipped when no daemon answers. |
 | Architecture tests | `tests/DevOpsCopilot.Architecture.Tests`. Reflection over the built assemblies and the project files, so no extra package. Fail the build when a layer references something it must not. |
 | Evaluation | Staged-incident set for diagnosis quality (M8) |
 
@@ -136,7 +137,7 @@ The dashboard and its back end are no longer samples: M1 replaced the weather sc
 
 ## NuGet packages
 
-Every `PackageReference` in the solution as of 2026-11-08, after a full update to the latest
+Every `PackageReference` in the solution as of 2026-11-20, after a full update to the latest
 stable versions on nuget.org (`dotnet list package --outdated` reports nothing for any project).
 The same list is the source of truth for the versions quoted above. The leftover samples
 (`ApiService`, `Functions`, `EmailNotifier`) were updated only for security and currency; they are
@@ -144,14 +145,15 @@ still not extended.
 
 | Package | Version | Projects |
 |---|---|---|
-| `Aspire.AppHost.Sdk` | 13.6.4 | AppHost |
-| `Aspire.Azure.Data.Tables` | 13.6.4 | ApiService |
-| `Aspire.Azure.Storage.Queues` | 13.6.4 | ApiService |
-| `Aspire.Hosting.Azure.EventHubs` | 13.6.4 | AppHost |
-| `Aspire.Hosting.Azure.Functions` | 13.6.4 | AppHost |
-| `Aspire.Hosting.Azure.Storage` | 13.6.4 | AppHost |
-| `Aspire.Hosting.JavaScript` | 13.6.4 | AppHost |
-| `Aspire.Hosting.Testing` | 13.6.4 | AppHost.Tests |
+| `Aspire.Azure.Data.Tables` | 17.0.0 | ApiService |
+| `Aspire.Azure.Storage.Queues` | 17.0.0 | ApiService |
+| `Aspire.Hosting.AppHost` | 17.0.0 | AppHost |
+| `Aspire.Hosting.Azure.EventHubs` | 17.0.0 | AppHost |
+| `Aspire.Hosting.Azure.Functions` | 17.0.0 | AppHost |
+| `Aspire.Hosting.Azure.Storage` | 17.0.0 | AppHost |
+| `Aspire.Hosting.Dotnet` | 17.0.0 | AppHost |
+| `Aspire.Hosting.JavaScript` | 17.0.0 | AppHost |
+| `Aspire.Hosting.Testing` | 17.0.0 | AppHost.Tests |
 | `Azure.AI.OpenAI` | 2.1.0 | Infrastructure |
 | `Azure.Communication.Email` | 1.1.0 | Infrastructure |
 | `Azure.Data.Tables` | 12.13.0 | EmailNotifier |
@@ -209,16 +211,46 @@ upgrade.
 ### Package audit
 
 `dotnet list package --vulnerable --include-transitive` reports no vulnerable package in any
-project. The 2026-11-08 update resolved the two advisories the build used to warn about:
+project, as of 2026-11-20.
+
+That audit does not cover the Aspire dashboard or the orchestrator (DCP). Since the migration to the
+Aspire 17 project model they come from the Aspire CLI bundle, not from NuGet packages, so no NuGet
+audit sees them. They are kept current by keeping the Aspire CLI at the version paired with
+`Aspire.Hosting.AppHost`, which the AppHost build does by default; an `aspire` installed separately
+on the `PATH` takes precedence and must be updated with `aspire update --self`.
+
+Two advisories were published against Aspire 13.6.4 after the 2026-11-08 audit was written, and
+the build warned about both. The 2026-11-20 upgrade to Aspire 17.0.0 resolved them; both were
+first fixed in 13.6.5:
+
+| Advisory | Package | Was | Now | Fixed by |
+|---|---|---|---|---|
+| [GHSA-4g86-54fm-h9h8](https://github.com/advisories/GHSA-4g86-54fm-h9h8) (critical, NU1904) | `Aspire.Dashboard.Sdk.*`, transitive in `AppHost` and `AppHost.Tests` | 13.6.4 | 17.0.0 | Aspire 13.6.4 → 17.0.0 |
+| [GHSA-f7vh-h5g3-7jrh](https://github.com/advisories/GHSA-f7vh-h5g3-7jrh) (high, NU1903) | `Aspire.Hosting` and `Aspire.Hosting.AppHost`, transitive in `AppHost` and `AppHost.Tests` | 13.6.4 | 17.0.0 | Aspire 13.6.4 → 17.0.0 |
+
+Resolved earlier, in the 2026-11-08 update:
 
 | Advisory | Package | Was | Now | Fixed by |
 |---|---|---|---|---|
 | [GHSA-v5pm-xwqc-g5wc](https://github.com/advisories/GHSA-v5pm-xwqc-g5wc) (high, NU1903) | `Microsoft.OpenApi`, transitive in `Server`, `ApiService` and their tests | 2.0.0 | 2.12.2 | `Microsoft.AspNetCore.OpenApi` 10.0.8 → 10.0.14 |
 | [GHSA-qhrr-8q5h-9q3h](https://github.com/advisories/GHSA-qhrr-8q5h-9q3h) (moderate, NU1902) | `MessagePack`, transitive in `AppHost` and `AppHost.Tests` | 2.5.302 | 2.5.307 | Aspire 13.6.1 → 13.6.4 |
 
-Major-version upgrades in this update: `Microsoft.NET.Test.Sdk` 17 → 18, `coverlet.collector`
-6 → 10, `xunit.runner.visualstudio` 3 → 4, and `Microsoft.ApplicationInsights.WorkerService`
-2 → 3 (leftover samples `Functions` and `EmailNotifier` only).
+Major-version upgrades so far: Aspire 13 → 17 (2026-11-20), and in the 2026-11-08 update
+`Microsoft.NET.Test.Sdk` 17 → 18, `coverlet.collector` 6 → 10, `xunit.runner.visualstudio` 3 → 4,
+and `Microsoft.ApplicationInsights.WorkerService` 2 → 3 (leftover samples `Functions` and
+`EmailNotifier` only).
+
+**Migration to the Aspire 17 project model (2026-11-20).** Aspire 17 made the `Aspire.AppHost.Sdk`
+project model obsolete (warning ASPIRE012) and `AddProject<TProject>` with it (warning CS0618).
+Following [the migration guide](https://aspire.dev/integrations/dotnet/migrate-dotnet-project-resource/),
+the AppHost is now a plain `Microsoft.NET.Sdk` project with explicit `Aspire.Hosting.AppHost` and
+`Aspire.Hosting.Dotnet` references, and the server, the worker and the sample API are added with
+`AddDotnetProject` and a project path, so the AppHost no longer references them. The Functions
+sample keeps `AddAzureFunctionsProject`, which the guide says not to replace, and its reference is
+marked `IsAspireProjectResource` so its `Projects.*` type is still generated. A dump of the resource
+model before and after showed the same resources, endpoints, health check and publish-mode
+environment variables; the only additions are a hidden build step that the projects wait for and
+the new resource type's own annotations.
 
 ## Not used
 

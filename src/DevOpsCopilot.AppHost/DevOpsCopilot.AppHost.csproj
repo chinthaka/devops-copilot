@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.4">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -9,16 +9,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DevOpsCopilot.Server\DevOpsCopilot.Server.csproj" />
-    <ProjectReference Include="..\DevOpsCopilot.ApiService\DevOpsCopilot.ApiService.csproj" />
-    <ProjectReference Include="..\DevOpsCopilot.Functions\DevOpsCopilot.Functions.csproj" />
-    <ProjectReference Include="..\DevOpsCopilot.Worker\DevOpsCopilot.Worker.csproj" />
+    <!-- The server, the worker and the sample API are added by path (AddDotnetProject), so they
+         need no reference here. The Functions sample still goes through AddAzureFunctionsProject,
+         which needs the generated Projects.* type; without the old AppHost SDK that type is only
+         generated when the reference is marked as an Aspire project resource. -->
+    <ProjectReference Include="..\DevOpsCopilot.Functions\DevOpsCopilot.Functions.csproj"
+                      IsAspireProjectResource="true"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.Azure.EventHubs" Version="13.6.4" />
-    <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.6.4" />
-	<PackageReference Include="Aspire.Hosting.Azure.Functions" Version="13.6.4" />
-	<PackageReference Include="Aspire.Hosting.Azure.Storage" Version="13.6.4" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="17.0.0" />
+    <PackageReference Include="Aspire.Hosting.Dotnet" Version="17.0.0" />
+    <PackageReference Include="Aspire.Hosting.Azure.EventHubs" Version="17.0.0" />
+    <PackageReference Include="Aspire.Hosting.JavaScript" Version="17.0.0" />
+	<PackageReference Include="Aspire.Hosting.Azure.Functions" Version="17.0.0" />
+	<PackageReference Include="Aspire.Hosting.Azure.Storage" Version="17.0.0" />
   </ItemGroup>
 </Project>

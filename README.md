@@ -148,7 +148,7 @@ Where TDD does not fit naturally, we still verify against the spec:
 ### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [.NET Aspire CLI](https://learn.microsoft.com/dotnet/aspire/)
+- [Aspire CLI](https://aspire.dev/get-started/install-cli/) 17 or later. Since Aspire 17 the AppHost takes its orchestrator and dashboard from the CLI, so it is required to build and run it. If `aspire` isn't installed, the AppHost build fetches the matching version through `dnx`, which comes with the .NET 10 SDK. `aspire run --watch` doesn't yet work for the services, which are added by path.
 - Docker (for the local Event Hubs emulator)
 - An Azure subscription, for Log Analytics, Azure AI Search and Azure OpenAI
 

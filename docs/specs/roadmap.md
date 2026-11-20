@@ -6,7 +6,7 @@ This file sets the order. It does not change the rules in [the pipeline contract
 
 Sizes are relative: **S** fits in one short feature branch, **M** is a few days of focused work, **L** is a week or more and should be split further when its spec is written.
 
-Last updated: 2026-11-17.
+Last updated: 2026-11-20.
 
 ## Where the product is now
 
@@ -34,6 +34,7 @@ Built and merged:
 | ~~A report is written to a file and delivered to nobody~~ Closed: M6 notifies Teams, Slack, Discord and email through `NotifyChannels` | `RunIncidentPipeline`, `NotifyChannels` | M6 (done) |
 | ~~Email can only be sent through Azure Communication Services~~ Closed: `SmtpEmailTransport` is selectable by configuration | `CommunicationServicesEmailTransport`, `SmtpEmailTransport` | M6.7 (done) |
 | Nothing deploys to Azure | `.github/workflows/` | M7 |
+| The worker sends its own logs into the stream it reads, even locally, and keeps reading them back, about a thousand a minute. Real test events wait behind them until they time out, which is why the end-to-end notification test fails. Found on 2026-11-20. | The shared service defaults | M7.1 (decision D4 of the M7 spec) |
 | ~~The dashboard is still the weather sample~~ Closed: the status dashboard replaced it | `src/DevOpsCopilot.Frontend`, `src/DevOpsCopilot.Server` | M1 (done) |
 
 ---
@@ -129,6 +130,10 @@ Split into:
 ### M7 – Deploy to Azure (M)
 
 An automated deployment that runs after the main branch passes its checks and deploys the product to Azure Container Apps: the event stream, the worker, the dashboard and the checkpoint storage. Connection details and keys stay in GitHub or Azure settings. Locally saved reports are never deployed.
+
+Specified by [2026-11-17-m7-deploy-to-azure](2026-11-17-m7-deploy-to-azure/requirement.md), in review. The spec proposes changes to the split and to the "Done when" below, which are made only once they are approved.
+
+**Prerequisite, done on 2026-11-20.** Aspire was upgraded from 13.6.4 to 17.0.0. Two security advisories had been published against the version in use, one critical and one high, in the very packages that describe and run a deployment, and nothing is deployed until they are cleared. The upgrade also made the way the local environment was described obsolete, so on the same day the local environment was moved to Aspire 17's replacement, following Aspire's migration guide. Every service, address, health check and setting stayed the same, which was checked by comparing a full listing of the local environment before and after. M7.1 can now build the deployment description on the current model. One consequence for every developer and for automation: the Aspire command-line tool is now required to build and run the local environment. If it is not installed, the build fetches the matching version by itself.
 
 Split into:
 
