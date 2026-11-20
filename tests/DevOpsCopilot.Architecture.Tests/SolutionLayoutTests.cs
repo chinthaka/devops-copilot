@@ -38,6 +38,7 @@ public class SolutionLayoutTests
             StringComparison.Ordinal);
         Assert.True(Repository.Exists("src/DevOpsCopilot.Worker/DevOpsCopilot.Worker.csproj"));
         Assert.DoesNotContain("AddProject<", composition, StringComparison.Ordinal);
+        Assert.DoesNotContain("DevOpsCopilot.Worker", appHost.ProjectReferences);
         Assert.DoesNotContain("DevOpsCopilot.Daemon", appHost.ProjectReferences);
         Assert.DoesNotContain("DevOpsCopilot.Daemon", composition, StringComparison.Ordinal);
         Assert.Contains("WithReference(eventHub, \"eventhubs\")", composition, StringComparison.Ordinal);
