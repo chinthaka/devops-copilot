@@ -2,7 +2,13 @@
 
 <!--
 Write this file third. Describe HOW the requirement will be met, within the rules in AGENTS.md
-(strict Clean Architecture, pragmatic DDD, SOLID). Delete these comments when done.
+(strict Clean Architecture, pragmatic DDD, SOLID).
+
+Plain English only. Say which layer changes and what responsibility it gains, not which classes,
+interfaces, types or files will be written — the developer chooses those while building, and a
+spec that fixes them goes out of date at the first rename. See "Writing specs" in AGENTS.md.
+
+Delete these comments when done.
 -->
 
 ## Approach
@@ -13,18 +19,22 @@ Write this file third. Describe HOW the requirement will be met, within the rule
 
 <!-- List only the layers this feature touches. Dependencies must point inwards only. -->
 
-| Layer | Project | New or changed types | Notes |
-|---|---|---|---|
-| Domain | `src/DevOpsCopilot.Domain` | <!-- aggregates, value objects, domain events --> | |
-| Application | `src/DevOpsCopilot.Application` | <!-- use cases, interfaces --> | |
-| Infrastructure | `src/DevOpsCopilot.Infrastructure` | <!-- interface implementations, mappers --> | |
-| Host | `src/DevOpsCopilot.Worker` | <!-- registration and configuration only --> | |
+| Layer | What changes here | Notes |
+|---|---|---|
+| Domain | <!-- the business concepts and rules this feature adds or changes --> | |
+| Application | <!-- the use case, where it sits in the stage order, what it needs from outside --> | |
+| Infrastructure | <!-- which outside services are connected, and what is translated at the boundary --> | |
+| Host | <!-- wiring and configuration only --> | |
 
-## Interfaces
+## What this feature needs from outside
 
-<!-- New or changed Application interfaces, with their responsibility. Keep them small and focused. Delete if none. -->
+<!--
+Each capability the use case needs from an outside service: what it must do, what it must
+return, and how it must behave when the service is unavailable. Describe the responsibility,
+not the interface. Delete if none.
+-->
 
-| Interface | Responsibility | Implemented by |
+| Capability | Responsibility | Provided by |
 |---|---|---|
 | | | |
 
@@ -39,13 +49,16 @@ None.
 
 ## Tech-stack changes
 
-<!-- New packages, services or versions. Each must be added to docs/specs/tech-stack.md in the same pull request. Write "None" if none. -->
+<!-- New packages, services or versions. Each must be added to docs/specs/tech-stack.md in the same pull request, which is where exact names and versions belong. Write "None" if none. -->
 
 None.
 
 ## Configuration and secrets
 
-<!-- New settings, where they are read from, and local defaults. Never put secret values here. Delete if none. -->
+<!--
+New settings: what each one controls, what happens when it is not set, and what a local run
+uses. Do not write the setting keys or any secret value. Delete if none.
+-->
 
 -
 
@@ -56,10 +69,10 @@ Ordered, small steps. Each step starts from a failing test listed in validation.
 Keep each step reviewable on its own.
 -->
 
-1. **<Step>** – write `<TestName>` (AC-1), then implement `<Type>` in <layer>.
+1. **<Step>** – write the test for <behaviour> (AC-1), then build the behaviour in <layer>.
 2. **<Step>** – …
-3. **Wire up** – register implementations in the Host.
-4. **Verify** – `dotnet build`, `dotnet test`, evaluation if listed; fill in Results in validation.md.
+3. **Wire up** – connect the new implementations in the Host.
+4. **Verify** – build, run the tests, run the evaluation if listed; fill in Results in validation.md.
 
 ## Risks
 
@@ -72,8 +85,9 @@ Keep each step reviewable on its own.
 ## Definition of done
 
 - [ ] All acceptance criteria in requirement.md are covered in validation.md
-- [ ] Tests written first and passing; `dotnet build` and `dotnet test` clean
+- [ ] Tests written first and passing; the build and the full test run are clean
 - [ ] No outward project references; architecture tests pass
 - [ ] `docs/pipeline.md` and `docs/specs/tech-stack.md` updated if changed
+- [ ] All three spec files are in plain English, with no code syntax
 - [ ] Results section of validation.md completed
 - [ ] Pull request links this feature folder

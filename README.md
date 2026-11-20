@@ -91,6 +91,8 @@ Every feature starts with a written specification before any code is written. A 
 - the rules it must follow (for example, read-only KQL and never inventing evidence),
 - clear, testable acceptance criteria.
 
+Specs are written in plain English, with no code syntax: no class, interface or file names, and no code or configuration snippets. Anyone the feature touches should be able to read a spec and judge whether it is the right thing to build, and the names stay the builder's choice. See [Writing specs](AGENTS.md#writing-specs).
+
 The spec is the source of truth. Code, tests and AI-agent prompts are written to match it, and if the behaviour needs to change, the spec is updated first, in the same pull request.
 
 ### Test-Driven Development
@@ -146,7 +148,7 @@ Where TDD does not fit naturally, we still verify against the spec:
 ### Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [.NET Aspire CLI](https://learn.microsoft.com/dotnet/aspire/)
+- [Aspire CLI](https://aspire.dev/get-started/install-cli/) 17 or later. Since Aspire 17 the AppHost takes its orchestrator and dashboard from the CLI, so it is required to build and run it. If `aspire` isn't installed, the AppHost build fetches the matching version through `dnx`, which comes with the .NET 10 SDK. `aspire run --watch` doesn't yet work for the services, which are added by path.
 - Docker (for the local Event Hubs emulator)
 - An Azure subscription, for Log Analytics, Azure AI Search and Azure OpenAI
 

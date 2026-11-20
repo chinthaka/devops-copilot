@@ -29,9 +29,18 @@ public class SolutionLayoutTests
         var composition = Repository.ReadText("src/DevOpsCopilot.AppHost/AppHost.cs");
 
         // Assert
-        Assert.Contains("DevOpsCopilot.Worker", appHost.ProjectReferences);
+        // Since Aspire 17 the worker is added by path, so the AppHost needs no project reference
+        // to it and there is no generated Projects.* type. The obsolete generic registration only
+        // warns, so it is ruled out here to keep it from coming back.
+        Assert.Contains(
+            "AddDotnetProject(\"worker\", \"../DevOpsCopilot.Worker/DevOpsCopilot.Worker.csproj\")",
+            composition,
+            StringComparison.Ordinal);
+        Assert.True(Repository.Exists("src/DevOpsCopilot.Worker/DevOpsCopilot.Worker.csproj"));
+        Assert.DoesNotContain("AddProject<", composition, StringComparison.Ordinal);
+        Assert.DoesNotContain("DevOpsCopilot.Worker", appHost.ProjectReferences);
         Assert.DoesNotContain("DevOpsCopilot.Daemon", appHost.ProjectReferences);
-        Assert.Contains("Projects.DevOpsCopilot_Worker", composition, StringComparison.Ordinal);
+        Assert.DoesNotContain("DevOpsCopilot.Daemon", composition, StringComparison.Ordinal);
         Assert.Contains("WithReference(eventHub, \"eventhubs\")", composition, StringComparison.Ordinal);
         Assert.Contains("WithReference(checkpoints, \"checkpoints\")", composition, StringComparison.Ordinal);
     }

@@ -30,7 +30,9 @@ public sealed class AppHostFixture : IAsyncLifetime
 
             var builder = await DistributedApplicationTestingBuilder
                 .CreateAsync<Projects.DevOpsCopilot_AppHost>(cancellationToken);
-            var worker = builder.Resources.OfType<ProjectResource>()
+            // Found by the capability the fixture needs, not by its concrete type: since Aspire 17
+            // the worker is a DotnetProjectResource rather than a ProjectResource.
+            var worker = builder.Resources.OfType<IResourceWithEnvironment>()
                 .Single(resource => resource.Name == "worker");
             worker.Annotations.Add(new EnvironmentCallbackAnnotation(context =>
                 context.EnvironmentVariables["Incident__DraftsDirectory"] = ReportsDirectory));

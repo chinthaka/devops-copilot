@@ -3,7 +3,13 @@
 <!--
 Copy this folder to docs/specs/YYYY-MM-DD-m<milestone>-feature-name/ (same date and name as the
 branch, with the roadmap milestone included, e.g. docs/specs/2026-11-04-m4-report-contract/).
-Write this file first. Describe WHAT and WHY, not HOW. Delete these comments when done.
+Write this file first. Describe WHAT and WHY, not HOW.
+
+Plain English only. Do not name classes, interfaces, methods, types, properties, projects or
+files, and do not include code, configuration or JSON snippets. Describe behaviour, and let the
+developer choose the names while building. See "Writing specs" in AGENTS.md.
+
+Delete these comments when done.
 -->
 
 | | |
@@ -34,7 +40,7 @@ Write this file first. Describe WHAT and WHY, not HOW. Delete these comments whe
 
 ## Inputs and outputs
 
-| | Description | Shape |
+| | Description | Defined by |
 |---|---|---|
 | **Input** | <!-- e.g. a normalised event --> | <!-- link to the pipeline.md section --> |
 | **Output** | <!-- e.g. a candidate --> | <!-- link to the pipeline.md section --> |
@@ -52,8 +58,9 @@ and describe it in plan.md.
 ## Domain language
 
 <!--
-The domain concepts this feature uses or introduces (aggregates, value objects, domain events),
-named as in pipeline.md. New terms must be added to pipeline.md in the same pull request.
+The product concepts this feature uses or introduces, named as in pipeline.md. Give the plain
+meaning of each one, not the shape it is stored in. New terms must be added to pipeline.md in
+the same pull request.
 -->
 
 | Term | Meaning in this feature |
@@ -64,7 +71,7 @@ named as in pipeline.md. New terms must be added to pipeline.md in the same pull
 
 <!--
 Numbered, observable and testable. Each one must map to at least one entry in validation.md.
-Prefer Given / When / Then.
+Prefer Given / When / Then. Write what someone could watch happen, in plain English.
 -->
 
 **AC-1** – <short title>
@@ -79,7 +86,7 @@ Prefer Given / When / Then.
 
 ## Non-functional requirements
 
-<!-- Only those that apply: performance, cost limits, security, idempotency, multi-replica behaviour. Delete if none. -->
+<!-- Only those that apply: speed, cost limits, security, repeat events, behaviour with more than one copy of the worker running. Delete if none. -->
 
 -
 
